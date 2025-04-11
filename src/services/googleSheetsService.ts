@@ -1,5 +1,3 @@
-import { useToast } from "@/components/ui/use-toast";
-
 // OAuth credentials
 const credentials = {
   client_id: "416630995185-007ermh3iidknbbtdmu5vct207mdlbaa.apps.googleusercontent.com",
@@ -17,6 +15,7 @@ interface TokenResponse {
 // Refresh access token
 const refreshAccessToken = async (): Promise<string> => {
   try {
+    console.log("Refreshing access token...");
     const params = new URLSearchParams({
       client_id: credentials.client_id,
       client_secret: credentials.client_secret,
@@ -33,13 +32,16 @@ const refreshAccessToken = async (): Promise<string> => {
     });
 
     if (!response.ok) {
-      throw new Error(`Failed to refresh token: ${response.statusText}`);
+      const errorText = await response.text();
+      console.error("Token refresh error:", errorText);
+      throw new Error(`Failed to refresh token: ${response.statusText} - ${errorText}`);
     }
 
     const data = await response.json() as TokenResponse;
     localStorage.setItem("access_token", data.access_token);
     localStorage.setItem("expiration_time", (Date.now() + data.expires_in * 1000).toString());
     
+    console.log("Token refreshed successfully");
     return data.access_token;
   } catch (error) {
     console.error("Error refreshing token:", error);
@@ -54,20 +56,24 @@ const getAccessToken = async (): Promise<string> => {
 
   // If token exists and is not expired, return it
   if (storedToken && expirationTime && Date.now() < parseInt(expirationTime)) {
+    console.log("Using cached token");
     return storedToken;
   }
 
   // Otherwise refresh the token
+  console.log("Token expired or not found, refreshing...");
   return refreshAccessToken();
 };
 
 // Fetch data from Google Sheets
 export const fetchSheetData = async (spreadsheetId: string, sheetName: string): Promise<any[]> => {
   try {
+    console.log(`Fetching data from ${sheetName}...`);
     const accessToken = await getAccessToken();
     const range = `${sheetName}!A:ZZ`;  // Fetch all columns
     const url = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${encodeURIComponent(range)}`;
 
+    console.log(`Making API request to ${url}`);
     const response = await fetch(url, {
       headers: {
         Authorization: `Bearer ${accessToken}`,
@@ -75,12 +81,16 @@ export const fetchSheetData = async (spreadsheetId: string, sheetName: string): 
     });
 
     if (!response.ok) {
-      throw new Error(`Failed to fetch sheet data: ${response.statusText}`);
+      const errorText = await response.text();
+      console.error("API error:", errorText);
+      throw new Error(`Failed to fetch sheet data: ${response.statusText} - ${errorText}`);
     }
 
     const data = await response.json();
+    console.log("Data received:", data);
 
     if (!data.values || data.values.length === 0) {
+      console.warn("No data found in sheet");
       return [];
     }
 
@@ -88,13 +98,16 @@ export const fetchSheetData = async (spreadsheetId: string, sheetName: string): 
     const rows = data.values.slice(1);
 
     // Convert the data to an array of objects
-    return rows.map((row: any[]) => {
+    const processedData = rows.map((row: any[]) => {
       const obj: Record<string, any> = {};
       headers.forEach((header: string, index: number) => {
         obj[header] = row[index] || "";
       });
       return obj;
     });
+    
+    console.log(`Processed ${processedData.length} rows of data`);
+    return processedData;
   } catch (error) {
     console.error("Error fetching sheet data:", error);
     throw error;
@@ -103,6 +116,7 @@ export const fetchSheetData = async (spreadsheetId: string, sheetName: string): 
 
 // Process fitness data
 export const processFitnessData = (data: any[]) => {
+  console.log("Processing fitness data...", data?.length);
   if (!data || data.length === 0) return null;
 
   // Group data by month
@@ -148,6 +162,8 @@ export const processFitnessData = (data: any[]) => {
       totalConverted
     };
   });
+
+  console.log("Monthly stats calculated:", monthlyStats.length);
 
   // Sort by month year
   monthlyStats.sort((a, b) => {

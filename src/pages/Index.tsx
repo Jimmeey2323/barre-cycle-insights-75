@@ -22,14 +22,33 @@ const Index = () => {
     const loadData = async () => {
       try {
         setIsLoading(true);
+        setError(null);
+        console.log("Starting data fetch process...");
+        
         const sheetData = await fetchSheetData(SPREADSHEET_ID, SHEET_NAME);
+        console.log(`Sheet data fetched: ${sheetData?.length} rows`);
+        
+        if (!sheetData || sheetData.length === 0) {
+          throw new Error("No data received from Google Sheets");
+        }
+        
         const processedData = processFitnessData(sheetData);
+        if (!processedData) {
+          throw new Error("Failed to process fitness data");
+        }
+        
+        console.log("Data processed successfully:", {
+          monthlyStats: processedData.monthlyStats.length,
+          rawData: processedData.rawData.length
+        });
         
         setData(processedData);
         
         // Auto-select the last 3 months or all if less than 3
         if (processedData && processedData.monthlyStats.length > 0) {
           const allMonths = processedData.monthlyStats.map(stat => stat.monthYear);
+          console.log("Available months:", allMonths);
+          
           const sortedMonths = [...allMonths].sort((a, b) => {
             // Parse "MMM-YYYY" format
             const [aMonth, aYear] = a.split('-');
@@ -44,6 +63,7 @@ const Index = () => {
           });
           
           const monthsToSelect = sortedMonths.slice(-3); // Get last 3 months
+          console.log("Auto-selecting months:", monthsToSelect);
           setSelectedMonths(monthsToSelect);
         }
         
@@ -64,6 +84,7 @@ const Index = () => {
       }
     };
 
+    // Initial data load
     loadData();
   }, [toast]);
 
