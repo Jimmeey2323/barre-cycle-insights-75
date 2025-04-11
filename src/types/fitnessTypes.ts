@@ -51,3 +51,7 @@ export interface ProcessedData {
 
 export type ViewType = 'overview' | 'teachers' | 'classes' | 'financials' | 'retention';
 export type ChartType = 'bar' | 'line' | 'pie' | 'area';
+
+// Recharts types for type safety
+export type RechartsValueType = string | number | Array<string | number>;
+export type RechartsNameType = string | number;

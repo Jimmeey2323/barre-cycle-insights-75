@@ -1,7 +1,7 @@
 
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ProcessedData } from "@/types/fitnessTypes";
+import { ProcessedData, RechartsValueType, RechartsNameType } from "@/types/fitnessTypes";
 import { BarChart, LineChart, Bar, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 interface RetentionViewProps {
@@ -206,7 +206,9 @@ const RetentionView: React.FC<RetentionViewProps> = ({ data, selectedMonths, loc
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="name" angle={-45} textAnchor="end" height={50} />
                 <YAxis />
-                <Tooltip formatter={(value) => [`${parseFloat(value).toFixed(1)}%`, ""]} />
+                <Tooltip formatter={(value: RechartsValueType) => {
+                  return [`${typeof value === 'number' ? value.toFixed(1) : value}%`, ""];
+                }} />
                 <Legend />
                 <Line type="monotone" dataKey="retentionRate" name="Retention Rate" stroke={retentionRateColor} strokeWidth={2} activeDot={{ r: 8 }} />
                 <Line type="monotone" dataKey="conversionRate" name="Conversion Rate" stroke={conversionRateColor} strokeWidth={2} activeDot={{ r: 8 }} />
@@ -232,10 +234,13 @@ const RetentionView: React.FC<RetentionViewProps> = ({ data, selectedMonths, loc
                 <YAxis yAxisId="left" />
                 <YAxis yAxisId="right" orientation="right" />
                 <Tooltip 
-                  formatter={(value, name) => [
-                    name.includes('Rate') ? `${parseFloat(value).toFixed(1)}%` : value, 
-                    name
-                  ]} 
+                  formatter={(value: RechartsValueType, name: RechartsNameType) => {
+                    const nameStr = typeof name === 'string' ? name : String(name);
+                    if (nameStr.includes('Rate')) {
+                      return [`${typeof value === 'number' ? value.toFixed(1) : value}%`, nameStr];
+                    }
+                    return [value, nameStr];
+                  }} 
                 />
                 <Legend />
                 <Line yAxisId="left" type="monotone" dataKey="new" name="New Customers" stroke={newColor} activeDot={{ r: 8 }} />

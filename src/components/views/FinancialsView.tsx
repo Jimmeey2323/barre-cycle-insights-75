@@ -1,7 +1,7 @@
 
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ProcessedData } from "@/types/fitnessTypes";
+import { ProcessedData, RechartsValueType, RechartsNameType } from "@/types/fitnessTypes";
 import { AreaChart, BarChart, ComposedChart, Area, Bar, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 interface FinancialsViewProps {
@@ -179,7 +179,9 @@ const FinancialsView: React.FC<FinancialsViewProps> = ({ data, selectedMonths, l
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="name" angle={-45} textAnchor="end" height={50} />
                 <YAxis />
-                <Tooltip formatter={(value) => [`₹${parseInt(value).toLocaleString()}`, ""]} />
+                <Tooltip formatter={(value: RechartsValueType) => {
+                  return [`₹${typeof value === 'number' ? value.toLocaleString() : value}`, ""];
+                }} />
                 <Legend />
                 <Area type="monotone" dataKey="barre" name="Barre Revenue" stroke={barreColor} fill={barreColor} fillOpacity={0.6} />
                 <Area type="monotone" dataKey="cycle" name="Cycle Revenue" stroke={cycleColor} fill={cycleColor} fillOpacity={0.6} />
@@ -204,10 +206,12 @@ const FinancialsView: React.FC<FinancialsViewProps> = ({ data, selectedMonths, l
                 <YAxis yAxisId="left" orientation="left" />
                 <YAxis yAxisId="right" orientation="right" />
                 <Tooltip 
-                  formatter={(value, name) => [
-                    name === 'revenue' ? `₹${parseInt(value).toLocaleString()}` : `${value.toFixed(1)}%`, 
-                    name === 'revenue' ? 'Revenue' : 'Change'
-                  ]} 
+                  formatter={(value: RechartsValueType, name: RechartsNameType) => {
+                    if (name === 'revenue') {
+                      return [`₹${typeof value === 'number' ? value.toLocaleString() : value}`, 'Revenue'];
+                    }
+                    return [`${typeof value === 'number' ? value.toFixed(1) : value}%`, 'Change'];
+                  }} 
                 />
                 <Legend />
                 <Bar yAxisId="left" dataKey="revenue" name="Revenue" fill={totalColor} />
@@ -232,7 +236,9 @@ const FinancialsView: React.FC<FinancialsViewProps> = ({ data, selectedMonths, l
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="name" angle={-45} textAnchor="end" height={50} />
                 <YAxis />
-                <Tooltip formatter={(value) => [`₹${value.toFixed(0)}`, ""]} />
+                <Tooltip formatter={(value: RechartsValueType) => {
+                  return [`₹${typeof value === 'number' ? value.toFixed(0) : value}`, ""];
+                }} />
                 <Legend />
                 <Bar dataKey="barre" name="Barre Rev/Customer" fill={barreColor} />
                 <Bar dataKey="cycle" name="Cycle Rev/Customer" fill={cycleColor} />
@@ -255,7 +261,9 @@ const FinancialsView: React.FC<FinancialsViewProps> = ({ data, selectedMonths, l
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="name" angle={-45} textAnchor="end" height={50} />
                 <YAxis />
-                <Tooltip formatter={(value) => [`₹${value.toFixed(0)}`, ""]} />
+                <Tooltip formatter={(value: RechartsValueType) => {
+                  return [`₹${typeof value === 'number' ? value.toFixed(0) : value}`, ""];
+                }} />
                 <Legend />
                 <Bar dataKey="barre" name="Barre Rev/Session" fill={barreColor} />
                 <Bar dataKey="cycle" name="Cycle Rev/Session" fill={cycleColor} />

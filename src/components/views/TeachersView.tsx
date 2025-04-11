@@ -1,7 +1,7 @@
 
 import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ProcessedData } from "@/types/fitnessTypes";
+import { ProcessedData, RechartsValueType } from "@/types/fitnessTypes";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
@@ -145,7 +145,9 @@ const TeachersView: React.FC<TeachersViewProps> = ({ data, selectedMonths, locat
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis type="number" />
                 <YAxis dataKey="name" type="category" width={80} />
-                <Tooltip formatter={(value) => [`₹${parseInt(value).toLocaleString()}`, ""]} />
+                <Tooltip formatter={(value: RechartsValueType) => {
+                  return [`₹${typeof value === 'number' ? value.toLocaleString() : value}`, ""];
+                }} />
                 <Legend />
                 <Bar dataKey="barre" name="Barre Revenue" fill={barreColor} />
                 <Bar dataKey="cycle" name="Cycle Revenue" fill={cycleColor} />

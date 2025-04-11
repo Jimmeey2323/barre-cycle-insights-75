@@ -1,7 +1,7 @@
 
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ProcessedData } from "@/types/fitnessTypes";
+import { ProcessedData, RechartsValueType } from "@/types/fitnessTypes";
 import { BarChart, LineChart, AreaChart, PieChart, ComposedChart, Bar, Line, Area, Pie, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell } from 'recharts';
 
 interface OverviewViewProps {
@@ -203,7 +203,7 @@ const OverviewView: React.FC<OverviewViewProps> = ({ data, selectedMonths, locat
                     <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />
                   ))}
                 </Pie>
-                <Tooltip formatter={(value) => [`${value} sessions`, ""]} />
+                <Tooltip formatter={(value: RechartsValueType) => [`${value} sessions`, ""]} />
                 <Legend />
               </PieChart>
             </ResponsiveContainer>
@@ -225,7 +225,9 @@ const OverviewView: React.FC<OverviewViewProps> = ({ data, selectedMonths, locat
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="name" angle={-45} textAnchor="end" height={50} />
                 <YAxis />
-                <Tooltip formatter={(value) => [`₹${parseInt(value).toLocaleString()}`, ""]} />
+                <Tooltip formatter={(value: RechartsValueType) => {
+                  return [`₹${typeof value === 'number' ? value.toLocaleString() : value}`, ""];
+                }} />
                 <Legend />
                 <Area type="monotone" dataKey="barre" name="Barre Revenue" fill={barreColor} stroke={barreColor} fillOpacity={0.5} />
                 <Area type="monotone" dataKey="cycle" name="Cycle Revenue" fill={cycleColor} stroke={cycleColor} fillOpacity={0.5} />
