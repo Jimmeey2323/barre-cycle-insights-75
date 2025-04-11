@@ -1,3 +1,4 @@
+
 // OAuth credentials
 const credentials = {
   client_id: "416630995185-007ermh3iidknbbtdmu5vct207mdlbaa.apps.googleusercontent.com",
@@ -119,68 +120,85 @@ export const processFitnessData = (data: any[]) => {
   console.log("Processing fitness data...", data?.length);
   if (!data || data.length === 0) return null;
 
-  // Group data by month
-  const monthlyData = data.reduce((acc: Record<string, any[]>, item) => {
-    const monthYear = item["Month Year"];
-    if (!acc[monthYear]) {
-      acc[monthYear] = [];
-    }
-    acc[monthYear].push(item);
-    return acc;
-  }, {});
+  try {
+    // Group data by month
+    const monthlyData = data.reduce((acc: Record<string, any[]>, item) => {
+      const monthYear = item["Month Year"];
+      if (!monthYear) {
+        console.warn("Item missing Month Year:", item);
+        return acc;
+      }
+      
+      if (!acc[monthYear]) {
+        acc[monthYear] = [];
+      }
+      acc[monthYear].push(item);
+      return acc;
+    }, {});
 
-  // Calculate monthly aggregates
-  const monthlyStats = Object.keys(monthlyData).map(monthYear => {
-    const month = monthlyData[monthYear];
+    console.log("Monthly data groups:", Object.keys(monthlyData));
+
+    // Calculate monthly aggregates
+    const monthlyStats = Object.keys(monthlyData).map(monthYear => {
+      const month = monthlyData[monthYear];
+      
+      const totalBarreSessions = month.reduce((sum, item) => sum + Number(item["Barre Sessions"] || 0), 0);
+      const totalCycleSessions = month.reduce((sum, item) => sum + Number(item["Cycle Sessions"] || 0), 0);
+      const totalBarreCustomers = month.reduce((sum, item) => sum + Number(item["Barre Customers"] || 0), 0);
+      const totalCycleCustomers = month.reduce((sum, item) => sum + Number(item["Cycle Customers"] || 0), 0);
+      const totalBarrePaid = month.reduce((sum, item) => sum + Number(item["Barre Paid"] || 0), 0);
+      const totalCyclePaid = month.reduce((sum, item) => sum + Number(item["Cycle Paid"] || 0), 0);
+      const totalNonEmptyBarreSessions = month.reduce((sum, item) => sum + Number(item["Non-Empty Barre Sessions"] || 0), 0);
+      const totalNonEmptyCycleSessions = month.reduce((sum, item) => sum + Number(item["Non-Empty Cycle Sessions"] || 0), 0);
+      
+      const avgBarreClassSize = totalNonEmptyBarreSessions > 0 ? totalBarreCustomers / totalNonEmptyBarreSessions : 0;
+      const avgCycleClassSize = totalNonEmptyCycleSessions > 0 ? totalCycleCustomers / totalNonEmptyCycleSessions : 0;
+      
+      const totalRetained = month.reduce((sum, item) => sum + Number(item["Retained"] || 0), 0);
+      const totalConverted = month.reduce((sum, item) => sum + Number(item["Converted"] || 0), 0);
+      
+      return {
+        monthYear,
+        totalBarreSessions,
+        totalCycleSessions,
+        totalBarreCustomers,
+        totalCycleCustomers,
+        totalBarrePaid,
+        totalCyclePaid,
+        avgBarreClassSize: avgBarreClassSize.toFixed(1),
+        avgCycleClassSize: avgCycleClassSize.toFixed(1),
+        totalRetained,
+        totalConverted
+      };
+    });
+
+    console.log("Monthly stats calculated:", monthlyStats);
+
+    // Sort by month year
+    monthlyStats.sort((a, b) => {
+      // Parse "MMM-YYYY" format
+      const [aMonth, aYear] = a.monthYear.split('-');
+      const [bMonth, bYear] = b.monthYear.split('-');
+      
+      const monthOrder = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+      
+      const yearComparison = Number(aYear) - Number(bYear);
+      if (yearComparison !== 0) return yearComparison;
+      
+      return monthOrder.indexOf(aMonth) - monthOrder.indexOf(bMonth);
+    });
     
-    const totalBarreSessions = month.reduce((sum, item) => sum + Number(item["Barre Sessions"] || 0), 0);
-    const totalCycleSessions = month.reduce((sum, item) => sum + Number(item["Cycle Sessions"] || 0), 0);
-    const totalBarreCustomers = month.reduce((sum, item) => sum + Number(item["Barre Customers"] || 0), 0);
-    const totalCycleCustomers = month.reduce((sum, item) => sum + Number(item["Cycle Customers"] || 0), 0);
-    const totalBarrePaid = month.reduce((sum, item) => sum + Number(item["Barre Paid"] || 0), 0);
-    const totalCyclePaid = month.reduce((sum, item) => sum + Number(item["Cycle Paid"] || 0), 0);
-    const totalNonEmptyBarreSessions = month.reduce((sum, item) => sum + Number(item["Non-Empty Barre Sessions"] || 0), 0);
-    const totalNonEmptyCycleSessions = month.reduce((sum, item) => sum + Number(item["Non-Empty Cycle Sessions"] || 0), 0);
-    
-    const avgBarreClassSize = totalNonEmptyBarreSessions > 0 ? totalBarreCustomers / totalNonEmptyBarreSessions : 0;
-    const avgCycleClassSize = totalNonEmptyCycleSessions > 0 ? totalCycleCustomers / totalNonEmptyCycleSessions : 0;
-    
-    const totalRetained = month.reduce((sum, item) => sum + Number(item["Retained"] || 0), 0);
-    const totalConverted = month.reduce((sum, item) => sum + Number(item["Converted"] || 0), 0);
+    console.log("Final processed data:", { 
+      monthlyStats: monthlyStats.length, 
+      rawData: data.length 
+    });
     
     return {
-      monthYear,
-      totalBarreSessions,
-      totalCycleSessions,
-      totalBarreCustomers,
-      totalCycleCustomers,
-      totalBarrePaid,
-      totalCyclePaid,
-      avgBarreClassSize: avgBarreClassSize.toFixed(1),
-      avgCycleClassSize: avgCycleClassSize.toFixed(1),
-      totalRetained,
-      totalConverted
+      monthlyStats,
+      rawData: data
     };
-  });
-
-  console.log("Monthly stats calculated:", monthlyStats.length);
-
-  // Sort by month year
-  monthlyStats.sort((a, b) => {
-    // Parse "MMM-YYYY" format
-    const [aMonth, aYear] = a.monthYear.split('-');
-    const [bMonth, bYear] = b.monthYear.split('-');
-    
-    const monthOrder = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-    
-    const yearComparison = Number(aYear) - Number(bYear);
-    if (yearComparison !== 0) return yearComparison;
-    
-    return monthOrder.indexOf(aMonth) - monthOrder.indexOf(bMonth);
-  });
-  
-  return {
-    monthlyStats,
-    rawData: data
-  };
+  } catch (error) {
+    console.error("Error processing fitness data:", error);
+    return null;
+  }
 };

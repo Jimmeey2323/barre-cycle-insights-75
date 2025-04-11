@@ -21,10 +21,11 @@ const Index = () => {
   useEffect(() => {
     const loadData = async () => {
       try {
+        console.log("Starting data fetch process...");
         setIsLoading(true);
         setError(null);
-        console.log("Starting data fetch process...");
         
+        // Fetch data from Google Sheets
         const sheetData = await fetchSheetData(SPREADSHEET_ID, SHEET_NAME);
         console.log(`Sheet data fetched: ${sheetData?.length} rows`);
         
@@ -32,20 +33,19 @@ const Index = () => {
           throw new Error("No data received from Google Sheets");
         }
         
+        // Process the data into the format we need
         const processedData = processFitnessData(sheetData);
+        console.log("Processed data result:", processedData ? "success" : "null");
+        
         if (!processedData) {
           throw new Error("Failed to process fitness data");
         }
         
-        console.log("Data processed successfully:", {
-          monthlyStats: processedData.monthlyStats.length,
-          rawData: processedData.rawData.length
-        });
-        
+        console.log("Setting data in state, with monthly stats:", processedData.monthlyStats.length);
         setData(processedData);
         
         // Auto-select the last 3 months or all if less than 3
-        if (processedData && processedData.monthlyStats.length > 0) {
+        if (processedData.monthlyStats.length > 0) {
           const allMonths = processedData.monthlyStats.map(stat => stat.monthYear);
           console.log("Available months:", allMonths);
           
@@ -62,18 +62,23 @@ const Index = () => {
             return monthOrder.indexOf(aMonth) - monthOrder.indexOf(bMonth);
           });
           
-          const monthsToSelect = sortedMonths.slice(-3); // Get last 3 months
+          // Get last 3 months (most recent)
+          const monthsToSelect = sortedMonths.slice(-3);
           console.log("Auto-selecting months:", monthsToSelect);
+          
+          // Set selected months
           setSelectedMonths(monthsToSelect);
         }
         
+        // Show a success toast
         toast({
           title: "Data loaded successfully",
-          description: "Fitness metrics have been loaded.",
+          description: `Loaded ${processedData.rawData.length} records across ${processedData.monthlyStats.length} months.`,
         });
       } catch (err) {
         console.error("Error loading data:", err);
         setError(err instanceof Error ? err : new Error(String(err)));
+        setData(null);
         toast({
           variant: "destructive",
           title: "Error loading data",
@@ -87,6 +92,8 @@ const Index = () => {
     // Initial data load
     loadData();
   }, [toast]);
+
+  console.log("Index rendering with data:", data ? "available" : "null", "isLoading:", isLoading);
 
   return (
     <div className="min-h-screen bg-gray-50">

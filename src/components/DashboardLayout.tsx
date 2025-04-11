@@ -35,12 +35,21 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   location,
   setLocation
 }) => {
+  console.log("DashboardLayout rendering with:", { 
+    hasData: !!data, 
+    isLoading, 
+    hasError: !!error,
+    selectedMonths,
+    location
+  });
+
   if (isLoading) {
     return (
       <div className="flex h-screen items-center justify-center">
         <div className="text-center">
           <ActivityIcon className="mx-auto h-12 w-12 animate-spin text-primary" />
           <h2 className="mt-4 text-xl font-semibold">Loading fitness data...</h2>
+          <p className="mt-2 text-muted-foreground">Fetching data from Google Sheets</p>
         </div>
       </div>
     );
@@ -49,9 +58,12 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   if (error) {
     return (
       <div className="flex h-screen items-center justify-center">
-        <div className="text-center">
+        <div className="text-center max-w-md mx-auto">
           <h2 className="text-xl font-semibold text-red-500">Error loading data</h2>
-          <p className="mt-2">{error.message}</p>
+          <p className="mt-2 text-sm">{error.message}</p>
+          <div className="mt-4 p-4 bg-red-50 rounded-md text-xs text-left overflow-auto max-h-60">
+            <pre>{error.stack}</pre>
+          </div>
         </div>
       </div>
     );
@@ -62,12 +74,14 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
       <div className="flex h-screen items-center justify-center">
         <div className="text-center">
           <h2 className="text-xl font-semibold">No data available</h2>
+          <p className="mt-2 text-muted-foreground">Please try refreshing the page</p>
         </div>
       </div>
     );
   }
 
   const allMonths = data.monthlyStats.map(stat => stat.monthYear);
+  console.log("Available months for filtering:", allMonths);
 
   return (
     <div className="container mx-auto my-8 px-4">
