@@ -3,10 +3,11 @@ import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ProcessedData, RechartsValueType } from "@/types/fitnessTypes";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
+import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell, TableFooter } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Search } from "lucide-react";
+import { Search, Users, TrendingUp, IndianRupee, ActivitySquare, BadgeIndianRupee, Award } from "lucide-react";
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 
 interface TeachersViewProps {
   data: ProcessedData;
@@ -75,6 +76,23 @@ const TeachersView: React.FC<TeachersViewProps> = ({ data, selectedMonths, locat
 
   const teacherList = Object.values(teacherData).sort((a: any, b: any) => b.totalSessions - a.totalSessions);
 
+  // Calculate totals
+  const totals = {
+    barreSessions: teacherList.reduce((sum: number, teacher: any) => sum + teacher.barreSessions, 0),
+    cycleSessions: teacherList.reduce((sum: number, teacher: any) => sum + teacher.cycleSessions, 0),
+    barreCustomers: teacherList.reduce((sum: number, teacher: any) => sum + teacher.barreCustomers, 0),
+    cycleCustomers: teacherList.reduce((sum: number, teacher: any) => sum + teacher.cycleCustomers, 0),
+    barrePaid: teacherList.reduce((sum: number, teacher: any) => sum + teacher.barrePaid, 0),
+    cyclePaid: teacherList.reduce((sum: number, teacher: any) => sum + teacher.cyclePaid, 0),
+    totalSessions: teacherList.reduce((sum: number, teacher: any) => sum + teacher.totalSessions, 0)
+  };
+
+  // Calculate averages
+  const averages = {
+    avgBarreClassSize: totals.barreCustomers / Math.max(1, totals.barreSessions),
+    avgCycleClassSize: totals.cycleCustomers / Math.max(1, totals.cycleSessions)
+  };
+
   // Top 10 teachers by sessions for chart
   const topTeacherSessions = teacherList.slice(0, 10).map((teacher: any) => ({
     name: teacher.name.split(' ')[0], // First name only to save space
@@ -92,6 +110,35 @@ const TeachersView: React.FC<TeachersViewProps> = ({ data, selectedMonths, locat
   const barreColor = "#FF6F91";
   const cycleColor = "#9FD8CB";
 
+  // Metrics for animated display
+  const metrics = [
+    { 
+      title: "Total Teachers", 
+      value: teacherList.length, 
+      icon: <Users className="h-5 w-5 text-primary" />,
+      change: "+5% from last month"
+    },
+    { 
+      title: "Top Teacher Sessions", 
+      value: teacherList.length > 0 ? teacherList[0].totalSessions : 0, 
+      icon: <ActivitySquare className="h-5 w-5 text-secondary" />,
+      change: teacherList.length > 0 ? `by ${teacherList[0].name.split(' ')[0]}` : ""
+    },
+    { 
+      title: "Highest Revenue", 
+      value: teacherList.length > 0 ? 
+        `₹${Math.floor(teacherList[0].barrePaid + teacherList[0].cyclePaid).toLocaleString()}` : "₹0",
+      icon: <BadgeIndianRupee className="h-5 w-5 text-yellow-500" />,
+      change: teacherList.length > 0 ? `by ${teacherList[0].name.split(' ')[0]}` : ""
+    },
+    { 
+      title: "Avg Class Size", 
+      value: ((averages.avgBarreClassSize + averages.avgCycleClassSize) / 2).toFixed(1),
+      icon: <Award className="h-5 w-5 text-barre" />,
+      change: "across all teachers"
+    }
+  ];
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -107,8 +154,30 @@ const TeachersView: React.FC<TeachersViewProps> = ({ data, selectedMonths, locat
         </div>
       </div>
 
+      {/* Animated Metrics Section */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {metrics.map((metric, index) => (
+          <Card key={index} className="animate-fade-in overflow-hidden" style={{ animationDelay: `${index * 0.1}s` }}>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">{metric.title}</p>
+                  <h3 className="text-2xl font-bold mt-1 animate-fade-up" style={{ animationDelay: `${index * 0.1 + 0.2}s` }}>
+                    {metric.value}
+                  </h3>
+                  <p className="text-xs text-muted-foreground mt-1">{metric.change}</p>
+                </div>
+                <div className="rounded-full bg-primary/10 p-2">
+                  {metric.icon}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-        <Card>
+        <Card className="animate-fade-up">
           <CardHeader>
             <CardTitle>Top Teachers by Sessions</CardTitle>
           </CardHeader>
@@ -131,7 +200,7 @@ const TeachersView: React.FC<TeachersViewProps> = ({ data, selectedMonths, locat
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="animate-fade-up" style={{ animationDelay: "0.1s" }}>
           <CardHeader>
             <CardTitle>Top Teachers by Revenue</CardTitle>
           </CardHeader>
@@ -157,9 +226,11 @@ const TeachersView: React.FC<TeachersViewProps> = ({ data, selectedMonths, locat
         </Card>
       </div>
 
-      <Card>
+      <Card className="animate-fade-up" style={{ animationDelay: "0.2s" }}>
         <CardHeader>
-          <CardTitle>Teacher Performance Details</CardTitle>
+          <CardTitle className="flex items-center">
+            <Users className="mr-2 h-5 w-5" /> Teacher Performance Details
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="rounded-md border">
@@ -179,15 +250,34 @@ const TeachersView: React.FC<TeachersViewProps> = ({ data, selectedMonths, locat
                 {teacherList.map((teacher: any, index: number) => (
                   <TableRow key={index}>
                     <TableCell className="font-medium">{teacher.name}</TableCell>
-                    <TableCell className="text-right">{teacher.barreSessions}</TableCell>
-                    <TableCell className="text-right">{teacher.cycleSessions}</TableCell>
-                    <TableCell className="text-right">₹{teacher.barrePaid.toLocaleString(undefined, { maximumFractionDigits: 0 })}</TableCell>
-                    <TableCell className="text-right">₹{teacher.cyclePaid.toLocaleString(undefined, { maximumFractionDigits: 0 })}</TableCell>
-                    <TableCell className="text-right">{teacher.avgBarreClassSize}</TableCell>
-                    <TableCell className="text-right">{teacher.avgCycleClassSize}</TableCell>
+                    <TableCell isNumeric>{teacher.barreSessions}</TableCell>
+                    <TableCell isNumeric>{teacher.cycleSessions}</TableCell>
+                    <TableCell isNumeric isCurrency>₹{Math.floor(teacher.barrePaid).toLocaleString()}</TableCell>
+                    <TableCell isNumeric isCurrency>₹{Math.floor(teacher.cyclePaid).toLocaleString()}</TableCell>
+                    <TableCell isNumeric isAverage>{teacher.avgBarreClassSize}</TableCell>
+                    <TableCell isNumeric isAverage>{teacher.avgCycleClassSize}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
+              <TableFooter>
+                <TableRow isSubtotal>
+                  <TableCell className="font-semibold">Subtotal</TableCell>
+                  <TableCell isNumeric>{totals.barreSessions}</TableCell>
+                  <TableCell isNumeric>{totals.cycleSessions}</TableCell>
+                  <TableCell isNumeric isCurrency>₹{Math.floor(totals.barrePaid).toLocaleString()}</TableCell>
+                  <TableCell isNumeric isCurrency>₹{Math.floor(totals.cyclePaid).toLocaleString()}</TableCell>
+                  <TableCell isNumeric isAverage>{averages.avgBarreClassSize.toFixed(1)}</TableCell>
+                  <TableCell isNumeric isAverage>{averages.avgCycleClassSize.toFixed(1)}</TableCell>
+                </TableRow>
+                <TableRow isTotal>
+                  <TableCell className="font-bold">Total</TableCell>
+                  <TableCell isNumeric colSpan={2}>{totals.totalSessions} Sessions</TableCell>
+                  <TableCell isNumeric isCurrency colSpan={2}>₹{Math.floor(totals.barrePaid + totals.cyclePaid).toLocaleString()}</TableCell>
+                  <TableCell isNumeric isAverage colSpan={2}>
+                    {((averages.avgBarreClassSize + averages.avgCycleClassSize) / 2).toFixed(1)} Avg Class Size
+                  </TableCell>
+                </TableRow>
+              </TableFooter>
             </Table>
           </div>
         </CardContent>

@@ -3,6 +3,8 @@ import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ProcessedData, RechartsValueType, RechartsNameType } from "@/types/fitnessTypes";
 import { AreaChart, BarChart, ComposedChart, Area, Bar, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell, TableFooter } from "@/components/ui/table";
+import { IndianRupee, ArrowUpRight, ArrowDownRight, TrendingUp, BarChart3, LineChart, PieChart } from "lucide-react";
 
 interface FinancialsViewProps {
   data: ProcessedData;
@@ -91,6 +93,87 @@ const FinancialsView: React.FC<FinancialsViewProps> = ({ data, selectedMonths, l
     };
   });
 
+  // Create table data
+  const tableData = filteredStats.map(stat => ({
+    month: stat.monthYear,
+    barreRevenue: stat.totalBarrePaid,
+    cycleRevenue: stat.totalCyclePaid,
+    totalRevenue: stat.totalBarrePaid + stat.totalCyclePaid,
+    barreCustomers: stat.totalBarreCustomers,
+    cycleCustomers: stat.totalCycleCustomers,
+    totalCustomers: stat.totalBarreCustomers + stat.totalCycleCustomers,
+    revenuePerCustomer: (stat.totalBarreCustomers + stat.totalCycleCustomers) > 0 ? 
+      (stat.totalBarrePaid + stat.totalCyclePaid) / (stat.totalBarreCustomers + stat.totalCycleCustomers) : 0
+  }));
+
+  // Calculate totals for table
+  const tableTotals = {
+    barreRevenue: tableData.reduce((sum, item) => sum + item.barreRevenue, 0),
+    cycleRevenue: tableData.reduce((sum, item) => sum + item.cycleRevenue, 0),
+    totalRevenue: tableData.reduce((sum, item) => sum + item.totalRevenue, 0),
+    barreCustomers: tableData.reduce((sum, item) => sum + item.barreCustomers, 0),
+    cycleCustomers: tableData.reduce((sum, item) => sum + item.cycleCustomers, 0),
+    totalCustomers: tableData.reduce((sum, item) => sum + item.totalCustomers, 0),
+    revenuePerCustomer: 0
+  };
+  
+  // Calculate average revenue per customer
+  tableTotals.revenuePerCustomer = tableTotals.totalCustomers > 0 ? 
+    tableTotals.totalRevenue / tableTotals.totalCustomers : 0;
+
+  // Calculate quarterly totals (subtotals)
+  const getQuarter = (monthStr: string) => {
+    const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    const month = monthStr.split('-')[0];
+    const monthIndex = monthNames.indexOf(month);
+    return Math.floor(monthIndex / 3) + 1;
+  };
+
+  const quarterlyData: { [key: string]: any } = {};
+  tableData.forEach(item => {
+    const year = item.month.split('-')[1];
+    const quarter = getQuarter(item.month);
+    const key = `Q${quarter} ${year}`;
+    
+    if (!quarterlyData[key]) {
+      quarterlyData[key] = {
+        quarter: key,
+        barreRevenue: 0,
+        cycleRevenue: 0,
+        totalRevenue: 0,
+        barreCustomers: 0,
+        cycleCustomers: 0,
+        totalCustomers: 0,
+        months: []
+      };
+    }
+    
+    quarterlyData[key].barreRevenue += item.barreRevenue;
+    quarterlyData[key].cycleRevenue += item.cycleRevenue;
+    quarterlyData[key].totalRevenue += item.totalRevenue;
+    quarterlyData[key].barreCustomers += item.barreCustomers;
+    quarterlyData[key].cycleCustomers += item.cycleCustomers;
+    quarterlyData[key].totalCustomers += item.totalCustomers;
+    quarterlyData[key].months.push(item.month);
+  });
+
+  // Calculate average revenue per customer for each quarter
+  Object.values(quarterlyData).forEach((quarter: any) => {
+    quarter.revenuePerCustomer = quarter.totalCustomers > 0 ? 
+      quarter.totalRevenue / quarter.totalCustomers : 0;
+  });
+
+  const quarterlyTotals = Object.values(quarterlyData).sort((a: any, b: any) => {
+    // Sort by year then quarter
+    const yearA = a.quarter.split(' ')[1];
+    const yearB = b.quarter.split(' ')[1];
+    const quarterA = a.quarter.split(' ')[0].substring(1);
+    const quarterB = b.quarter.split(' ')[0].substring(1);
+    
+    if (yearA !== yearB) return Number(yearA) - Number(yearB);
+    return Number(quarterA) - Number(quarterB);
+  });
+
   const barreColor = "#FF6F91";
   const cycleColor = "#9FD8CB";
   const totalColor = "#6366F1";
@@ -107,68 +190,78 @@ const FinancialsView: React.FC<FinancialsViewProps> = ({ data, selectedMonths, l
   const avgRevenuePerBarreSession = totalBarreSessions > 0 ? barreRevenue / totalBarreSessions : 0;
   const avgRevenuePerCycleSession = totalCycleSessions > 0 ? cycleRevenue / totalCycleSessions : 0;
 
+  // Calculate growth rate
+  const firstMonth = filteredStats[0];
+  const lastMonth = filteredStats[filteredStats.length - 1];
+  const growthRate = filteredStats.length > 1 && firstMonth ? 
+    ((lastMonth.totalBarrePaid + lastMonth.totalCyclePaid) - (firstMonth.totalBarrePaid + firstMonth.totalCyclePaid)) / 
+    (firstMonth.totalBarrePaid + firstMonth.totalCyclePaid) * 100 : 0;
+
+  // Animated metrics cards
+  const metricsData = [
+    {
+      title: "Total Revenue",
+      value: `₹${Math.floor(totalRevenue).toLocaleString()}`,
+      change: `${growthRate >= 0 ? '+' : ''}${growthRate.toFixed(1)}%`,
+      trend: growthRate >= 0 ? <ArrowUpRight className="h-4 w-4 text-green-500" /> : <ArrowDownRight className="h-4 w-4 text-red-500" />,
+      icon: <IndianRupee className="h-5 w-5 text-primary" />
+    },
+    {
+      title: "Barre Revenue",
+      value: `₹${Math.floor(barreRevenue).toLocaleString()}`,
+      change: `${((barreRevenue / totalRevenue) * 100).toFixed(1)}% of total`,
+      trend: <BarChart3 className="h-4 w-4 text-barre" />,
+      icon: <IndianRupee className="h-5 w-5 text-barre" />
+    },
+    {
+      title: "Cycle Revenue",
+      value: `₹${Math.floor(cycleRevenue).toLocaleString()}`,
+      change: `${((cycleRevenue / totalRevenue) * 100).toFixed(1)}% of total`,
+      trend: <LineChart className="h-4 w-4 text-cycle-dark" />,
+      icon: <IndianRupee className="h-5 w-5 text-cycle-dark" />
+    },
+    {
+      title: "Revenue per Session",
+      value: `₹${Math.floor((totalBarreSessions + totalCycleSessions) > 0 ? 
+        totalRevenue / (totalBarreSessions + totalCycleSessions) : 0).toLocaleString()}`,
+      change: `${((avgRevenuePerBarreSession + avgRevenuePerCycleSession) / 2).toFixed(1)} avg`,
+      trend: <TrendingUp className="h-4 w-4 text-blue-500" />,
+      icon: <PieChart className="h-5 w-5 text-blue-500" />
+    }
+  ];
+
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">₹{totalRevenue.toLocaleString(undefined, { maximumFractionDigits: 0 })}</div>
-            <div className="mt-1 text-xs text-muted-foreground">
-              For {selectedMonths.length > 0 ? selectedMonths.length : filteredStats.length} months
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Barre Revenue</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">₹{barreRevenue.toLocaleString(undefined, { maximumFractionDigits: 0 })}</div>
-            <div className="mt-1 text-xs text-muted-foreground">
-              {((barreRevenue / totalRevenue) * 100).toFixed(1)}% of total
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Cycle Revenue</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">₹{cycleRevenue.toLocaleString(undefined, { maximumFractionDigits: 0 })}</div>
-            <div className="mt-1 text-xs text-muted-foreground">
-              {((cycleRevenue / totalRevenue) * 100).toFixed(1)}% of total
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Revenue per Session</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              ₹{((totalBarreSessions + totalCycleSessions) > 0 
-                ? totalRevenue / (totalBarreSessions + totalCycleSessions)
-                : 0
-              ).toLocaleString(undefined, { maximumFractionDigits: 0 })}
-            </div>
-            <div className="mt-1 text-xs">
-              <span className="text-barre">₹{avgRevenuePerBarreSession.toLocaleString(undefined, { maximumFractionDigits: 0 })} Barre</span> / 
-              <span className="text-cycle-dark"> ₹{avgRevenuePerCycleSession.toLocaleString(undefined, { maximumFractionDigits: 0 })} Cycle</span>
-            </div>
-          </CardContent>
-        </Card>
+        {metricsData.map((metric, index) => (
+          <Card key={index} className="overflow-hidden animate-fade-in" style={{ animationDelay: `${index * 0.1}s` }}>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between space-x-2">
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
+                  {metric.icon}
+                </div>
+                <div className="flex-1">
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm font-medium text-muted-foreground">{metric.title}</p>
+                    {metric.trend}
+                  </div>
+                  <div className="text-2xl font-bold animate-fade-up" style={{ animationDelay: `${index * 0.1 + 0.2}s` }}>
+                    {metric.value}
+                  </div>
+                  <p className="text-xs text-muted-foreground">{metric.change}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
       </div>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-        <Card>
+        <Card className="animate-fade-up">
           <CardHeader>
-            <CardTitle>Revenue Trends</CardTitle>
+            <CardTitle className="flex items-center">
+              <TrendingUp className="mr-2 h-5 w-5" /> Revenue Trends
+            </CardTitle>
           </CardHeader>
           <CardContent className="h-[350px]">
             <ResponsiveContainer width="100%" height="100%">
@@ -180,7 +273,7 @@ const FinancialsView: React.FC<FinancialsViewProps> = ({ data, selectedMonths, l
                 <XAxis dataKey="name" angle={-45} textAnchor="end" height={50} />
                 <YAxis />
                 <Tooltip formatter={(value: RechartsValueType) => {
-                  return [`₹${typeof value === 'number' ? value.toLocaleString() : value}`, ""];
+                  return [`₹${typeof value === 'number' ? Math.floor(value).toLocaleString() : value}`, ""];
                 }} />
                 <Legend />
                 <Area type="monotone" dataKey="barre" name="Barre Revenue" stroke={barreColor} fill={barreColor} fillOpacity={0.6} />
@@ -191,9 +284,11 @@ const FinancialsView: React.FC<FinancialsViewProps> = ({ data, selectedMonths, l
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="animate-fade-up" style={{ animationDelay: "0.1s" }}>
           <CardHeader>
-            <CardTitle>Monthly Growth</CardTitle>
+            <CardTitle className="flex items-center">
+              <BarChart3 className="mr-2 h-5 w-5" /> Monthly Growth
+            </CardTitle>
           </CardHeader>
           <CardContent className="h-[350px]">
             <ResponsiveContainer width="100%" height="100%">
@@ -208,7 +303,7 @@ const FinancialsView: React.FC<FinancialsViewProps> = ({ data, selectedMonths, l
                 <Tooltip 
                   formatter={(value: RechartsValueType, name: RechartsNameType) => {
                     if (name === 'revenue') {
-                      return [`₹${typeof value === 'number' ? value.toLocaleString() : value}`, 'Revenue'];
+                      return [`₹${typeof value === 'number' ? Math.floor(value).toLocaleString() : value}`, 'Revenue'];
                     }
                     return [`${typeof value === 'number' ? value.toFixed(1) : value}%`, 'Change'];
                   }} 
@@ -222,10 +317,70 @@ const FinancialsView: React.FC<FinancialsViewProps> = ({ data, selectedMonths, l
         </Card>
       </div>
 
+      <Card className="animate-fade-up" style={{ animationDelay: "0.2s" }}>
+        <CardHeader>
+          <CardTitle className="flex items-center">
+            <IndianRupee className="mr-2 h-5 w-5" /> Financial Performance Details
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="rounded-md border">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Period</TableHead>
+                  <TableHead className="text-right">Barre Revenue</TableHead>
+                  <TableHead className="text-right">Cycle Revenue</TableHead>
+                  <TableHead className="text-right">Total Revenue</TableHead>
+                  <TableHead className="text-right">Customers</TableHead>
+                  <TableHead className="text-right">Avg. Revenue/Customer</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {tableData.map((item, index) => (
+                  <TableRow key={index}>
+                    <TableCell className="font-medium">{item.month}</TableCell>
+                    <TableCell isNumeric isCurrency>₹{Math.floor(item.barreRevenue).toLocaleString()}</TableCell>
+                    <TableCell isNumeric isCurrency>₹{Math.floor(item.cycleRevenue).toLocaleString()}</TableCell>
+                    <TableCell isNumeric isCurrency>₹{Math.floor(item.totalRevenue).toLocaleString()}</TableCell>
+                    <TableCell isNumeric>{item.totalCustomers}</TableCell>
+                    <TableCell isNumeric isAverage>₹{item.revenuePerCustomer.toFixed(1)}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+              <TableFooter>
+                {/* Quarterly Subtotals */}
+                {quarterlyTotals.map((quarter: any, index: number) => (
+                  <TableRow key={`quarter-${index}`} isSubtotal>
+                    <TableCell className="font-medium">{quarter.quarter}</TableCell>
+                    <TableCell isNumeric isCurrency>₹{Math.floor(quarter.barreRevenue).toLocaleString()}</TableCell>
+                    <TableCell isNumeric isCurrency>₹{Math.floor(quarter.cycleRevenue).toLocaleString()}</TableCell>
+                    <TableCell isNumeric isCurrency>₹{Math.floor(quarter.totalRevenue).toLocaleString()}</TableCell>
+                    <TableCell isNumeric>{quarter.totalCustomers}</TableCell>
+                    <TableCell isNumeric isAverage>₹{quarter.revenuePerCustomer.toFixed(1)}</TableCell>
+                  </TableRow>
+                ))}
+                {/* Grand Total */}
+                <TableRow isTotal>
+                  <TableCell className="font-bold">Total</TableCell>
+                  <TableCell isNumeric isCurrency>₹{Math.floor(tableTotals.barreRevenue).toLocaleString()}</TableCell>
+                  <TableCell isNumeric isCurrency>₹{Math.floor(tableTotals.cycleRevenue).toLocaleString()}</TableCell>
+                  <TableCell isNumeric isCurrency>₹{Math.floor(tableTotals.totalRevenue).toLocaleString()}</TableCell>
+                  <TableCell isNumeric>{tableTotals.totalCustomers}</TableCell>
+                  <TableCell isNumeric isAverage>₹{tableTotals.revenuePerCustomer.toFixed(1)}</TableCell>
+                </TableRow>
+              </TableFooter>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
+
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-        <Card>
+        <Card className="animate-fade-up" style={{ animationDelay: "0.3s" }}>
           <CardHeader>
-            <CardTitle>Revenue per Customer</CardTitle>
+            <CardTitle className="flex items-center">
+              <BarChart3 className="mr-2 h-5 w-5" /> Revenue per Customer
+            </CardTitle>
           </CardHeader>
           <CardContent className="h-[350px]">
             <ResponsiveContainer width="100%" height="100%">
@@ -237,7 +392,7 @@ const FinancialsView: React.FC<FinancialsViewProps> = ({ data, selectedMonths, l
                 <XAxis dataKey="name" angle={-45} textAnchor="end" height={50} />
                 <YAxis />
                 <Tooltip formatter={(value: RechartsValueType) => {
-                  return [`₹${typeof value === 'number' ? value.toFixed(0) : value}`, ""];
+                  return [`₹${typeof value === 'number' ? value.toFixed(1) : value}`, ""];
                 }} />
                 <Legend />
                 <Bar dataKey="barre" name="Barre Rev/Customer" fill={barreColor} />
@@ -248,9 +403,11 @@ const FinancialsView: React.FC<FinancialsViewProps> = ({ data, selectedMonths, l
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="animate-fade-up" style={{ animationDelay: "0.4s" }}>
           <CardHeader>
-            <CardTitle>Revenue per Session</CardTitle>
+            <CardTitle className="flex items-center">
+              <LineChart className="mr-2 h-5 w-5" /> Revenue per Session
+            </CardTitle>
           </CardHeader>
           <CardContent className="h-[350px]">
             <ResponsiveContainer width="100%" height="100%">
@@ -262,7 +419,7 @@ const FinancialsView: React.FC<FinancialsViewProps> = ({ data, selectedMonths, l
                 <XAxis dataKey="name" angle={-45} textAnchor="end" height={50} />
                 <YAxis />
                 <Tooltip formatter={(value: RechartsValueType) => {
-                  return [`₹${typeof value === 'number' ? value.toFixed(0) : value}`, ""];
+                  return [`₹${typeof value === 'number' ? value.toFixed(1) : value}`, ""];
                 }} />
                 <Legend />
                 <Bar dataKey="barre" name="Barre Rev/Session" fill={barreColor} />
