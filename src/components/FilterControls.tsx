@@ -26,7 +26,7 @@ const FilterControls: React.FC<FilterControlsProps> = ({
   data
 }) => {
   // Get unique locations from the data
-  const locations = Array.from(new Set(data.rawData.map(item => item.Location)));
+  const locations = Array.from(new Set(data.rawData.map(item => item.Location))).filter(loc => loc && loc.trim() !== "");
 
   const handleMonthToggle = (month: string) => {
     if (selectedMonths.includes(month)) {
@@ -55,7 +55,7 @@ const FilterControls: React.FC<FilterControlsProps> = ({
             <SelectValue placeholder="All Locations" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">All Locations</SelectItem>
+            <SelectItem value="all">All Locations</SelectItem>
             {locations.map(loc => (
               <SelectItem key={loc} value={loc}>
                 {loc}

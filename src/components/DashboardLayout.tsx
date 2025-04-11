@@ -9,7 +9,6 @@ import TeachersView from "./views/TeachersView";
 import ClassesView from "./views/ClassesView";
 import FinancialsView from "./views/FinancialsView";
 import RetentionView from "./views/RetentionView";
-import MonthSelector from "./MonthSelector";
 import FilterControls from "./FilterControls";
 
 interface DashboardLayoutProps {
@@ -82,6 +81,9 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
 
   const allMonths = data.monthlyStats.map(stat => stat.monthYear);
   console.log("Available months for filtering:", allMonths);
+  
+  // Get actual filtered location
+  const actualLocation = location === "all" ? "" : location;
 
   return (
     <div className="container mx-auto my-8 px-4">
@@ -136,23 +138,23 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
         </TabsList>
 
         <TabsContent value="overview" className="space-y-4">
-          <OverviewView data={data} selectedMonths={selectedMonths} location={location} />
+          <OverviewView data={data} selectedMonths={selectedMonths} location={actualLocation} />
         </TabsContent>
 
         <TabsContent value="teachers" className="space-y-4">
-          <TeachersView data={data} selectedMonths={selectedMonths} location={location} />
+          <TeachersView data={data} selectedMonths={selectedMonths} location={actualLocation} />
         </TabsContent>
 
         <TabsContent value="classes" className="space-y-4">
-          <ClassesView data={data} selectedMonths={selectedMonths} location={location} />
+          <ClassesView data={data} selectedMonths={selectedMonths} location={actualLocation} />
         </TabsContent>
 
         <TabsContent value="financials" className="space-y-4">
-          <FinancialsView data={data} selectedMonths={selectedMonths} location={location} />
+          <FinancialsView data={data} selectedMonths={selectedMonths} location={actualLocation} />
         </TabsContent>
 
         <TabsContent value="retention" className="space-y-4">
-          <RetentionView data={data} selectedMonths={selectedMonths} location={location} />
+          <RetentionView data={data} selectedMonths={selectedMonths} location={actualLocation} />
         </TabsContent>
       </Tabs>
     </div>

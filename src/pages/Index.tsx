@@ -16,7 +16,7 @@ const Index = () => {
   
   const [currentView, setCurrentView] = useState<ViewType>("overview");
   const [selectedMonths, setSelectedMonths] = useState<string[]>([]);
-  const [location, setLocation] = useState("");
+  const [location, setLocation] = useState("all");
 
   useEffect(() => {
     const loadData = async () => {

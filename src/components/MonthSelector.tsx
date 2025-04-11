@@ -42,6 +42,9 @@ const MonthSelector: React.FC<MonthSelectorProps> = ({
     }
   };
 
+  // Make sure we have a valid selected month
+  const safeSelectedMonth = sortedMonths.includes(selectedMonth) ? selectedMonth : (sortedMonths[0] || "no-months");
+
   return (
     <div className="flex items-center gap-2">
       <Button
@@ -53,16 +56,20 @@ const MonthSelector: React.FC<MonthSelectorProps> = ({
         <ChevronLeft className="h-4 w-4" />
       </Button>
       
-      <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+      <Select value={safeSelectedMonth} onValueChange={setSelectedMonth}>
         <SelectTrigger className="w-[150px]">
           <SelectValue placeholder="Select Month" />
         </SelectTrigger>
         <SelectContent>
-          {sortedMonths.map((month) => (
-            <SelectItem key={month} value={month}>
-              {month}
-            </SelectItem>
-          ))}
+          {sortedMonths.length > 0 ? (
+            sortedMonths.map((month) => (
+              <SelectItem key={month} value={month}>
+                {month}
+              </SelectItem>
+            ))
+          ) : (
+            <SelectItem value="no-months">No months available</SelectItem>
+          )}
         </SelectContent>
       </Select>
       
