@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ProcessedData, ViewType } from "@/types/fitnessTypes";
@@ -215,7 +214,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
               </TabsContent>
               
               <TabsContent value="pivot" className="space-y-4">
-                <PivotTableView data={data} selectedMonths={selectedMonths} location={location} />
+                <PivotTableView data={data.rawData} selectedMonths={selectedMonths} location={location} />
               </TabsContent>
             </>
           )}

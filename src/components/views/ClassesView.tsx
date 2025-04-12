@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ProcessedData } from "@/types/fitnessTypes";
@@ -160,7 +159,7 @@ const ClassesView: React.FC<ClassesViewProps> = ({ data, selectedMonths, locatio
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {filteredRawData.reduce((sum, record) => sum + parseInt(record["Barre Sessions"] || "0"), 0)}
+              {filteredRawData.reduce((sum, record) => sum + parseInt(String(record["Barre Sessions"] || "0")), 0)}
             </div>
             <div className="mt-1 text-xs text-muted-foreground">
               {emptyVsNonEmptyBarre.nonEmpty} filled, {emptyVsNonEmptyBarre.empty} empty
@@ -174,7 +173,7 @@ const ClassesView: React.FC<ClassesViewProps> = ({ data, selectedMonths, locatio
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {filteredRawData.reduce((sum, record) => sum + parseInt(record["Cycle Sessions"] || "0"), 0)}
+              {filteredRawData.reduce((sum, record) => sum + parseInt(String(record["Cycle Sessions"] || "0")), 0)}
             </div>
             <div className="mt-1 text-xs text-muted-foreground">
               {emptyVsNonEmptyCycle.nonEmpty} filled, {emptyVsNonEmptyCycle.empty} empty
@@ -189,7 +188,7 @@ const ClassesView: React.FC<ClassesViewProps> = ({ data, selectedMonths, locatio
           <CardContent>
             <div className="text-2xl font-bold">
               {filteredStats.length > 0 ? 
-                (filteredStats.reduce((sum, stat) => sum + parseFloat(stat.avgBarreClassSize), 0) / filteredStats.length).toFixed(1) 
+                (filteredStats.reduce((sum, stat) => sum + parseFloat(String(stat.avgBarreClassSize)), 0) / filteredStats.length).toFixed(1) 
                 : "0"}
             </div>
             <div className="mt-1 text-xs text-muted-foreground">
@@ -205,7 +204,7 @@ const ClassesView: React.FC<ClassesViewProps> = ({ data, selectedMonths, locatio
           <CardContent>
             <div className="text-2xl font-bold">
               {filteredStats.length > 0 ? 
-                (filteredStats.reduce((sum, stat) => sum + parseFloat(stat.avgCycleClassSize), 0) / filteredStats.length).toFixed(1) 
+                (filteredStats.reduce((sum, stat) => sum + parseFloat(String(stat.avgCycleClassSize)), 0) / filteredStats.length).toFixed(1) 
                 : "0"}
             </div>
             <div className="mt-1 text-xs text-muted-foreground">

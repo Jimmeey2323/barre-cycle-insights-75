@@ -86,13 +86,13 @@ const OverviewView: React.FC<OverviewViewProps> = ({ data, selectedMonths, locat
     return data;
   });
 
-  const totalBarreSessions = filteredStats.reduce((sum, stat) => sum + stat.totalBarreSessions, 0);
+  const totalBarreSessions = filteredStats.reduce((sum, stat) => sum + (stat.totalBarreSessions || 0), 0);
   const totalCycleSessions = showCycleMetrics ? 
-    filteredStats.reduce((sum, stat) => sum + stat.totalCycleSessions, 0) : 0;
+    filteredStats.reduce((sum, stat) => sum + (stat.totalCycleSessions || 0), 0) : 0;
   
-  const totalBarreCustomers = filteredStats.reduce((sum, stat) => sum + stat.totalBarreCustomers, 0);
+  const totalBarreCustomers = filteredStats.reduce((sum, stat) => sum + (stat.totalBarreCustomers || 0), 0);
   const totalCycleCustomers = showCycleMetrics ? 
-    filteredStats.reduce((sum, stat) => sum + stat.totalCycleCustomers, 0) : 0;
+    filteredStats.reduce((sum, stat) => sum + (stat.totalCycleCustomers || 0), 0) : 0;
   
   const totalBarreRevenue = filteredStats.reduce((sum, stat) => sum + stat.totalBarrePaid, 0);
   const totalCycleRevenue = showCycleMetrics ? 

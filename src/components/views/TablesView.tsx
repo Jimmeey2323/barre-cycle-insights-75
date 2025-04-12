@@ -16,7 +16,7 @@ interface TablesViewProps {
 
 const TablesView: React.FC<TablesViewProps> = ({ data, selectedMonths, location }) => {
   const [searchQuery, setSearchQuery] = useState("");
-  const [sortColumn, setSortColumn] = useState<keyof any>("Month Year");
+  const [sortColumn, setSortColumn] = useState<string>("Month Year");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
   const [activeTable, setActiveTable] = useState<"rawData" | "monthlyStats">("rawData");
 
@@ -54,7 +54,7 @@ const TablesView: React.FC<TablesViewProps> = ({ data, selectedMonths, location 
     setSearchQuery(e.target.value);
   };
 
-  const handleSort = (column: keyof any) => {
+  const handleSort = (column: string) => {
     if (column === sortColumn) {
       setSortDirection(sortDirection === "asc" ? "desc" : "asc");
     } else {
@@ -151,7 +151,10 @@ const TablesView: React.FC<TablesViewProps> = ({ data, selectedMonths, location 
               value={searchQuery}
               onChange={handleSearchChange}
             />
-            <Select value={activeTable} onValueChange={setActiveTable}>
+            <Select 
+              value={activeTable} 
+              onValueChange={(value: "rawData" | "monthlyStats") => setActiveTable(value)}
+            >
               <SelectTrigger className="w-[180px]">
                 <SelectValue placeholder="Select Table" />
               </SelectTrigger>

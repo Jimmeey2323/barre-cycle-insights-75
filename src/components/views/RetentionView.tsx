@@ -86,9 +86,9 @@ const RetentionView: React.FC<RetentionViewProps> = ({ data, selectedMonths, loc
   });
 
   // Calculate overall retention metrics
-  const totalNewCustomers = retentionData.reduce((sum, item) => sum + item.new, 0);
-  const totalRetainedCustomers = retentionData.reduce((sum, item) => sum + item.retained, 0);
-  const totalConvertedCustomers = retentionData.reduce((sum, item) => sum + item.converted, 0);
+  const totalNewCustomers = retentionData.reduce((sum, item) => sum + (item.new || 0), 0);
+  const totalRetainedCustomers = retentionData.reduce((sum, item) => sum + (item.retained || 0), 0);
+  const totalConvertedCustomers = retentionData.reduce((sum, item) => sum + (item.converted || 0), 0);
   
   const overallRetentionRate = (totalNewCustomers + totalRetainedCustomers) > 0
     ? (totalRetainedCustomers / (totalNewCustomers + totalRetainedCustomers)) * 100

@@ -54,8 +54,8 @@ const TeachersView: React.FC<TeachersViewProps> = ({ data, selectedMonths, locat
     acc[teacherName].cycleSessions += parseInt(String(record["Cycle Sessions"] || "0"));
     acc[teacherName].barreCustomers += parseInt(String(record["Barre Customers"] || "0"));
     acc[teacherName].cycleCustomers += parseInt(String(record["Cycle Customers"] || "0"));
-    acc[teacherName].barrePaid += parseFloat(record["Barre Paid"] || "0");
-    acc[teacherName].cyclePaid += parseFloat(record["Cycle Paid"] || "0");
+    acc[teacherName].barrePaid += parseInt(String(record["Barre Paid"] || "0"));
+    acc[teacherName].cyclePaid += parseInt(String(record["Cycle Paid"] || "0"));
     acc[teacherName].totalSessions += parseInt(String(record["Total Sessions"] || "0"));
     
     // Calculate avg class size for non-empty sessions
