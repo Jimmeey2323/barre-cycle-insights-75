@@ -37,7 +37,7 @@ const EnhancedTitle: React.FC = () => {
         <span className="text-gradient-barre font-semibold">Barre</span> 
         <span className="text-muted-foreground">vs</span> 
         <span className="text-gradient-cycle font-semibold">Cycle</span>
-        <span className="hidden md:inline-block font-normal text-base text-slate-900 text-left">Comparison Dashboard</span>
+        <span className="hidden md:inline-block font-normal text-slate-900 text-left text-base">Comparison Dashboard</span>
       </div>
       
       
