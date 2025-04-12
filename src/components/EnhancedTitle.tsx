@@ -36,7 +36,7 @@ const EnhancedTitle: React.FC = () => {
       <div className="flex gap-2 text-3xl">
         <span className="text-gradient-barre font-semibold text-4xl">Barre</span> 
         <span className="text-muted-foreground text-4xl font-light text-center">vs</span> 
-        <span className="text-gradient-cycle font-semibold">Cycle</span>
+        <span className="text-gradient-cycle font-semibold text-4xl">Cycle</span>
         
       </div>
       
