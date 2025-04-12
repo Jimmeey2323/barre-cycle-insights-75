@@ -1,25 +1,62 @@
 
 /**
+ * Format a number with commas as thousands separators
+ */
+export const formatNumber = (value: number | string): string => {
+  const numberValue = typeof value === 'string' ? parseFloat(value) : value;
+  if (isNaN(numberValue)) return '0';
+  
+  return new Intl.NumberFormat('en-IN').format(
+    Math.round(numberValue * 10) / 10
+  );
+};
+
+/**
  * Format a number as Indian Rupees (INR)
  */
-export const formatINR = (amount: number): string => {
-  return new Intl.NumberFormat('en-IN', {
-    style: 'currency',
-    currency: 'INR',
-    maximumFractionDigits: 0,
-  }).format(amount);
+export const formatINR = (value: number | string): string => {
+  const numberValue = typeof value === 'string' ? parseFloat(value) : value;
+  if (isNaN(numberValue)) return '₹0';
+  
+  return `₹${new Intl.NumberFormat('en-IN').format(
+    Math.round(numberValue * 10) / 10
+  )}`;
 };
 
 /**
- * Format a number with thousand separators
+ * Format a number as US Dollars (USD)
  */
-export const formatNumber = (num: number): string => {
-  return new Intl.NumberFormat('en-IN').format(num);
+export const formatUSD = (value: number | string): string => {
+  const numberValue = typeof value === 'string' ? parseFloat(value) : value;
+  if (isNaN(numberValue)) return '$0';
+  
+  return `$${new Intl.NumberFormat('en-US').format(
+    Math.round(numberValue * 10) / 10
+  )}`;
 };
 
 /**
- * Format a decimal number with specified digits
+ * Format a number as a percentage
  */
-export const formatDecimal = (num: number, digits: number = 1): string => {
-  return num.toFixed(digits);
+export const formatPercent = (value: number | string): string => {
+  const numberValue = typeof value === 'string' ? parseFloat(value) : value;
+  if (isNaN(numberValue)) return '0%';
+  
+  return `${new Intl.NumberFormat('en-IN', { 
+    maximumFractionDigits: 1,
+    minimumFractionDigits: 1
+  }).format(numberValue)}%`;
+};
+
+/**
+ * Format a number with a specific suffix (k, M, B, etc.)
+ */
+export const formatCompact = (value: number | string): string => {
+  const numberValue = typeof value === 'string' ? parseFloat(value) : value;
+  if (isNaN(numberValue)) return '0';
+  
+  return new Intl.NumberFormat('en-IN', { 
+    notation: 'compact',
+    maximumFractionDigits: 1 
+  }).format(numberValue);
 };

@@ -1,33 +1,30 @@
-export type ViewType = "overview" | "teachers" | "classes" | "financials" | "retention" | "tables" | "pivot";
 
-export interface RawFitnessData {
-  "Teacher ID": string;
-  "Teacher Name": string;
-  "Teacher Email": string;
-  "Location": string;
-  "Cycle Sessions": string;
-  "Empty Cycle Sessions": string;
-  "Non-Empty Cycle Sessions": string;
-  "Cycle Customers": string;
-  "Cycle Paid": string;
-  "Barre Sessions": string;
-  "Empty Barre Sessions": string;
-  "Non-Empty Barre Sessions": string;
-  "Barre Customers": string;
-  "Barre Paid": string;
-  "Total Sessions": string;
-  "Total Empty Sessions": string;
-  "Total Non-Empty Sessions": string;
-  "Total Customers": string;
-  "Total Paid": string;
+export interface RawDataRecord {
+  [key: string]: any;
   "Month Year": string;
-  "New": string;
-  "Retained": string;
-  "Converted": string;
-  [key: string]: string;
+  "Teacher Name": string;
+  "Location": string;
+  "Total Sessions": number;
+  "Barre Sessions": number;
+  "Cycle Sessions": number;
+  "Total Customers": number;
+  "Barre Customers": number;
+  "Cycle Customers": number;
+  "Total Paid": number;
+  "Barre Paid": number;
+  "Cycle Paid": number;
+  "Empty Barre Sessions": number;
+  "Empty Cycle Sessions": number;
+  "Non-Empty Barre Sessions": number;
+  "Non-Empty Cycle Sessions": number;
+  "New": number;
+  "Retained": number;
+  "Converted": number;
+  "Avg Barre Class Size": string;
+  "Avg Cycle Class Size": string;
 }
 
-export interface MonthlyStat {
+export interface MonthlyStats {
   monthYear: string;
   totalBarreSessions: number;
   totalCycleSessions: number;
@@ -37,32 +34,42 @@ export interface MonthlyStat {
   totalCyclePaid: number;
   avgBarreClassSize: string;
   avgCycleClassSize: string;
-  totalRetained: number;
-  totalConverted: number;
-  totalNew: number;
 }
 
 export interface ProcessedData {
-  rawData: RawFitnessData[];
-  monthlyStats: MonthlyStat[];
+  rawData: RawDataRecord[];
+  monthlyStats: MonthlyStats[];
+  locations: string[];
+  teachers: string[];
 }
 
-// For typing Recharts data
-export type RechartsValueType = string | number | Array<string | number>;
-export type RechartsNameType = string | number;
+export type RechartsValueType = number | string | Array<number | string>;
+export type RechartsNameType = number | string;
 
-// Custom table component prop types
-export interface TableHeadProps extends React.ThHTMLAttributes<HTMLTableCellElement> {
-  isNumeric?: boolean;
+export type ViewType = 
+  | "overview" 
+  | "teachers" 
+  | "classes" 
+  | "financials" 
+  | "retention" 
+  | "tables" 
+  | "pivot";
+
+export interface DrillDownDataItem {
+  [key: string]: any;
+  name?: string;
 }
 
-export interface TableCellProps extends React.TdHTMLAttributes<HTMLTableCellElement> {
-  isNumeric?: boolean;
-  isCurrency?: boolean;
-  isAverage?: boolean;
+export interface PaginatedData<T> {
+  data: T[];
+  pageCount: number;
+  pageSize: number;
+  currentPage: number;
 }
 
-export interface TableRowProps extends React.HTMLAttributes<HTMLTableRowElement> {
-  isSubtotal?: boolean;
-  isTotal?: boolean;
+export type SortDirection = "asc" | "desc";
+
+export interface SortState {
+  column: string | null;
+  direction: SortDirection;
 }

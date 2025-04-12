@@ -5,65 +5,48 @@
 
 @layer base {
   :root {
-    --background: 200 20% 98%;
-    --foreground: 224 71% 4%;
-
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
     --card: 0 0% 100%;
-    --card-foreground: 224 71% 4%;
-
+    --card-foreground: 222.2 84% 4.9%;
     --popover: 0 0% 100%;
-    --popover-foreground: 224 71% 4%;
-
-    --primary: 262 53% 57%;
+    --popover-foreground: 222.2 84% 4.9%;
+    --primary: 262 83% 58%;
     --primary-foreground: 210 40% 98%;
-
-    --secondary: 173 100% 38%;
+    --secondary: 210 40% 96.1%;
     --secondary-foreground: 222.2 47.4% 11.2%;
-
     --muted: 210 40% 96.1%;
     --muted-foreground: 215.4 16.3% 46.9%;
-
     --accent: 210 40% 96.1%;
     --accent-foreground: 222.2 47.4% 11.2%;
-
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
-
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
-    --ring: 262 53% 57%;
-
-    --radius: 0.75rem;
+    --ring: 262 83% 58%;
+    --radius: 0.5rem;
   }
 
   .dark {
-    --background: 224 71% 4%;
+    --background: 222.2 84% 4.9%;
     --foreground: 210 40% 98%;
-
-    --card: 224 71% 4%;
+    --card: 222.2 84% 4.9%;
     --card-foreground: 210 40% 98%;
-
-    --popover: 224 71% 4%;
+    --popover: 222.2 84% 4.9%;
     --popover-foreground: 210 40% 98%;
-
-    --primary: 262 53% 57%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-
-    --secondary: 173 100% 38%;
+    --primary: 262 83% 58%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 217.2 32.6% 17.5%;
     --secondary-foreground: 210 40% 98%;
-
     --muted: 217.2 32.6% 17.5%;
     --muted-foreground: 215 20.2% 65.1%;
-
     --accent: 217.2 32.6% 17.5%;
     --accent-foreground: 210 40% 98%;
-
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 40% 98%;
-
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
+    --ring: 262 83% 58%;
   }
 }
 
@@ -71,99 +54,92 @@
   * {
     @apply border-border;
   }
-
   body {
     @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
   }
 }
 
-/* Custom Utility Classes */
 @layer components {
-  .text-barre {
-    @apply text-[#845EC2];
-  }
-  
-  .text-cycle {
-    @apply text-[#00C2A8];
-  }
-  
-  .text-cycle-dark {
-    @apply text-[#009380];
-  }
-  
-  .text-gradient-barre {
-    @apply bg-gradient-to-r from-barre to-barre-light bg-clip-text text-transparent;
-  }
-  
-  .text-gradient-cycle {
-    @apply bg-gradient-to-r from-cycle-dark to-cycle bg-clip-text text-transparent;
-  }
-
-  /* Glass-morphism card effect */
   .card-glass {
-    @apply bg-white/80 backdrop-blur-sm border border-white/20 shadow-lg;
-  }
-  
-  .card-glass-dark {
-    @apply bg-gray-900/80 backdrop-blur-sm border border-gray-800/50 shadow-lg;
-  }
-
-  /* Custom Table Styles */
-  .table-compact th, .table-compact td {
-    @apply py-2 px-3 text-sm;
+    @apply border border-border/50 bg-card/50 backdrop-blur-sm;
   }
 }
 
-/* Animation classes defined separately to avoid circular dependencies */
-.animate-fade-in {
+.text-gradient-barre {
+  @apply bg-gradient-to-r from-barre to-barre-dark bg-clip-text text-transparent;
+}
+
+.text-gradient-cycle {
+  @apply bg-gradient-to-r from-cycle-dark to-cycle bg-clip-text text-transparent;
+}
+
+/* Custom table styles */
+.table-compact tbody tr td {
+  @apply py-2 px-3;
+}
+
+.table-compact thead tr th {
+  @apply py-3 px-3;
+}
+
+/* Counter animation styles */
+.counter {
+  @apply relative overflow-hidden inline-block;
+}
+
+.counter .content {
   @apply opacity-0;
-  animation: fadeIn 0.5s ease-out forwards;
 }
 
-.animate-fade-up {
-  @apply opacity-0;
-  animation: fadeUp 0.5s ease-out forwards;
+.counter .counter-value {
+  @apply absolute top-0 left-0 flex flex-col transition-transform duration-700 ease-out;
 }
 
-.animate-scale-in {
-  @apply opacity-0 scale-95;
-  animation: scaleIn 0.3s ease-out forwards;
+.counter-animation-complete .counter-value {
+  @apply transform-none;
 }
 
-@keyframes fadeIn {
-  0% { opacity: 0; }
-  100% { opacity: 1; }
+/* Enhanced tooltip styles for charts */
+.recharts-tooltip-wrapper .recharts-default-tooltip {
+  @apply shadow-lg rounded-lg border border-gray-200 !bg-white/95 backdrop-blur-sm p-2;
 }
 
-@keyframes fadeUp {
-  0% { opacity: 0; transform: translateY(20px); }
-  100% { opacity: 1; transform: translateY(0); }
+.recharts-tooltip-wrapper .recharts-default-tooltip .recharts-tooltip-label {
+  @apply font-semibold text-primary;
 }
 
-@keyframes scaleIn {
-  0% { opacity: 0; transform: scale(0.95); }
-  100% { opacity: 1; transform: scale(1); }
+.recharts-tooltip-wrapper .recharts-default-tooltip .recharts-tooltip-item {
+  @apply text-sm;
 }
 
-/* Custom Table Extensions */
-@layer utilities {
-  td[isNumeric="true"] {
-    @apply text-right tabular-nums;
-  }
-  
-  td[isCurrency="true"] {
-    @apply text-right font-medium;
-  }
-  
-  td[isAverage="true"] {
-    @apply text-right text-muted-foreground;
-  }
-  
-  tr[isSubtotal="true"] {
-    @apply bg-muted/50;
-  }
-  
-  tr[isTotal="true"] {
-    @apply bg-muted font-bold;
-  }
+.recharts-tooltip-cursor {
+  @apply !opacity-20;
+}
+
+/* Enhanced active chart elements */
+.recharts-active-dot {
+  @apply animate-pulse;
+}
+
+/* Make charts more interactive */
+.recharts-layer.recharts-bar-rectangle:hover {
+  @apply opacity-80 cursor-pointer transition-opacity duration-300;
+}
+
+.recharts-layer.recharts-pie:hover {
+  @apply opacity-90 cursor-pointer;
+}
+
+.recharts-active-shape {
+  @apply opacity-80;
+}
+
+/* Drilldown overlay */
+.drill-down-overlay {
+  @apply fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 animate-fade-in;
+}
+
+.drill-down-content {
+  @apply bg-white rounded-lg w-11/12 max-w-5xl max-h-[90vh] overflow-auto shadow-xl animate-scale-in;
 }
