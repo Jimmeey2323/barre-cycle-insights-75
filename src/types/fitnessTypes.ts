@@ -17,6 +17,12 @@ export interface RawDataRecord {
   "Cycle Paid": number;
   "Non-Empty Barre Sessions": number;
   "Non-Empty Cycle Sessions": number;
+  "New Customers"?: number;
+  "Retained Customers"?: number;
+  "Converted Customers"?: number;
+  "Churned Customers"?: number;
+  "Leads"?: number;
+  "Visitors"?: number;
 }
 
 export interface MonthlyStats {
@@ -52,6 +58,14 @@ export interface MonthlyStats {
   revenuePerSeat?: number;  // Added for financials metrics
   avgRevenuePerSeat?: number; // Added for financials metrics
   seatUtilization?: number;  // Added for financials metrics
+  // Additional fields for retention view
+  retentionRate?: number;
+  conversionRate?: number;
+  churnRate?: number;
+  newCustomers?: number;
+  churnedCustomers?: number;
+  barreRetentionRate?: number;
+  cycleRetentionRate?: number;
 }
 
 export interface TeacherStats {
@@ -66,6 +80,7 @@ export interface TeacherStats {
   totalSessions: number;
   avgBarreClassSize: number;
   avgCycleClassSize: number;
+  mostTaughtClass?: string;
 }
 
 export interface ProcessedData {

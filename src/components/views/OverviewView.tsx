@@ -89,43 +89,93 @@ const OverviewView: React.FC<OverviewViewProps> = ({ data, selectedMonths, locat
 
   const totalRevenue = totalBarrePaid + totalCyclePaid;
 
-  // CORRECTED: Calculate retention and conversion metrics for funnel using actual values
-  // These values should align with the retention tab's calculations
-  const totalVisitors = Math.round(totalCustomers * 1.4); // Estimating visitors as 140% of customers
-  const totalLeads = Math.round(totalVisitors * 0.7); // Conversion from visitors to leads ~70%
-  const conversionRate = totalLeads > 0 ? (totalCustomers / totalLeads) * 100 : 0;
-  const retentionRate = 65; // Using fixed value matching retention tab
-  const totalRetained = Math.round((totalCustomers * retentionRate) / 100);
-  const totalNewCustomers = Math.round(totalCustomers * 0.25);
+  // Calculate non-empty sessions data
+  const totalNonEmptyBarreSessions = useMemo(() => 
+    filteredRawData.reduce((sum, record) => 
+      sum + parseInt(String(record["Non-Empty Barre Sessions"] || 0)), 0), 
+    [filteredRawData]);
+    
+  const totalNonEmptyCycleSessions = useMemo(() => 
+    filteredRawData.reduce((sum, record) => 
+      sum + parseInt(String(record["Non-Empty Cycle Sessions"] || 0)), 0), 
+    [filteredRawData]);
+  
+  const nonEmptySessions = totalNonEmptyBarreSessions + totalNonEmptyCycleSessions;
 
   // Calculate averages
   const avgBarreClassSize = totalBarreSessions > 0 ? totalBarreCustomers / totalBarreSessions : 0;
   const avgCycleClassSize = totalCycleSessions > 0 ? totalCycleCustomers / totalCycleSessions : 0;
   const avgRevPerClass = totalSessions > 0 ? totalRevenue / totalSessions : 0;
   const avgRevPerCustomer = totalCustomers > 0 ? totalRevenue / totalCustomers : 0;
-
-  // CORRECTED: Calculate attendance rate - Average # of customers per session
-  const totalNonEmptyBarreSessions = filteredRawData.reduce((sum, record) => 
-    sum + parseInt(String(record["Non-Empty Barre Sessions"] || 0)), 0);
-  const totalNonEmptyCycleSessions = filteredRawData.reduce((sum, record) => 
-    sum + parseInt(String(record["Non-Empty Cycle Sessions"] || 0)), 0);
   
-  const nonEmptySessions = totalNonEmptyBarreSessions + totalNonEmptyCycleSessions;
+  // Calculate attendance rate - Average # of customers per session
   const avgAttendanceRate = nonEmptySessions > 0 ? 
     ((totalBarreCustomers + totalCycleCustomers) / nonEmptySessions) : 0;
 
   // Calculate additional metrics
   const avgSessionsPerCustomer = totalCustomers > 0 ? totalSessions / totalCustomers : 0;
-  const revenuePerAttendee = totalCustomers > 0 ? totalRevenue / totalCustomers : 0;
+
+  // Get actual metrics for the funnel from the raw data
+  const totalLeads = useMemo(() => 
+    filteredRawData.reduce((sum, record) => {
+      const leads = parseInt(String(record["Leads"] || 0));
+      return sum + (isNaN(leads) ? 0 : leads);
+    }, 0), 
+    [filteredRawData]);
+    
+  const totalVisitors = useMemo(() => 
+    filteredRawData.reduce((sum, record) => {
+      const visitors = parseInt(String(record["Visitors"] || 0));
+      return sum + (isNaN(visitors) ? 0 : visitors);
+    }, 0), 
+    [filteredRawData]);
+
+  const totalNewCustomers = useMemo(() => 
+    filteredRawData.reduce((sum, record) => {
+      const newCust = parseInt(String(record["New Customers"] || 0));
+      return sum + (isNaN(newCust) ? 0 : newCust);
+    }, 0), 
+    [filteredRawData]);
+
+  const totalRetainedCustomers = useMemo(() => 
+    filteredRawData.reduce((sum, record) => {
+      const retained = parseInt(String(record["Retained Customers"] || 0));
+      return sum + (isNaN(retained) ? 0 : retained);
+    }, 0), 
+    [filteredRawData]);
+
+  const totalConvertedCustomers = useMemo(() => 
+    filteredRawData.reduce((sum, record) => {
+      const converted = parseInt(String(record["Converted Customers"] || 0));
+      return sum + (isNaN(converted) ? 0 : converted);
+    }, 0), 
+    [filteredRawData]);
+
+  const totalChurnedCustomers = useMemo(() => 
+    filteredRawData.reduce((sum, record) => {
+      const churned = parseInt(String(record["Churned Customers"] || 0));
+      return sum + (isNaN(churned) ? 0 : churned);
+    }, 0), 
+    [filteredRawData]);
+
+  // Calculate retention and conversion rates using the same logic as RetentionView
+  const retentionRate = useMemo(() => {
+    const retainableCustomers = totalRetainedCustomers + totalChurnedCustomers;
+    return retainableCustomers > 0 ? (totalRetainedCustomers / retainableCustomers) * 100 : 0;
+  }, [totalRetainedCustomers, totalChurnedCustomers]);
+
+  const conversionRate = useMemo(() => {
+    return totalNewCustomers > 0 ? (totalConvertedCustomers / totalNewCustomers) * 100 : 0;
+  }, [totalConvertedCustomers, totalNewCustomers]);
 
   // PREPARE CHART DATA
   // Enhanced Customer funnel data with Sankey style
-  // Define nodes and links for the Sankey funnel chart
+  // Define nodes and links for the Sankey funnel chart based on actual data
   const funnelNodes = [
     {
       id: "visitors",
       label: "Visitors",
-      value: totalVisitors,
+      value: totalVisitors > 0 ? totalVisitors : totalCustomers * 1.2, // Fallback if no visitor data
       color: "#818cf8",
       position: "top" as const,
       column: 0
@@ -133,7 +183,7 @@ const OverviewView: React.FC<OverviewViewProps> = ({ data, selectedMonths, locat
     {
       id: "leads",
       label: "Leads",
-      value: totalLeads,
+      value: totalLeads > 0 ? totalLeads : totalNewCustomers * 1.1, // Fallback if no leads data
       color: "#93c5fd",
       position: "top" as const,
       column: 1
@@ -149,7 +199,7 @@ const OverviewView: React.FC<OverviewViewProps> = ({ data, selectedMonths, locat
     {
       id: "retained",
       label: "Retained",
-      value: totalRetained,
+      value: totalRetainedCustomers > 0 ? totalRetainedCustomers : totalCustomers * 0.65, // Fallback if no retention data
       color: "#10b981",
       position: "top" as const,
       column: 3
@@ -160,7 +210,7 @@ const OverviewView: React.FC<OverviewViewProps> = ({ data, selectedMonths, locat
     {
       source: "visitors",
       target: "leads",
-      value: totalLeads,
+      value: totalLeads > 0 ? totalLeads : totalNewCustomers * 1.1,
       color: "#818cf8"
     },
     {
@@ -172,7 +222,7 @@ const OverviewView: React.FC<OverviewViewProps> = ({ data, selectedMonths, locat
     {
       source: "customers",
       target: "retained",
-      value: totalRetained,
+      value: totalRetainedCustomers > 0 ? totalRetainedCustomers : totalCustomers * 0.65,
       color: "#34d399"
     }
   ];
@@ -232,17 +282,13 @@ const OverviewView: React.FC<OverviewViewProps> = ({ data, selectedMonths, locat
     }
   };
 
-  // METRICS DATA FOR CARDS - Adding detailed tooltips and calculation details
+  // METRICS DATA FOR CARDS - Using only actual data, no placeholders
   const metricsData = [
     {
       title: "Total Sessions",
       value: formatNumber(totalSessions),
       icon: <Activity className="h-5 w-5 text-purple-500" />,
       details: `${formatNumber(totalBarreSessions)} Barre, ${formatNumber(totalCycleSessions)} Cycle`,
-      trend: <Badge variant="outline" className={totalSessions > 0 ? "text-green-500" : "text-red-500"}>
-        {totalSessions > 0 ? <TrendingUp className="h-3 w-3 mr-1" /> : <TrendingDown className="h-3 w-3 mr-1" />}
-        {totalSessions > 0 ? "+5%" : "-2%"}
-      </Badge>,
       tooltipContent: "Total number of sessions conducted across all locations and class types",
       calculationDetails: `Barre Sessions (${totalBarreSessions}) + Cycle Sessions (${totalCycleSessions}) = ${totalSessions}`
     },
@@ -251,10 +297,6 @@ const OverviewView: React.FC<OverviewViewProps> = ({ data, selectedMonths, locat
       value: formatNumber(totalCustomers),
       icon: <Users className="h-5 w-5 text-blue-500" />,
       details: `${formatNumber(totalBarreCustomers)} Barre, ${formatNumber(totalCycleCustomers)} Cycle`,
-      trend: <Badge variant="outline" className="text-green-500">
-        <TrendingUp className="h-3 w-3 mr-1" />
-        +3%
-      </Badge>,
       tooltipContent: "Total number of customers who attended classes",
       calculationDetails: `Barre Customers (${totalBarreCustomers}) + Cycle Customers (${totalCycleCustomers}) = ${totalCustomers}`
     },
@@ -263,125 +305,91 @@ const OverviewView: React.FC<OverviewViewProps> = ({ data, selectedMonths, locat
       value: formatINR(totalRevenue),
       icon: <IndianRupee className="h-5 w-5 text-green-500" />,
       details: `Avg ${formatINR(avgRevPerClass)} per class`,
-      trend: <Badge variant="outline" className="text-green-500">
-        <TrendingUp className="h-3 w-3 mr-1" />
-        +7%
-      </Badge>,
       tooltipContent: "Total revenue generated from all classes",
       calculationDetails: `Barre Revenue (${formatINR(totalBarrePaid)}) + Cycle Revenue (${formatINR(totalCyclePaid)}) = ${formatINR(totalRevenue)}`
     },
-    {
-      title: "Total Customers",
-      value: formatNumber(totalCustomers),
-      icon: <User className="h-5 w-5 text-amber-500" />,
-      details: `${formatNumber(totalNewCustomers)} new customers`,
-      trend: <Badge variant="outline" className="text-green-500">
-        <TrendingUp className="h-3 w-3 mr-1" />
-        +4%
-      </Badge>,
-      tooltipContent: "Total unique customers across all classes",
-      calculationDetails: `Sum of all customer attendances in the selected period: ${totalCustomers}`
-    },
-    // Additional metrics
     {
       title: "Avg Class Size",
       value: (avgBarreClassSize + avgCycleClassSize) / 2 > 0 ? 
         ((avgBarreClassSize + avgCycleClassSize) / 2).toFixed(1) : "0",
       icon: <Users className="h-5 w-5 text-violet-500" />,
       details: `Barre: ${avgBarreClassSize.toFixed(1)}, Cycle: ${avgCycleClassSize.toFixed(1)}`,
-      trend: <Badge variant="outline" className="text-green-500">
-        <TrendingUp className="h-3 w-3 mr-1" />
-        +2%
-      </Badge>,
       tooltipContent: "Average number of customers per class",
       calculationDetails: `Barre: ${totalBarreCustomers} customers / ${totalBarreSessions} sessions = ${avgBarreClassSize.toFixed(2)}\nCycle: ${totalCycleCustomers} customers / ${totalCycleSessions} sessions = ${avgCycleClassSize.toFixed(2)}`
-    },
-    {
+    }
+  ];
+
+  // Only add retention rate if we have the data for it
+  if (totalRetainedCustomers > 0 || totalChurnedCustomers > 0) {
+    metricsData.push({
       title: "Retention Rate",
       value: `${retentionRate.toFixed(1)}%`,
       icon: <RefreshCcw className="h-5 w-5 text-teal-500" />,
-      details: `${formatNumber(totalRetained)} retained customers`,
-      trend: <Badge variant="outline" className="text-green-500">
-        <TrendingUp className="h-3 w-3 mr-1" />
-        +1.5%
-      </Badge>,
+      details: `${formatNumber(totalRetainedCustomers)} retained customers`,
       tooltipContent: "Percentage of customers who return for additional classes",
-      calculationDetails: `${retentionRate}% of ${totalCustomers} customers = ${totalRetained} retained customers`
-    },
-    {
+      calculationDetails: `${totalRetainedCustomers} retained / (${totalRetainedCustomers} + ${totalChurnedCustomers}) = ${retentionRate.toFixed(2)}%`
+    });
+  }
+
+  // Only add conversion rate if we have the data for it
+  if (totalConvertedCustomers > 0 && totalNewCustomers > 0) {
+    metricsData.push({
       title: "Conversion Rate",
       value: `${conversionRate.toFixed(1)}%`,
       icon: <Zap className="h-5 w-5 text-amber-500" />,
-      details: `${formatNumber(totalCustomers)} from ${formatNumber(totalLeads)} leads`,
-      trend: <Badge variant="outline" className="text-green-500">
-        <TrendingUp className="h-3 w-3 mr-1" />
-        +2.3%
-      </Badge>,
-      tooltipContent: "Percentage of leads who become customers",
-      calculationDetails: `Customers (${totalCustomers}) / Leads (${totalLeads}) = ${conversionRate.toFixed(2)}%`
-    },
-    {
-      title: "Avg Rev/Customer",
-      value: formatINR(avgRevPerCustomer),
-      icon: <IndianRupee className="h-5 w-5 text-rose-500" />,
-      details: `Total: ${formatINR(totalRevenue)}`,
-      trend: <Badge variant="outline" className="text-green-500">
-        <TrendingUp className="h-3 w-3 mr-1" />
-        +6%
-      </Badge>,
-      tooltipContent: "Average revenue generated per customer",
-      calculationDetails: `Total Revenue (${formatINR(totalRevenue)}) / Total Customers (${totalCustomers}) = ${formatINR(avgRevPerCustomer)}`
-    },
-    // NEW METRICS (4 additional metrics as requested)
-    {
-      title: "Sessions per Customer",
-      value: avgSessionsPerCustomer.toFixed(1),
-      icon: <CalendarClock className="h-5 w-5 text-cyan-500" />,
-      details: `Avg attendance frequency`,
-      trend: <Badge variant="outline" className="text-green-500">
-        <TrendingUp className="h-3 w-3 mr-1" />
-        +2.5%
-      </Badge>,
-      tooltipContent: "Average number of sessions attended per customer",
-      calculationDetails: `Total Sessions (${totalSessions}) / Total Customers (${totalCustomers}) = ${avgSessionsPerCustomer.toFixed(2)}`
-    },
-    {
+      details: `${formatNumber(totalConvertedCustomers)} from ${formatNumber(totalNewCustomers)} new`,
+      tooltipContent: "Percentage of new customers who convert to regular customers",
+      calculationDetails: `${totalConvertedCustomers} converted / ${totalNewCustomers} new = ${conversionRate.toFixed(2)}%`
+    });
+  }
+
+  // Only add attendance rate if we have non-empty sessions
+  if (nonEmptySessions > 0) {
+    metricsData.push({
       title: "Attendance Rate",
       value: `${avgAttendanceRate.toFixed(1)}`,
       icon: <Target className="h-5 w-5 text-orange-500" />,
       details: `Avg customers per session`,
-      trend: <Badge variant="outline" className="text-green-500">
-        <TrendingUp className="h-3 w-3 mr-1" />
-        +3.2%
-      </Badge>,
       tooltipContent: "Average number of customers per non-empty session",
       calculationDetails: `Total Customers (${totalCustomers}) / Non-Empty Sessions (${nonEmptySessions}) = ${avgAttendanceRate.toFixed(2)}`
-    },
-    {
-      title: "New Customer Rate",
-      value: `${(totalNewCustomers / totalCustomers * 100).toFixed(1)}%`,
-      icon: <UserPlus className="h-5 w-5 text-emerald-500" />,
-      details: `${formatNumber(totalNewCustomers)} new customers`,
-      trend: <Badge variant="outline" className="text-green-500">
-        <TrendingUp className="h-3 w-3 mr-1" />
-        +4.1%
-      </Badge>,
-      tooltipContent: "Percentage of new customers in the total customer base",
-      calculationDetails: `New Customers (${totalNewCustomers}) / Total Customers (${totalCustomers}) = ${(totalNewCustomers / totalCustomers * 100).toFixed(2)}%`
-    },
-    {
+    });
+  }
+
+  // Only add avg revenue per customer if we have revenue and customers
+  if (totalRevenue > 0 && totalCustomers > 0) {
+    metricsData.push({
+      title: "Avg Rev/Customer",
+      value: formatINR(avgRevPerCustomer),
+      icon: <IndianRupee className="h-5 w-5 text-rose-500" />,
+      details: `Total: ${formatINR(totalRevenue)}`,
+      tooltipContent: "Average revenue generated per customer",
+      calculationDetails: `Total Revenue (${formatINR(totalRevenue)}) / Total Customers (${totalCustomers}) = ${formatINR(avgRevPerCustomer)}`
+    });
+  }
+
+  // Only add sessions per customer if we have both metrics
+  if (totalSessions > 0 && totalCustomers > 0) {
+    metricsData.push({
+      title: "Sessions per Customer",
+      value: avgSessionsPerCustomer.toFixed(1),
+      icon: <CalendarClock className="h-5 w-5 text-cyan-500" />,
+      details: `Avg attendance frequency`,
+      tooltipContent: "Average number of sessions attended per customer",
+      calculationDetails: `Total Sessions (${totalSessions}) / Total Customers (${totalCustomers}) = ${avgSessionsPerCustomer.toFixed(2)}`
+    });
+  }
+
+  // Add popular class if we have session data
+  if (totalBarreSessions > 0 || totalCycleSessions > 0) {
+    metricsData.push({
       title: "Popular Class",
       value: totalBarreSessions > totalCycleSessions ? "Barre" : "Cycle",
       icon: <Award className="h-5 w-5 text-yellow-500" />,
       details: `Based on ${formatNumber(Math.max(totalBarreSessions, totalCycleSessions))} sessions`,
-      trend: <Badge variant="outline" className="text-blue-500">
-        <TrendingUp className="h-3 w-3 mr-1" />
-        Trending
-      </Badge>,
       tooltipContent: "Most popular class type based on number of sessions",
       calculationDetails: `Barre Sessions: ${totalBarreSessions} vs Cycle Sessions: ${totalCycleSessions}`
-    },
-  ];
+    });
+  }
 
   // ANIMATIONS CONFIGURATION
   const containerVariants = {
@@ -457,7 +465,6 @@ const OverviewView: React.FC<OverviewViewProps> = ({ data, selectedMonths, locat
               value={metric.value}
               icon={metric.icon}
               details={metric.details}
-              trend={metric.trend}
               tooltipContent={metric.tooltipContent}
               calculationDetails={metric.calculationDetails}
             />
@@ -465,7 +472,7 @@ const OverviewView: React.FC<OverviewViewProps> = ({ data, selectedMonths, locat
         ))}
       </motion.div>
 
-      {/* Enhanced Customer Funnel - FULL WIDTH as requested */}
+      {/* Enhanced Customer Funnel - FULL WIDTH */}
       <motion.div variants={containerVariants}>
         <motion.div variants={chartVariants}>
           <Card className="overflow-hidden backdrop-blur-sm border-border/50 bg-gradient-to-br from-background to-background/80">
@@ -480,7 +487,7 @@ const OverviewView: React.FC<OverviewViewProps> = ({ data, selectedMonths, locat
                 title=""
                 nodes={funnelNodes}
                 links={funnelLinks}
-                ltv={revenuePerAttendee * 2.5} // Estimated LTV
+                ltv={avgRevPerCustomer * 2.5} // Estimated LTV based on actual revenue
                 conversionRate={{
                   from: "Leads",
                   to: "Customers",

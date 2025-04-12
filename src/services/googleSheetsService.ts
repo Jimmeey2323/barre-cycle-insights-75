@@ -144,20 +144,67 @@ export function processFitnessData(rawData: any[]) {
         : "0";
         
       // Calculate retention and conversion metrics  
-      const totalRetained = monthData.reduce((sum, item) => {
-        const retained = parseInt(item["Retained"] || "0");
+      const totalNewCustomers = monthData.reduce((sum, item) => {
+        const newCust = parseInt(item["New Customers"] || "0");
+        return sum + (isNaN(newCust) ? 0 : newCust);
+      }, 0);
+      
+      const totalRetainedCustomers = monthData.reduce((sum, item) => {
+        const retained = parseInt(item["Retained Customers"] || "0");
         return sum + (isNaN(retained) ? 0 : retained);
       }, 0);
       
-      const totalConverted = monthData.reduce((sum, item) => {
-        const converted = parseInt(item["Converted"] || "0");
+      const totalConvertedCustomers = monthData.reduce((sum, item) => {
+        const converted = parseInt(item["Converted Customers"] || "0");
         return sum + (isNaN(converted) ? 0 : converted);
       }, 0);
       
-      const totalNew = monthData.reduce((sum, item) => {
-        const newCustomers = parseInt(item["New"] || "0");
-        return sum + (isNaN(newCustomers) ? 0 : newCustomers);
+      const totalChurnedCustomers = monthData.reduce((sum, item) => {
+        const churned = parseInt(item["Churned Customers"] || "0");
+        return sum + (isNaN(churned) ? 0 : churned);
       }, 0);
+      
+      // Calculate retention and conversion rates
+      const retentionRate = (totalRetainedCustomers + totalChurnedCustomers) > 0 
+        ? (totalRetainedCustomers / (totalRetainedCustomers + totalChurnedCustomers)) * 100 
+        : 0;
+        
+      const conversionRate = totalNewCustomers > 0 
+        ? (totalConvertedCustomers / totalNewCustomers) * 100 
+        : 0;
+        
+      const churnRate = (totalRetainedCustomers + totalChurnedCustomers) > 0 
+        ? (totalChurnedCustomers / (totalRetainedCustomers + totalChurnedCustomers)) * 100 
+        : 0;
+      
+      // Calculate barre and cycle specific retention rates
+      const barreRetainedCustomers = monthData.reduce((sum, item) => {
+        const retained = parseInt(item["Barre Retained"] || "0");
+        return sum + (isNaN(retained) ? 0 : retained);
+      }, 0);
+      
+      const barreChurnedCustomers = monthData.reduce((sum, item) => {
+        const churned = parseInt(item["Barre Churned"] || "0");
+        return sum + (isNaN(churned) ? 0 : churned);
+      }, 0);
+      
+      const cycleRetainedCustomers = monthData.reduce((sum, item) => {
+        const retained = parseInt(item["Cycle Retained"] || "0");
+        return sum + (isNaN(retained) ? 0 : retained);
+      }, 0);
+      
+      const cycleChurnedCustomers = monthData.reduce((sum, item) => {
+        const churned = parseInt(item["Cycle Churned"] || "0");
+        return sum + (isNaN(churned) ? 0 : churned);
+      }, 0);
+      
+      const barreRetentionRate = (barreRetainedCustomers + barreChurnedCustomers) > 0
+        ? (barreRetainedCustomers / (barreRetainedCustomers + barreChurnedCustomers)) * 100
+        : 0;
+        
+      const cycleRetentionRate = (cycleRetainedCustomers + cycleChurnedCustomers) > 0
+        ? (cycleRetainedCustomers / (cycleRetainedCustomers + cycleChurnedCustomers)) * 100
+        : 0;
       
       // Calculate most popular class
       const mostPopularClass = totalBarreCustomers > totalCycleCustomers ? "Barre" : 
@@ -186,9 +233,16 @@ export function processFitnessData(rawData: any[]) {
         totalCyclePaid,
         avgBarreClassSize,
         avgCycleClassSize,
-        totalRetained,
-        totalConverted,
-        totalNew,
+        // Retention and conversion data
+        retentionRate,
+        conversionRate,
+        churnRate,
+        totalRetained: totalRetainedCustomers,
+        totalConverted: totalConvertedCustomers,
+        newCustomers: totalNewCustomers,
+        churnedCustomers: totalChurnedCustomers,
+        barreRetentionRate,
+        cycleRetentionRate,
         mostPopularClass // Add most popular class information
       };
     });
