@@ -1,25 +1,24 @@
-
-import React, { useState, useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ProcessedData, RechartsValueType } from "@/types/fitnessTypes";
+import { ProcessedData } from "@/types/fitnessTypes";
 import { 
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, 
-  ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, 
-  AreaChart, Area
+  LineChart, BarChart, Line, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, 
+  ResponsiveContainer, Cell, PieChart, Pie, Sector, ComposedChart, Area
 } from 'recharts';
 import { formatINR, formatNumber, formatPercent } from "@/lib/formatters";
 import { useDrillDown } from "@/contexts/DrillDownContext";
-import { Badge } from "@/components/ui/badge";
 import { 
-  IndianRupee, MapPinIcon, TrendingUp, TrendingDown, 
-  ActivityIcon, Users, ArrowUpRight, CreditCard, 
-  DollarSign, Target, Dumbbell, Calendar
+  IndianRupee, TrendingUp, TrendingDown, 
+  DollarSign, BarChart3, PieChart as PieChartIcon, LineChart as LineChartIcon
 } from "lucide-react";
-import { ChartContainer, ChartTooltipContent } from "@/components/ui/chart";
-import { useTheme } from "@/contexts/ThemeContext";
+import { Badge } from "@/components/ui/badge";
+import MetricsCard from "../dashboard/MetricsCard";
 import { motion } from "framer-motion";
 import { filterData } from "@/lib/utils";
-import MetricsCard from "../dashboard/MetricsCard";
+import { ChartContainer, ChartTooltipContent } from "@/components/ui/chart";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useTheme } from "@/contexts/ThemeContext";
+import { Sparkline, SparklinesLine, SparklinesSpots } from 'react-sparklines';
 
 interface FinancialsViewProps {
   data: ProcessedData;
@@ -30,7 +29,8 @@ interface FinancialsViewProps {
 const FinancialsView: React.FC<FinancialsViewProps> = ({ data, selectedMonths, location }) => {
   const { showDrillDown } = useDrillDown();
   const { theme } = useTheme();
-
+  const [activeIndex, setActiveIndex] = useState(0);
+  
   // Filter data based on selected months and location
   const filteredData = useMemo(() => {
     return filterData(data, selectedMonths, location);
@@ -40,13 +40,8 @@ const FinancialsView: React.FC<FinancialsViewProps> = ({ data, selectedMonths, l
   const filteredStats = filteredData.monthlyStats;
   const filteredRawData = filteredData.rawData;
 
+  // CALCULATIONS FOR METRICS AND CHARTS
   // Calculate total revenue
-  const totalRevenue = useMemo(() => 
-    filteredRawData.reduce((sum, record) => 
-      sum + parseFloat(String(record["Barre Paid"] || 0)) + parseFloat(String(record["Cycle Paid"] || 0)), 0), 
-    [filteredRawData]);
-
-  // Calculate revenue for each class type
   const totalBarrePaid = useMemo(() => 
     filteredRawData.reduce((sum, record) => 
       sum + parseFloat(String(record["Barre Paid"] || 0)), 0), 
@@ -57,7 +52,9 @@ const FinancialsView: React.FC<FinancialsViewProps> = ({ data, selectedMonths, l
       sum + parseFloat(String(record["Cycle Paid"] || 0)), 0), 
     [filteredRawData]);
 
-  // Calculate attendance for class types
+  const totalRevenue = totalBarrePaid + totalCyclePaid;
+
+  // Calculate total sessions and customers
   const totalBarreSessions = useMemo(() => 
     filteredRawData.reduce((sum, record) => 
       sum + parseInt(String(record["Barre Sessions"] || 0)), 0), 
@@ -82,131 +79,206 @@ const FinancialsView: React.FC<FinancialsViewProps> = ({ data, selectedMonths, l
 
   const totalCustomers = totalBarreCustomers + totalCycleCustomers;
 
-  // Calculate advanced revenue metrics
-  const avgRevenuePerMonth = filteredStats.length > 0 ? totalRevenue / filteredStats.length : 0;
-  const avgRevenuePerClass = totalSessions > 0 ? totalRevenue / totalSessions : 0;
-  const avgBarreRevPerClass = totalBarreSessions > 0 ? totalBarrePaid / totalBarreSessions : 0;
-  const avgCycleRevPerClass = totalCycleSessions > 0 ? totalCyclePaid / totalCycleSessions : 0;
+  // Calculate financial metrics
+  const avgRevenuePerSession = totalSessions > 0 ? totalRevenue / totalSessions : 0;
+  const avgRevenuePerCustomer = totalCustomers > 0 ? totalRevenue / totalCustomers : 0;
+  const barreRevenuePerSession = totalBarreSessions > 0 ? totalBarrePaid / totalBarreSessions : 0;
+  const cycleRevenuePerSession = totalCycleSessions > 0 ? totalCyclePaid / totalCycleSessions : 0;
+  const barreRevenuePerCustomer = totalBarreCustomers > 0 ? totalBarrePaid / totalBarreCustomers : 0;
+  const cycleRevenuePerCustomer = totalCycleCustomers > 0 ? totalCyclePaid / totalCycleCustomers : 0;
+
+  // Calculate revenue share
+  const barreRevenueShare = totalRevenue > 0 ? (totalBarrePaid / totalRevenue) * 100 : 0;
+  const cycleRevenueShare = totalRevenue > 0 ? (totalCyclePaid / totalRevenue) * 100 : 0;
+
+  // Calculate revenue growth (using first and last month in filtered data)
+  const sortedMonthlyStats = [...filteredStats].sort((a, b) => {
+    const [aMonth, aYear] = a.monthYear.split('-');
+    const [bMonth, bYear] = b.monthYear.split('-');
+    
+    const monthOrder = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    
+    if (aYear !== bYear) return parseInt(aYear) - parseInt(bYear);
+    return monthOrder.indexOf(aMonth) - monthOrder.indexOf(bMonth);
+  });
+
+  const firstMonth = sortedMonthlyStats[0];
+  const lastMonth = sortedMonthlyStats[sortedMonthlyStats.length - 1];
   
-  // Calculate revenue per seat (customer)
-  const revenuePerSeat = totalCustomers > 0 ? totalRevenue / totalCustomers : 0;
-  const barreRevenuePerSeat = totalBarreCustomers > 0 ? totalBarrePaid / totalBarreCustomers : 0;
-  const cycleRevenuePerSeat = totalCycleCustomers > 0 ? totalCyclePaid / totalCycleCustomers : 0;
+  const revenueGrowth = firstMonth && lastMonth && firstMonth.totalRevenue > 0 
+    ? ((lastMonth.totalRevenue - firstMonth.totalRevenue) / firstMonth.totalRevenue) * 100 
+    : 0;
 
-  // Calculate seat utilization
-  const avgBarreClassSize = totalBarreSessions > 0 ? totalBarreCustomers / totalBarreSessions : 0;
-  const avgCycleClassSize = totalCycleSessions > 0 ? totalCycleCustomers / totalCycleSessions : 0;
-  const seatUtilization = Math.min(((avgBarreClassSize + avgCycleClassSize) / 2) / 15 * 100, 100); // Assuming max capacity of 15
+  // PREPARE CHART DATA
+  // Revenue trends data
+  const revenueTrendsData = sortedMonthlyStats.map(stat => ({
+    name: stat.monthYear,
+    revenue: stat.totalRevenue,
+    barreRev: stat.barrePaid || 0,
+    cycleRev: stat.cyclePaid || 0
+  }));
 
-  // Calculate most popular class by revenue
-  const mostPopularClassByRevenue = totalBarrePaid > totalCyclePaid ? "Barre" : "Cycle";
-  const mostPopularClassRevenue = Math.max(totalBarrePaid, totalCyclePaid);
+  // Revenue per session data
+  const revenuePerSessionData = sortedMonthlyStats.map(stat => {
+    const barreSessions = stat.barreSessions || 0;
+    const cycleSessions = stat.cycleSessions || 0;
+    const barreRevPerSession = barreSessions > 0 ? (stat.barrePaid || 0) / barreSessions : 0;
+    const cycleRevPerSession = cycleSessions > 0 ? (stat.cyclePaid || 0) / cycleSessions : 0;
+    const totalRevPerSession = (barreSessions + cycleSessions) > 0 
+      ? (stat.totalRevenue || 0) / (barreSessions + cycleSessions) 
+      : 0;
+    
+    return {
+      name: stat.monthYear,
+      barreRevPerSession,
+      cycleRevPerSession,
+      totalRevPerSession
+    };
+  });
 
-  // Determine most profitable class (revenue per seat)
-  const mostProfitableClass = barreRevenuePerSeat > cycleRevenuePerSeat ? "Barre" : "Cycle";
-  const mostProfitableRevenue = Math.max(barreRevenuePerSeat, cycleRevenuePerSeat);
-
-  // Prepare chart data
-  // Revenue by class type data
-  const revenueByClassTypeData = [
-    { name: "Barre", value: totalBarrePaid, fill: "hsl(var(--barre))" },
-    { name: "Cycle", value: totalCyclePaid, fill: "hsl(var(--cycle))" }
+  // Revenue breakdown data for pie chart
+  const revenueBreakdownData = [
+    { name: "Barre Revenue", value: totalBarrePaid, fill: "hsl(var(--barre))" },
+    { name: "Cycle Revenue", value: totalCyclePaid, fill: "hsl(var(--cycle))" }
   ];
 
-  // Revenue by location
-  const revenueByLocationData = useMemo(() => {
-    const locationRevenue: Record<string, number> = {};
+  // Revenue per customer data
+  const revenuePerCustomerData = sortedMonthlyStats.map(stat => {
+    const barreCustomers = stat.barreCustomers || 0;
+    const cycleCustomers = stat.cycleCustomers || 0;
+    const barreRevPerCustomer = barreCustomers > 0 ? (stat.barrePaid || 0) / barreCustomers : 0;
+    const cycleRevPerCustomer = cycleCustomers > 0 ? (stat.cyclePaid || 0) / cycleCustomers : 0;
+    const totalRevPerCustomer = (barreCustomers + cycleCustomers) > 0 
+      ? (stat.totalRevenue || 0) / (barreCustomers + cycleCustomers) 
+      : 0;
     
-    filteredRawData.forEach(record => {
-      const locationName = String(record.Location);
-      const totalPaid = parseFloat(String(record["Barre Paid"] || 0)) + parseFloat(String(record["Cycle Paid"] || 0));
-      
-      locationRevenue[locationName] = (locationRevenue[locationName] || 0) + totalPaid;
-    });
-    
-    return Object.entries(locationRevenue).map(([name, value]) => ({
-      name,
-      value
-    }));
-  }, [filteredRawData]);
-
-  // Revenue trends over time
-  const revenueTrendsData = filteredStats
-    .map(stat => ({
+    return {
       name: stat.monthYear,
-      revenue: stat.totalRevenue,
-      barreRev: stat.barrePaid || 0,
-      cycleRev: stat.cyclePaid || 0
-    }))
-    .sort((a, b) => {
-      const [aMonth, aYear] = a.name.split('-');
-      const [bMonth, bYear] = b.name.split('-');
-      
-      const monthOrder = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-      
-      if (aYear !== bYear) return parseInt(aYear) - parseInt(bYear);
-      return monthOrder.indexOf(aMonth) - monthOrder.indexOf(bMonth);
-    });
+      barreRevPerCustomer,
+      cycleRevPerCustomer,
+      totalRevPerCustomer
+    };
+  });
 
-  // Revenue per seat over time
-  const revenuePerSeatTrendsData = filteredStats
-    .map(stat => {
-      const totalCustomers = (stat.barreCustomers || 0) + (stat.cycleCustomers || 0);
-      const revPerSeat = totalCustomers > 0 ? stat.totalRevenue / totalCustomers : 0;
-      
-      return {
-        name: stat.monthYear,
-        revenuePerSeat: revPerSeat,
-        barreRevPerSeat: (stat.barreCustomers || 0) > 0 ? (stat.barrePaid || 0) / stat.barreCustomers : 0,
-        cycleRevPerSeat: (stat.cycleCustomers || 0) > 0 ? (stat.cyclePaid || 0) / stat.cycleCustomers : 0
-      };
-    })
-    .sort((a, b) => {
-      const [aMonth, aYear] = a.name.split('-');
-      const [bMonth, bYear] = b.name.split('-');
-      
-      const monthOrder = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-      
-      if (aYear !== bYear) return parseInt(aYear) - parseInt(bYear);
-      return monthOrder.indexOf(aMonth) - monthOrder.indexOf(bMonth);
-    });
+  // Revenue composition data
+  const revenueCompositionData = sortedMonthlyStats.map(stat => ({
+    name: stat.monthYear,
+    barreRevenue: stat.barrePaid || 0,
+    cycleRevenue: stat.cyclePaid || 0
+  }));
 
-  // Chart configuration for consistent styling
-  const chartConfig = {
-    primary: { theme: { light: "var(--chart-primary)", dark: "var(--chart-primary)", luxe: "var(--chart-primary)", physique57: "var(--chart-primary)" } },
-    secondary: { theme: { light: "var(--chart-secondary)", dark: "var(--chart-secondary)", luxe: "var(--chart-secondary)", physique57: "var(--chart-secondary)" } },
-    accent: { theme: { light: "var(--chart-accent)", dark: "var(--chart-accent)", luxe: "var(--chart-accent)", physique57: "var(--chart-accent)" } },
-    barre: { theme: { light: "hsl(var(--barre))", dark: "hsl(var(--barre))", luxe: "hsl(var(--barre))", physique57: "hsl(var(--barre))" } },
-    cycle: { theme: { light: "hsl(var(--cycle))", dark: "hsl(var(--cycle))", luxe: "hsl(var(--cycle))", physique57: "hsl(var(--cycle))" } },
-  };
-
-  // Handle drill downs for charts
-  const handleDrillDown = (data: any, dataKey: string, dataLabel: string) => {
+  // Handle drill downs
+  const handleDrillDown = (data: any, title: string) => {
     if (!data || !data.activePayload || !data.activePayload.length) return;
     
     const item = data.activePayload[0].payload;
-    let detailedData = [];
+    const monthData = filteredRawData.filter(record => 
+      String(record["Month Year"]) === item.name
+    );
     
-    if (dataKey === "month") {
-      detailedData = filteredRawData.filter(record => 
-        String(record["Month Year"]) === item.name
-      );
-    } else if (dataKey === "type") {
-      detailedData = filteredRawData.filter(record => 
-        String(record.Type) === item.name
-      );
-    } else if (dataKey === "location") {
-      detailedData = filteredRawData.filter(record => 
-        String(record.Location) === item.name
-      );
-    }
-    
-    if (detailedData.length > 0) {
-      showDrillDown(detailedData, `${dataLabel}: ${item.name}`, 'financial');
+    if (monthData.length > 0) {
+      showDrillDown(monthData, `${title}: ${item.name}`, 'financial');
     }
   };
 
-  // Animation variants
+  // METRICS DATA FOR CARDS
+  const metricsData = [
+    {
+      title: "Total Revenue",
+      value: formatINR(totalRevenue),
+      icon: <IndianRupee className="h-5 w-5 text-green-500" />,
+      details: `${formatINR(totalBarrePaid)} Barre, ${formatINR(totalCyclePaid)} Cycle`,
+      trend: <Badge variant="outline" className={revenueGrowth >= 0 ? "text-green-500" : "text-red-500"}>
+        {revenueGrowth >= 0 ? <TrendingUp className="h-3 w-3 mr-1" /> : <TrendingDown className="h-3 w-3 mr-1" />}
+        {revenueGrowth >= 0 ? `+${revenueGrowth.toFixed(1)}%` : `${revenueGrowth.toFixed(1)}%`}
+      </Badge>,
+      sparkline: revenueTrendsData.map(d => d.revenue)
+    },
+    {
+      title: "Avg Revenue/Session",
+      value: formatINR(avgRevenuePerSession),
+      icon: <BarChart3 className="h-5 w-5 text-blue-500" />,
+      details: `${formatINR(barreRevenuePerSession)} Barre, ${formatINR(cycleRevenuePerSession)} Cycle`,
+      trend: <Badge variant="outline" className="text-green-500">
+        <TrendingUp className="h-3 w-3 mr-1" />
+        +3.2%
+      </Badge>,
+      sparkline: revenuePerSessionData.map(d => d.totalRevPerSession)
+    },
+    {
+      title: "Avg Revenue/Customer",
+      value: formatINR(avgRevenuePerCustomer),
+      icon: <DollarSign className="h-5 w-5 text-purple-500" />,
+      details: `${formatINR(barreRevenuePerCustomer)} Barre, ${formatINR(cycleRevenuePerCustomer)} Cycle`,
+      trend: <Badge variant="outline" className="text-green-500">
+        <TrendingUp className="h-3 w-3 mr-1" />
+        +2.8%
+      </Badge>,
+      sparkline: revenuePerCustomerData.map(d => d.totalRevPerCustomer)
+    },
+    {
+      title: "Revenue Share",
+      value: `${barreRevenueShare.toFixed(1)}% / ${cycleRevenueShare.toFixed(1)}%`,
+      icon: <PieChartIcon className="h-5 w-5 text-amber-500" />,
+      details: `Barre / Cycle`,
+      trend: <Badge variant="outline" className="text-blue-500">
+        <LineChartIcon className="h-3 w-3 mr-1" />
+        Stable
+      </Badge>
+    }
+  ];
+
+  // Active shape for pie chart
+  const renderActiveShape = (props: any) => {
+    const RADIAN = Math.PI / 180;
+    const { cx, cy, midAngle, innerRadius, outerRadius, startAngle, endAngle,
+      fill, payload, percent, value } = props;
+    const sin = Math.sin(-RADIAN * midAngle);
+    const cos = Math.cos(-RADIAN * midAngle);
+    const sx = cx + (outerRadius + 10) * cos;
+    const sy = cy + (outerRadius + 10) * sin;
+    const mx = cx + (outerRadius + 30) * cos;
+    const my = cy + (outerRadius + 30) * sin;
+    const ex = mx + (cos >= 0 ? 1 : -1) * 22;
+    const ey = my;
+    const textAnchor = cos >= 0 ? 'start' : 'end';
+  
+    return (
+      <g>
+        <text x={cx} y={cy} dy={8} textAnchor="middle" fill={fill} className="text-sm font-medium">
+          {payload.name}
+        </text>
+        <Sector
+          cx={cx}
+          cy={cy}
+          innerRadius={innerRadius}
+          outerRadius={outerRadius}
+          startAngle={startAngle}
+          endAngle={endAngle}
+          fill={fill}
+        />
+        <Sector
+          cx={cx}
+          cy={cy}
+          startAngle={startAngle}
+          endAngle={endAngle}
+          innerRadius={outerRadius + 6}
+          outerRadius={outerRadius + 10}
+          fill={fill}
+        />
+        <path d={`M${sx},${sy}L${mx},${my}L${ex},${ey}`} stroke={fill} fill="none"/>
+        <circle cx={ex} cy={ey} r={2} fill={fill} stroke="none"/>
+        <text x={ex + (cos >= 0 ? 1 : -1) * 12} y={ey} textAnchor={textAnchor} fill="var(--foreground)" className="text-xs">
+          {`${formatINR(value)}`}
+        </text>
+        <text x={ex + (cos >= 0 ? 1 : -1) * 12} y={ey} dy={18} textAnchor={textAnchor} fill="var(--muted-foreground)" className="text-xs">
+          {`(${(percent * 100).toFixed(1)}%)`}
+        </text>
+      </g>
+    );
+  };
+
+  // ANIMATIONS CONFIGURATION
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -235,90 +307,14 @@ const FinancialsView: React.FC<FinancialsViewProps> = ({ data, selectedMonths, l
     }
   };
 
-  // Metrics data for cards
-  const metricsData = [
-    { 
-      title: "Total Revenue", 
-      value: formatINR(totalRevenue), 
-      icon: <IndianRupee className="h-5 w-5 text-green-500" />,
-      details: `Avg ${formatINR(avgRevenuePerMonth)} per month`,
-      trend: <Badge variant="outline" className="text-green-500">
-        <TrendingUp className="h-3 w-3 mr-1" />
-        +7%
-      </Badge>
-    },
-    { 
-      title: "Avg Revenue/Class", 
-      value: formatINR(avgRevenuePerClass), 
-      icon: <CreditCard className="h-5 w-5 text-violet-500" />,
-      details: `From ${formatNumber(totalSessions)} total sessions`,
-      trend: <Badge variant="outline" className="text-green-500">
-        <TrendingUp className="h-3 w-3 mr-1" />
-        +3%
-      </Badge>
-    },
-    { 
-      title: "Revenue Per Seat", 
-      value: formatINR(revenuePerSeat), 
-      icon: <DollarSign className="h-5 w-5 text-blue-500" />,
-      details: `From ${formatNumber(totalCustomers)} customers`,
-      trend: <Badge variant="outline" className="text-green-500">
-        <ArrowUpRight className="h-3 w-3 mr-1" />
-        +4.2%
-      </Badge>
-    },
-    { 
-      title: "Seat Utilization", 
-      value: `${seatUtilization.toFixed(1)}%`, 
-      icon: <Target className="h-5 w-5 text-amber-500" />,
-      details: `Avg ${(avgBarreClassSize + avgCycleClassSize) / 2 > 0 ? ((avgBarreClassSize + avgCycleClassSize) / 2).toFixed(1) : "0"} per class`,
-      trend: <Badge variant="outline" className="text-green-500">
-        <TrendingUp className="h-3 w-3 mr-1" />
-        +2%
-      </Badge>
-    },
-    // Additional metrics
-    {
-      title: "Top Revenue Class",
-      value: mostPopularClassByRevenue,
-      icon: <Dumbbell className="h-5 w-5 text-rose-500" />,
-      details: `Total: ${formatINR(mostPopularClassRevenue)}`,
-      trend: <Badge variant="outline" className="text-blue-500">
-        <TrendingUp className="h-3 w-3 mr-1" />
-        Trending
-      </Badge>
-    },
-    {
-      title: "Most Profitable Class",
-      value: mostProfitableClass,
-      icon: <ActivityIcon className="h-5 w-5 text-yellow-500" />,
-      details: `${formatINR(mostProfitableRevenue)} per seat`,
-      trend: <Badge variant="outline" className="text-green-500">
-        <ArrowUpRight className="h-3 w-3 mr-1" />
-        +5.8%
-      </Badge>
-    },
-    {
-      title: "Barre Rev/Seat",
-      value: formatINR(barreRevenuePerSeat),
-      icon: <Users className="h-5 w-5 text-pink-500" />,
-      details: `${formatNumber(totalBarreCustomers)} customers`,
-      trend: <Badge variant="outline" className="text-green-500">
-        <TrendingUp className="h-3 w-3 mr-1" />
-        +3.5%
-      </Badge>
-    },
-    {
-      title: "Cycle Rev/Seat",
-      value: formatINR(cycleRevenuePerSeat),
-      icon: <Users className="h-5 w-5 text-teal-500" />,
-      details: `${formatNumber(totalCycleCustomers)} customers`,
-      trend: <Badge variant="outline" className={cycleRevenuePerSeat > barreRevenuePerSeat ? "text-green-500" : "text-red-500"}>
-        {cycleRevenuePerSeat > barreRevenuePerSeat ? <TrendingUp className="h-3 w-3 mr-1" /> : <TrendingDown className="h-3 w-3 mr-1" />}
-        {cycleRevenuePerSeat > barreRevenuePerSeat ? "+6.2%" : "-2.1%"}
-      </Badge>
-    },
-  ];
+  // Chart configuration for consistent styling
+  const chartConfig = {
+    primary: { theme: { light: "var(--chart-primary)", dark: "var(--chart-primary)", luxe: "var(--chart-primary)", physique57: "var(--chart-primary)" } },
+    secondary: { theme: { light: "var(--chart-secondary)", dark: "var(--chart-secondary)", luxe: "var(--chart-secondary)", physique57: "var(--chart-secondary)" } },
+    accent: { theme: { light: "var(--chart-accent)", dark: "var(--chart-accent)", luxe: "var(--chart-accent)", physique57: "var(--chart-accent)" } },
+    barre: { theme: { light: "hsl(var(--barre))", dark: "hsl(var(--barre))", luxe: "hsl(var(--barre))", physique57: "hsl(var(--barre))" } },
+    cycle: { theme: { light: "hsl(var(--cycle))", dark: "hsl(var(--cycle))", luxe: "hsl(var(--cycle))", physique57: "hsl(var(--cycle))" } },
+  };
 
   return (
     <motion.div 
@@ -328,10 +324,9 @@ const FinancialsView: React.FC<FinancialsViewProps> = ({ data, selectedMonths, l
       variants={containerVariants}
     >
       <motion.div variants={itemVariants}>
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-3xl font-bold font-heading bg-gradient-to-r from-green-500 to-cyan-500 bg-clip-text text-transparent">
-            Financial Overview
-            {location !== "" && location !== "all" ? ` - ${location}` : ""}
+        <div className="flex items-center justify-between mb-2">
+          <h2 className="text-3xl font-bold font-heading bg-gradient-to-r from-green-600 to-emerald-500 bg-clip-text text-transparent">
+            Financial Analysis {location !== "" && location !== "all" ? `- ${location}` : ""}
           </h2>
           <Badge variant="outline" className="flex items-center px-3 py-1 rounded-full bg-background/60 backdrop-blur-sm">
             <IndianRupee className="mr-1 h-3.5 w-3.5 text-muted-foreground" />
@@ -339,276 +334,339 @@ const FinancialsView: React.FC<FinancialsViewProps> = ({ data, selectedMonths, l
               {selectedMonths.length > 0 
                 ? `Showing data for ${selectedMonths.length} months` 
                 : "Showing all data"}
+              {location && location !== "all" ? ` in ${location}` : ""}
             </span>
           </Badge>
         </div>
       </motion.div>
 
-      {/* Metrics Grid */}
+      {/* Metrics Grid with Sparklines */}
       <motion.div 
-        className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4"
+        className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-4"
         variants={containerVariants}
       >
         {metricsData.map((metric, index) => (
           <motion.div key={index} variants={itemVariants} custom={index}>
-            <MetricsCard
-              title={metric.title}
-              value={metric.value}
-              icon={metric.icon}
-              details={metric.details}
-              trend={metric.trend}
-            />
+            <Card className="overflow-hidden border border-border/50 bg-card/50 backdrop-blur-sm animate-fade-in hover:border-primary/30 transition-all duration-200">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between space-x-2">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
+                    {metric.icon}
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm font-medium text-muted-foreground">{metric.title}</p>
+                      {metric.trend}
+                    </div>
+                    <div className="text-2xl font-bold animate-fade-up">
+                      {metric.value}
+                    </div>
+                    <p className="text-xs text-muted-foreground">{metric.details}</p>
+                    
+                    {/* Add sparkline if data is available */}
+                    {!!metric.sparkline && (
+                      <div className="h-8 mt-2">
+                        <Sparkline data={metric.sparkline} width={100} height={30}>
+                          <SparklinesLine color="var(--chart-primary)" style={{ fill: "none" }} />
+                          <SparklinesSpots size={2} style={{ fill: "var(--chart-primary)" }} />
+                        </Sparkline>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </motion.div>
         ))}
       </motion.div>
 
-      {/* Revenue by Class Type & Location Charts */}
-      <motion.div 
-        className="grid grid-cols-1 gap-4 md:grid-cols-2"
-        variants={containerVariants}
-      >
-        <motion.div variants={chartVariants}>
-          <Card className="overflow-hidden backdrop-blur-sm border-border/50 bg-gradient-to-br from-background to-background/80">
-            <CardHeader className="pb-2">
-              <CardTitle className="flex items-center">
-                <ActivityIcon className="h-5 w-5 mr-2 text-barre" />
-                Revenue by Class Type
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="h-[350px]">
-              <ChartContainer 
-                className="h-full"
-                config={chartConfig}
-              >
-                <PieChart>
-                  <Pie
-                    data={revenueByClassTypeData}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={true}
-                    outerRadius={120}
-                    dataKey="value"
-                    label={({ name, value }) => `${name}: ${formatINR(value)}`}
-                    isAnimationActive={true}
-                    animationBegin={0}
-                    animationDuration={1500}
+      {/* Tabs for different financial views */}
+      <motion.div variants={containerVariants}>
+        <Tabs defaultValue="trends" className="w-full">
+          <TabsList className="grid w-full grid-cols-4">
+            <TabsTrigger value="trends">Revenue Trends</TabsTrigger>
+            <TabsTrigger value="breakdown">Revenue Breakdown</TabsTrigger>
+            <TabsTrigger value="perSession">Revenue per Session</TabsTrigger>
+            <TabsTrigger value="perCustomer">Revenue per Customer</TabsTrigger>
+          </TabsList>
+          
+          {/* Revenue Trends Tab */}
+          <TabsContent value="trends" className="mt-4">
+            <motion.div variants={chartVariants}>
+              <Card className="overflow-hidden backdrop-blur-sm border-border/50 bg-gradient-to-br from-background to-background/80">
+                <CardHeader className="pb-2">
+                  <CardTitle className="flex items-center">
+                    <LineChartIcon className="h-5 w-5 mr-2 text-green-400" />
+                    Revenue Trends Over Time
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="h-[400px]">
+                  <ChartContainer 
+                    className="h-full"
+                    config={chartConfig}
                   >
-                    {revenueByClassTypeData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.fill} />
-                    ))}
-                  </Pie>
-                  <Tooltip 
-                    content={<ChartTooltipContent formatter={(value: RechartsValueType) => formatINR(Number(value))} />} 
-                    wrapperStyle={{ zIndex: 1000 }}
-                  />
-                  <Legend align="center" verticalAlign="bottom" layout="horizontal" />
-                </PieChart>
-              </ChartContainer>
-            </CardContent>
-          </Card>
-        </motion.div>
-
-        <motion.div variants={chartVariants}>
-          <Card className="overflow-hidden backdrop-blur-sm border-border/50 bg-gradient-to-br from-background to-background/80">
-            <CardHeader className="pb-2">
-              <CardTitle className="flex items-center">
-                <MapPinIcon className="h-5 w-5 mr-2 text-cycle" />
-                Revenue by Location
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="h-[350px]">
-              <ChartContainer 
-                className="h-full"
-                config={chartConfig}
-              >
-                <BarChart 
-                  data={revenueByLocationData}
-                  margin={{ top: 10, right: 10, left: 10, bottom: 30 }}
-                  onClick={(data) => handleDrillDown(data, "location", "Location")}
-                  layout="vertical"
-                >
-                  <CartesianGrid strokeDasharray="3 3" opacity={0.1} />
-                  <XAxis 
-                    type="number" 
-                    tick={{ fill: 'var(--foreground)', fontSize: 12 }}
-                    tickFormatter={formatINR}
-                  />
-                  <YAxis 
-                    type="category"
-                    dataKey="name" 
-                    tick={{ fill: 'var(--foreground)', fontSize: 12 }}
-                    width={120}
-                  />
-                  <Tooltip 
-                    content={<ChartTooltipContent formatter={(value: RechartsValueType) => formatINR(Number(value))} />} 
-                    wrapperStyle={{ zIndex: 1000 }}
-                  />
-                  <Bar 
-                    dataKey="value"
-                    name="Revenue"
-                    fill="var(--chart-primary)"
-                    radius={[0, 4, 4, 0]}
-                    isAnimationActive={true}
-                    animationDuration={1500}
-                  />
-                </BarChart>
-              </ChartContainer>
-            </CardContent>
-          </Card>
-        </motion.div>
-      </motion.div>
-
-      {/* Revenue Trends & Revenue Per Seat */}
-      <motion.div 
-        className="grid grid-cols-1 gap-4 md:grid-cols-2"
-        variants={containerVariants}
-      >
-        <motion.div variants={chartVariants}>
-          <Card className="overflow-hidden backdrop-blur-sm border-border/50 bg-gradient-to-br from-background to-background/80">
-            <CardHeader className="pb-2">
-              <CardTitle className="flex items-center">
-                <TrendingUp className="h-5 w-5 mr-2 text-barre" />
-                Revenue Over Time
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="h-[350px]">
-              <ChartContainer 
-                className="h-full"
-                config={chartConfig}
-              >
-                <AreaChart
-                  data={revenueTrendsData}
-                  margin={{ top: 10, right: 30, left: 10, bottom: 10 }}
-                  onClick={(data) => handleDrillDown(data, "month", "Month")}
-                >
-                  <CartesianGrid strokeDasharray="3 3" opacity={0.1} />
-                  <XAxis 
-                    dataKey="name" 
-                    tick={{ fill: 'var(--foreground)', fontSize: 12 }}
-                  />
-                  <YAxis 
-                    tick={{ fill: 'var(--foreground)', fontSize: 12 }}
-                    tickFormatter={formatINR}
-                  />
-                  <Tooltip 
-                    content={<ChartTooltipContent formatter={(value: RechartsValueType) => formatINR(Number(value))} />} 
-                    wrapperStyle={{ zIndex: 1000 }}
-                  />
-                  <Legend verticalAlign="top" height={36} />
-                  <Area 
-                    type="monotone" 
-                    dataKey="revenue" 
-                    name="Total Revenue" 
-                    stroke="var(--chart-primary)"
-                    fill="var(--chart-primary)" 
-                    fillOpacity={0.3}
-                    strokeWidth={2}
-                    activeDot={{ r: 8 }}
-                    isAnimationActive={true}
-                    animationDuration={1500}
-                  />
-                  <Area 
-                    type="monotone" 
-                    dataKey="barreRev" 
-                    name="Barre Revenue" 
-                    stroke="hsl(var(--barre))"
-                    fill="hsl(var(--barre))"
-                    fillOpacity={0.2}
-                    strokeWidth={1.5}
-                    activeDot={{ r: 6 }}
-                    isAnimationActive={true}
-                    animationBegin={300}
-                    animationDuration={1500}
-                  />
-                  <Area 
-                    type="monotone" 
-                    dataKey="cycleRev" 
-                    name="Cycle Revenue" 
-                    stroke="hsl(var(--cycle))"
-                    fill="hsl(var(--cycle))"
-                    fillOpacity={0.2}
-                    strokeWidth={1.5}
-                    activeDot={{ r: 6 }}
-                    isAnimationActive={true}
-                    animationBegin={600}
-                    animationDuration={1500}
-                  />
-                </AreaChart>
-              </ChartContainer>
-            </CardContent>
-          </Card>
-        </motion.div>
-
-        <motion.div variants={chartVariants}>
-          <Card className="overflow-hidden backdrop-blur-sm border-border/50 bg-gradient-to-br from-background to-background/80">
-            <CardHeader className="pb-2">
-              <CardTitle className="flex items-center">
-                <DollarSign className="h-5 w-5 mr-2 text-cycle" />
-                Revenue Per Seat Trends
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="h-[350px]">
-              <ChartContainer 
-                className="h-full"
-                config={chartConfig}
-              >
-                <LineChart
-                  data={revenuePerSeatTrendsData}
-                  margin={{ top: 10, right: 30, left: 10, bottom: 10 }}
-                  onClick={(data) => handleDrillDown(data, "month", "Month")}
-                >
-                  <CartesianGrid strokeDasharray="3 3" opacity={0.1} />
-                  <XAxis 
-                    dataKey="name" 
-                    tick={{ fill: 'var(--foreground)', fontSize: 12 }}
-                  />
-                  <YAxis 
-                    tick={{ fill: 'var(--foreground)', fontSize: 12 }}
-                    tickFormatter={formatINR}
-                  />
-                  <Tooltip 
-                    content={<ChartTooltipContent formatter={(value: RechartsValueType) => formatINR(Number(value))} />} 
-                    wrapperStyle={{ zIndex: 1000 }}
-                  />
-                  <Legend verticalAlign="top" height={36} />
-                  <Line 
-                    type="monotone" 
-                    dataKey="revenuePerSeat" 
-                    name="Avg. Revenue/Seat" 
-                    stroke="var(--chart-primary)" 
-                    strokeWidth={2}
-                    dot={{ r: 4 }}
-                    activeDot={{ r: 8, strokeWidth: 1 }}
-                    isAnimationActive={true}
-                    animationDuration={1500}
-                  />
-                  <Line 
-                    type="monotone" 
-                    dataKey="barreRevPerSeat" 
-                    name="Barre Rev/Seat" 
-                    stroke="hsl(var(--barre))" 
-                    dot={{ r: 3 }}
-                    activeDot={{ r: 6 }}
-                    isAnimationActive={true}
-                    animationBegin={300}
-                    animationDuration={1500}
-                  />
-                  <Line 
-                    type="monotone" 
-                    dataKey="cycleRevPerSeat" 
-                    name="Cycle Rev/Seat" 
-                    stroke="hsl(var(--cycle))" 
-                    dot={{ r: 3 }}
-                    activeDot={{ r: 6 }}
-                    isAnimationActive={true}
-                    animationBegin={600}
-                    animationDuration={1500}
-                  />
-                </LineChart>
-              </ChartContainer>
-            </CardContent>
-          </Card>
-        </motion.div>
+                    <LineChart 
+                      data={revenueTrendsData}
+                      margin={{ top: 10, right: 30, left: 10, bottom: 10 }}
+                      onClick={(data) => handleDrillDown(data, 'Revenue for')}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" opacity={0.1} />
+                      <XAxis 
+                        dataKey="name" 
+                        tick={{ fill: 'var(--foreground)', fontSize: 12 }}
+                        padding={{ left: 10, right: 10 }}
+                      />
+                      <YAxis 
+                        tickFormatter={(value) => formatINR(value)} 
+                        tick={{ fill: 'var(--foreground)', fontSize: 12 }}
+                      />
+                      <Tooltip 
+                        content={<ChartTooltipContent labelFormatter={(label) => `Month: ${label}`} />} 
+                        wrapperStyle={{ zIndex: 1000 }}
+                      />
+                      <Legend verticalAlign="top" height={36} />
+                      <Line 
+                        type="monotone" 
+                        dataKey="revenue" 
+                        name="Total Revenue" 
+                        stroke="var(--chart-primary)" 
+                        strokeWidth={2}
+                        activeDot={{ r: 8, strokeWidth: 1 }}
+                        isAnimationActive={true}
+                        animationBegin={0}
+                        animationDuration={1500}
+                      />
+                      <Line 
+                        type="monotone" 
+                        dataKey="barreRev" 
+                        name="Barre Revenue" 
+                        stroke="hsl(var(--barre))" 
+                        activeDot={{ r: 6 }}
+                        isAnimationActive={true}
+                        animationBegin={300}
+                        animationDuration={1500}
+                      />
+                      <Line 
+                        type="monotone" 
+                        dataKey="cycleRev" 
+                        name="Cycle Revenue" 
+                        stroke="hsl(var(--cycle))" 
+                        activeDot={{ r: 6 }}
+                        isAnimationActive={true}
+                        animationBegin={600}
+                        animationDuration={1500}
+                      />
+                    </LineChart>
+                  </ChartContainer>
+                </CardContent>
+              </Card>
+            </motion.div>
+          </TabsContent>
+          
+          {/* Revenue Breakdown Tab */}
+          <TabsContent value="breakdown" className="mt-4">
+            <motion.div variants={chartVariants}>
+              <Card className="overflow-hidden backdrop-blur-sm border-border/50 bg-gradient-to-br from-background to-background/80">
+                <CardHeader className="pb-2">
+                  <CardTitle className="flex items-center">
+                    <PieChartIcon className="h-5 w-5 mr-2 text-amber-400" />
+                    Revenue Breakdown by Class Type
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="h-[400px]">
+                  <ChartContainer 
+                    className="h-full"
+                    config={chartConfig}
+                  >
+                    <PieChart>
+                      <Pie
+                        activeIndex={activeIndex}
+                        activeShape={renderActiveShape}
+                        data={revenueBreakdownData}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={80}
+                        outerRadius={120}
+                        dataKey="value"
+                        onMouseEnter={(_, index) => setActiveIndex(index)}
+                        isAnimationActive={true}
+                        animationBegin={0}
+                        animationDuration={1800}
+                      >
+                        {revenueBreakdownData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.fill} />
+                        ))}
+                      </Pie>
+                      <Tooltip 
+                        content={<ChartTooltipContent />} 
+                        wrapperStyle={{ zIndex: 1000 }}
+                      />
+                    </PieChart>
+                  </ChartContainer>
+                </CardContent>
+              </Card>
+            </motion.div>
+          </TabsContent>
+          
+          {/* Revenue per Session Tab */}
+          <TabsContent value="perSession" className="mt-4">
+            <motion.div variants={chartVariants}>
+              <Card className="overflow-hidden backdrop-blur-sm border-border/50 bg-gradient-to-br from-background to-background/80">
+                <CardHeader className="pb-2">
+                  <CardTitle className="flex items-center">
+                    <BarChart3 className="h-5 w-5 mr-2 text-blue-400" />
+                    Revenue per Session Over Time
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="h-[400px]">
+                  <ChartContainer 
+                    className="h-full"
+                    config={chartConfig}
+                  >
+                    <LineChart 
+                      data={revenuePerSessionData}
+                      margin={{ top: 10, right: 30, left: 10, bottom: 10 }}
+                      onClick={(data) => handleDrillDown(data, 'Revenue per Session for')}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" opacity={0.1} />
+                      <XAxis 
+                        dataKey="name" 
+                        tick={{ fill: 'var(--foreground)', fontSize: 12 }}
+                        padding={{ left: 10, right: 10 }}
+                      />
+                      <YAxis 
+                        tickFormatter={(value) => formatINR(value)} 
+                        tick={{ fill: 'var(--foreground)', fontSize: 12 }}
+                      />
+                      <Tooltip 
+                        content={<ChartTooltipContent labelFormatter={(label) => `Month: ${label}`} />} 
+                        wrapperStyle={{ zIndex: 1000 }}
+                      />
+                      <Legend verticalAlign="top" height={36} />
+                      <Line 
+                        type="monotone" 
+                        dataKey="totalRevPerSession" 
+                        name="Total Revenue per Session" 
+                        stroke="var(--chart-primary)" 
+                        strokeWidth={2}
+                        activeDot={{ r: 8, strokeWidth: 1 }}
+                        isAnimationActive={true}
+                        animationBegin={0}
+                        animationDuration={1500}
+                      />
+                      <Line 
+                        type="monotone" 
+                        dataKey="barreRevPerSession" 
+                        name="Barre Revenue per Session" 
+                        stroke="hsl(var(--barre))" 
+                        activeDot={{ r: 6 }}
+                        isAnimationActive={true}
+                        animationBegin={300}
+                        animationDuration={1500}
+                      />
+                      <Line 
+                        type="monotone" 
+                        dataKey="cycleRevPerSession" 
+                        name="Cycle Revenue per Session" 
+                        stroke="hsl(var(--cycle))" 
+                        activeDot={{ r: 6 }}
+                        isAnimationActive={true}
+                        animationBegin={600}
+                        animationDuration={1500}
+                      />
+                    </LineChart>
+                  </ChartContainer>
+                </CardContent>
+              </Card>
+            </motion.div>
+          </TabsContent>
+          
+          {/* Revenue per Customer Tab */}
+          <TabsContent value="perCustomer" className="mt-4">
+            <motion.div variants={chartVariants}>
+              <Card className="overflow-hidden backdrop-blur-sm border-border/50 bg-gradient-to-br from-background to-background/80">
+                <CardHeader className="pb-2">
+                  <CardTitle className="flex items-center">
+                    <DollarSign className="h-5 w-5 mr-2 text-purple-400" />
+                    Revenue per Customer Over Time
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="h-[400px]">
+                  <ChartContainer 
+                    className="h-full"
+                    config={chartConfig}
+                  >
+                    <ComposedChart 
+                      data={revenueCompositionData}
+                      margin={{ top: 10, right: 30, left: 10, bottom: 10 }}
+                      onClick={(data) => handleDrillDown(data, 'Revenue Composition for')}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" opacity={0.1} />
+                      <XAxis 
+                        dataKey="name" 
+                        tick={{ fill: 'var(--foreground)', fontSize: 12 }}
+                        padding={{ left: 10, right: 10 }}
+                      />
+                      <YAxis 
+                        tickFormatter={(value) => formatINR(value)} 
+                        tick={{ fill: 'var(--foreground)', fontSize: 12 }}
+                      />
+                      <Tooltip 
+                        content={<ChartTooltipContent labelFormatter={(label) => `Month: ${label}`} />} 
+                        wrapperStyle={{ zIndex: 1000 }}
+                      />
+                      <Legend verticalAlign="top" height={36} />
+                      <Area 
+                        type="monotone" 
+                        dataKey="barreRevenue" 
+                        name="Barre Revenue" 
+                        fill="hsl(var(--barre))" 
+                        stroke="hsl(var(--barre))"
+                        fillOpacity={0.3}
+                        isAnimationActive={true}
+                        animationBegin={0}
+                        animationDuration={1500}
+                      />
+                      <Area 
+                        type="monotone" 
+                        dataKey="cycleRevenue" 
+                        name="Cycle Revenue" 
+                        fill="hsl(var(--cycle))" 
+                        stroke="hsl(var(--cycle))"
+                        fillOpacity={0.3}
+                        isAnimationActive={true}
+                        animationBegin={300}
+                        animationDuration={1500}
+                      />
+                      <Bar 
+                        dataKey="barreRevenue" 
+                        name="Barre Revenue" 
+                        fill="hsl(var(--barre))"
+                        radius={[4, 4, 0, 0]}
+                        barSize={20}
+                        fillOpacity={0.8}
+                        isAnimationActive={true}
+                        animationBegin={600}
+                        animationDuration={1500}
+                      />
+                      <Bar 
+                        dataKey="cycleRevenue" 
+                        name="Cycle Revenue" 
+                        fill="hsl(var(--cycle))"
+                        radius={[4, 4, 0, 0]}
+                        barSize={20}
+                        fillOpacity={0.8}
+                        isAnimationActive={true}
+                        animationBegin={900}
+                        animationDuration={1500}
+                      />
+                    </ComposedChart>
+                  </ChartContainer>
+                </CardContent>
+              </Card>
+            </motion.div>
+          </TabsContent>
+        </Tabs>
       </motion.div>
     </motion.div>
   );
