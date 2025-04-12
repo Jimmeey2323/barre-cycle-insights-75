@@ -3,12 +3,13 @@ import React from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ProcessedData, ViewType } from "@/types/fitnessTypes";
-import { BarChart, LineChart, PieChart, ActivityIcon, Users, DollarSign, RefreshCw } from "lucide-react";
+import { BarChart, LineChart, PieChart, ActivityIcon, Users, DollarSign, RefreshCw, Database } from "lucide-react";
 import OverviewView from "./views/OverviewView";
 import TeachersView from "./views/TeachersView";
 import ClassesView from "./views/ClassesView";
 import FinancialsView from "./views/FinancialsView";
 import RetentionView from "./views/RetentionView";
+import TablesView from "./views/TablesView";
 import FilterControls from "./FilterControls";
 
 interface DashboardLayoutProps {
@@ -97,7 +98,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
       </div>
 
       <div className="mb-6 flex flex-col gap-4 md:flex-row">
-        <Card className="flex-1">
+        <Card className="flex-1 card-glass">
           <CardHeader className="pb-2">
             <CardTitle className="text-lg">
               <FilterControls 
@@ -114,7 +115,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
       </div>
 
       <Tabs value={currentView} onValueChange={(value) => setCurrentView(value as ViewType)} className="space-y-4">
-        <TabsList className="grid w-full grid-cols-2 md:grid-cols-5">
+        <TabsList className="grid w-full grid-cols-2 md:grid-cols-6">
           <TabsTrigger value="overview" className="flex items-center gap-2">
             <BarChart className="h-4 w-4" />
             <span className="hidden md:inline">Overview</span>
@@ -134,6 +135,10 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
           <TabsTrigger value="retention" className="flex items-center gap-2">
             <RefreshCw className="h-4 w-4" />
             <span className="hidden md:inline">Retention</span>
+          </TabsTrigger>
+          <TabsTrigger value="tables" className="flex items-center gap-2">
+            <Database className="h-4 w-4" />
+            <span className="hidden md:inline">Tables</span>
           </TabsTrigger>
         </TabsList>
 
@@ -155,6 +160,10 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
 
         <TabsContent value="retention" className="space-y-4">
           <RetentionView data={data} selectedMonths={selectedMonths} location={actualLocation} />
+        </TabsContent>
+
+        <TabsContent value="tables" className="space-y-4">
+          <TablesView data={data} selectedMonths={selectedMonths} location={actualLocation} />
         </TabsContent>
       </Tabs>
     </div>

@@ -5,19 +5,19 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    --background: 200 20% 98%;
+    --foreground: 224 71% 4%;
 
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card-foreground: 224 71% 4%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover-foreground: 224 71% 4%;
 
-    --primary: 340 82% 52%;
+    --primary: 262 53% 57%;
     --primary-foreground: 210 40% 98%;
 
-    --secondary: 160 51% 65%;
+    --secondary: 173 100% 38%;
     --secondary-foreground: 222.2 47.4% 11.2%;
 
     --muted: 210 40% 96.1%;
@@ -31,25 +31,25 @@
 
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --ring: 262 53% 57%;
 
-    --radius: 0.5rem;
+    --radius: 0.75rem;
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
+    --background: 224 71% 4%;
     --foreground: 210 40% 98%;
 
-    --card: 222.2 84% 4.9%;
+    --card: 224 71% 4%;
     --card-foreground: 210 40% 98%;
 
-    --popover: 222.2 84% 4.9%;
+    --popover: 224 71% 4%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 340 82% 52%;
+    --primary: 262 53% 57%;
     --primary-foreground: 222.2 47.4% 11.2%;
 
-    --secondary: 160 51% 65%;
+    --secondary: 173 100% 38%;
     --secondary-foreground: 210 40% 98%;
 
     --muted: 217.2 32.6% 17.5%;
@@ -80,15 +80,15 @@
 /* Custom Utility Classes */
 @layer components {
   .text-barre {
-    @apply text-[#FF6F91];
+    @apply text-[#845EC2];
   }
   
   .text-cycle {
-    @apply text-[#9FD8CB];
+    @apply text-[#00C2A8];
   }
   
   .text-cycle-dark {
-    @apply text-[#67B3A3];
+    @apply text-[#009380];
   }
   
   .text-gradient-barre {
@@ -97,6 +97,15 @@
   
   .text-gradient-cycle {
     @apply bg-gradient-to-r from-cycle-dark to-cycle bg-clip-text text-transparent;
+  }
+
+  /* Glass-morphism card effect */
+  .card-glass {
+    @apply bg-white/80 backdrop-blur-sm border border-white/20 shadow-lg;
+  }
+  
+  .card-glass-dark {
+    @apply bg-gray-900/80 backdrop-blur-sm border border-gray-800/50 shadow-lg;
   }
 
   /* Custom Table Styles */

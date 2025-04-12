@@ -49,13 +49,13 @@ export default {
           foreground: "hsl(var(--card-foreground))",
         },
         
-        // Custom colors
-        "barre": "#FF6F91",
-        "barre-light": "#FFA5B9",
-        "barre-dark": "#D84A6C",
-        "cycle": "#9FD8CB",
-        "cycle-light": "#C0E6DD",
-        "cycle-dark": "#67B3A3"
+        // Custom colors - Updated with new shades
+        "barre": "#845EC2", // Changed from pink to purple
+        "barre-light": "#B39CD0",
+        "barre-dark": "#5D3E96",
+        "cycle": "#00C2A8", // Changed from teal to turquoise
+        "cycle-light": "#5EEAD4",
+        "cycle-dark": "#009380"
       },
       borderRadius: {
         lg: "var(--radius)",
