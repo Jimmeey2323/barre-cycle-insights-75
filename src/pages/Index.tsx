@@ -14,6 +14,7 @@ const Index = () => {
   const [error, setError] = useState<Error | null>(null);
   const { toast } = useToast();
   
+  // Include 'pivot' in the ViewType
   const [currentView, setCurrentView] = useState<ViewType>("overview");
   const [selectedMonths, setSelectedMonths] = useState<string[]>([]);
   const [location, setLocation] = useState("all");
@@ -70,6 +71,12 @@ const Index = () => {
           setSelectedMonths(monthsToSelect);
         }
         
+        // Load last view from local storage if available
+        const lastView = localStorage.getItem("fitnessAppLastView");
+        if (lastView && ["overview", "teachers", "classes", "financials", "retention", "tables", "pivot"].includes(lastView)) {
+          setCurrentView(lastView as ViewType);
+        }
+        
         // Show a success toast
         toast({
           title: "Data loaded successfully",
@@ -92,11 +99,16 @@ const Index = () => {
     // Initial data load
     loadData();
   }, [toast]);
+  
+  // Save current view to local storage whenever it changes
+  useEffect(() => {
+    localStorage.setItem("fitnessAppLastView", currentView);
+  }, [currentView]);
 
   console.log("Index rendering with data:", data ? "available" : "null", "isLoading:", isLoading);
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-background to-muted/30">
       <DashboardLayout
         data={data}
         isLoading={isLoading}

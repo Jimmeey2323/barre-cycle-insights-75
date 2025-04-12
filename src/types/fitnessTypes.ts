@@ -1,5 +1,4 @@
-
-export type ViewType = "overview" | "teachers" | "classes" | "financials" | "retention" | "tables";
+export type ViewType = "overview" | "teachers" | "classes" | "financials" | "retention" | "tables" | "pivot";
 
 export interface RawFitnessData {
   "Teacher ID": string;
