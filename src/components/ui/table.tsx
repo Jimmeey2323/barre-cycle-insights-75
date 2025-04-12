@@ -70,13 +70,14 @@ const TableHead = React.forwardRef<
   HTMLTableCellElement,
   React.HTMLAttributes<HTMLTableCellElement> & {
     isNumeric?: boolean;
+    isFirstColumn?: boolean;
   }
->(({ className, isNumeric, ...props }, ref) => (
+>(({ className, isNumeric, isFirstColumn, ...props }, ref) => (
   <th
     ref={ref}
     className={cn(
-      "h-12 px-4 text-center align-middle font-medium text-muted-foreground [&:has([role=checkbox])]:pr-0",
-      isNumeric ? "text-center" : "text-left",
+      "h-12 px-4 align-middle font-medium text-muted-foreground [&:has([role=checkbox])]:pr-0",
+      isFirstColumn ? "text-left" : "text-center",
       className
     )}
     {...props}
@@ -90,16 +91,19 @@ const TableCell = React.forwardRef<
     isNumeric?: boolean;
     isCurrency?: boolean;
     isAverage?: boolean;
+    isFirstColumn?: boolean;
+    colSpan?: number;
   }
->(({ className, isNumeric, isCurrency, isAverage, ...props }, ref) => (
+>(({ className, isNumeric, isCurrency, isAverage, isFirstColumn, colSpan, ...props }, ref) => (
   <td
     ref={ref}
     className={cn(
       "p-4 align-middle [&:has([role=checkbox])]:pr-0",
-      isNumeric || isCurrency || isAverage ? "text-center" : "text-left",
+      isFirstColumn ? "text-left" : "text-center",
       isAverage && "text-blue-600 dark:text-blue-400",
       className
     )}
+    colSpan={colSpan}
     {...props}
   />
 ));

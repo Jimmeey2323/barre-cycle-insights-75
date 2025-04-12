@@ -52,12 +52,12 @@ export default {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
-        barre: "#FF6F91",
-        "barre-light": "#FFADBE",
-        "barre-dark": "#E5436A",
-        cycle: "#9FD8CB",
-        "cycle-light": "#C7EAE3",
-        "cycle-dark": "#6DBBAA",
+        barre: "#845EC2", // Updated to match new colors
+        "barre-light": "#B39CD0",
+        "barre-dark": "#5D3E96",
+        cycle: "#00C2A8", // Updated to match new colors
+        "cycle-light": "#5EEAD4",
+        "cycle-dark": "#009380"
       },
       borderRadius: {
         lg: "var(--radius)",
@@ -115,6 +115,20 @@ export default {
           "0%": { transform: "translateY(100%)" },
           "100%": { transform: "translateY(0)" }
         },
+        "float": {
+          "0%": { transform: "translateY(0px)" },
+          "50%": { transform: "translateY(-10px)" },
+          "100%": { transform: "translateY(0px)" }
+        },
+        "pulse-ring": {
+          "0%": { transform: "scale(0.8)", opacity: "0.8" },
+          "50%": { transform: "scale(1.1)", opacity: "0.4" },
+          "100%": { transform: "scale(0.8)", opacity: "0.8" }
+        },
+        "shimmer": {
+          "0%": { backgroundPosition: "-1000px 0" },
+          "100%": { backgroundPosition: "1000px 0" }
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -123,6 +137,9 @@ export default {
         "fade-up": "fade-up 0.5s ease-out forwards",
         "scale-in": "scale-in 0.3s ease-out forwards",
         "counter": "counter 1s ease-out forwards",
+        "float": "float 3s ease-in-out infinite",
+        "pulse-ring": "pulse-ring 3s cubic-bezier(0.4, 0, 0.6, 1) infinite",
+        "shimmer": "shimmer 2s infinite"
       },
     },
   },

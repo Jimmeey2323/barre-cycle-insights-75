@@ -1,9 +1,11 @@
 
-import React from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import React, { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ProcessedData, ViewType } from "@/types/fitnessTypes";
-import { BarChart, LineChart, PieChart, ActivityIcon, Users, IndianRupee, RefreshCw, Database, TableProperties } from "lucide-react";
+import { 
+  BarChart, LineChart, PieChart, ActivityIcon, Users, IndianRupee, 
+  RefreshCw, Database, TableProperties, SearchIcon, ArrowUpRightSquare 
+} from "lucide-react";
 import OverviewView from "./views/OverviewView";
 import TeachersView from "./views/TeachersView";
 import ClassesView from "./views/ClassesView";
@@ -11,7 +13,11 @@ import FinancialsView from "./views/FinancialsView";
 import RetentionView from "./views/RetentionView";
 import TablesView from "./views/TablesView";
 import PivotTableView from "./views/PivotTableView";
-import FilterControls from "./FilterControls";
+import EnhancedFilters from "./EnhancedFilters";
+import EnhancedTitle from "./EnhancedTitle";
+import VoiceSearch from "./VoiceSearch";
+import { Button } from "./ui/button";
+import { Card, CardContent } from "./ui/card";
 
 interface DashboardLayoutProps {
   data: ProcessedData | null;
@@ -36,6 +42,15 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   location,
   setLocation
 }) => {
+  const [searchQuery, setSearchQuery] = useState("");
+  const [trainers, setTrainers] = useState<string[]>([]);
+  const [classTypes, setClassTypes] = useState<string[]>([]);
+  
+  const handleSearch = (query: string) => {
+    setSearchQuery(query);
+    // You could implement actual search functionality here
+  };
+
   console.log("DashboardLayout rendering with:", { 
     hasData: !!data, 
     isLoading, 
@@ -81,38 +96,53 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
     );
   }
 
-  const allMonths = data.monthlyStats.map(stat => stat.monthYear);
-  console.log("Available months for filtering:", allMonths);
+  // Calculate filter effects - for now it's just information display
+  const totalRecords = data.rawData.length;
+  const filteredCount = data.rawData.filter(record => 
+    (selectedMonths.length === 0 || selectedMonths.includes(record["Month Year"])) &&
+    (location === "" || location === "all" || record.Location === location) &&
+    (trainers.length === 0 || trainers.includes(record.Teacher)) &&
+    (classTypes.length === 0 || classTypes.includes(record.Type))
+  ).length;
   
-  // Get actual filtered location
-  const actualLocation = location === "all" ? "" : location;
+  const filterPercentage = totalRecords > 0 ? Math.round((filteredCount / totalRecords) * 100) : 0;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-muted/30 pb-8">
       <div className="container mx-auto px-4 py-8">
-        <div className="mb-8">
-          <h1 className="mb-2 text-3xl font-bold tracking-tight bg-gradient-to-r from-primary to-accent-foreground bg-clip-text text-transparent">
-            <span className="text-gradient-barre">Barre</span> vs <span className="text-gradient-cycle">Cycle</span> Analytics
-          </h1>
-          <p className="text-muted-foreground">
-            Interactive analytics dashboard for fitness program performance metrics
-          </p>
+        <div className="mb-8 flex flex-col md:flex-row justify-between items-start gap-4">
+          <EnhancedTitle />
+          
+          <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
+            <VoiceSearch onSearch={handleSearch} />
+            
+            <Button 
+              variant="outline" 
+              size="icon"
+              className="bg-background/70 backdrop-blur-sm"
+            >
+              <ArrowUpRightSquare className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
 
         <div className="mb-6">
           <Card className="card-glass backdrop-blur-sm border-opacity-30">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-lg">
-                <FilterControls 
-                  allMonths={allMonths} 
-                  selectedMonths={selectedMonths} 
+            <CardContent className="pt-6">
+              {data && (
+                <EnhancedFilters 
+                  data={data}
+                  selectedMonths={selectedMonths}
                   setSelectedMonths={setSelectedMonths}
                   location={location}
                   setLocation={setLocation}
-                  data={data}
+                  trainers={trainers}
+                  setTrainers={setTrainers}
+                  classTypes={classTypes}
+                  setClassTypes={setClassTypes}
                 />
-              </CardTitle>
-            </CardHeader>
+              )}
+            </CardContent>
           </Card>
         </div>
 
@@ -150,33 +180,45 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
             </TabsList>
           </div>
 
-          <TabsContent value="overview" className="space-y-4">
-            <OverviewView data={data} selectedMonths={selectedMonths} location={actualLocation} />
-          </TabsContent>
+          {searchQuery ? (
+            <div className="p-8 text-center">
+              <h2 className="text-2xl font-bold mb-4">Search Results for "{searchQuery}"</h2>
+              <p className="text-muted-foreground">
+                Showing results across all dashboard sections. 
+                <Button variant="link" onClick={() => setSearchQuery("")}>Clear search</Button>
+              </p>
+            </div>
+          ) : (
+            <>
+              <TabsContent value="overview" className="space-y-4">
+                <OverviewView data={data} selectedMonths={selectedMonths} location={location} />
+              </TabsContent>
 
-          <TabsContent value="teachers" className="space-y-4">
-            <TeachersView data={data} selectedMonths={selectedMonths} location={actualLocation} />
-          </TabsContent>
+              <TabsContent value="teachers" className="space-y-4">
+                <TeachersView data={data} selectedMonths={selectedMonths} location={location} />
+              </TabsContent>
 
-          <TabsContent value="classes" className="space-y-4">
-            <ClassesView data={data} selectedMonths={selectedMonths} location={actualLocation} />
-          </TabsContent>
+              <TabsContent value="classes" className="space-y-4">
+                <ClassesView data={data} selectedMonths={selectedMonths} location={location} />
+              </TabsContent>
 
-          <TabsContent value="financials" className="space-y-4">
-            <FinancialsView data={data} selectedMonths={selectedMonths} location={actualLocation} />
-          </TabsContent>
+              <TabsContent value="financials" className="space-y-4">
+                <FinancialsView data={data} selectedMonths={selectedMonths} location={location} />
+              </TabsContent>
 
-          <TabsContent value="retention" className="space-y-4">
-            <RetentionView data={data} selectedMonths={selectedMonths} location={actualLocation} />
-          </TabsContent>
+              <TabsContent value="retention" className="space-y-4">
+                <RetentionView data={data} selectedMonths={selectedMonths} location={location} />
+              </TabsContent>
 
-          <TabsContent value="tables" className="space-y-4">
-            <TablesView data={data} selectedMonths={selectedMonths} location={actualLocation} />
-          </TabsContent>
-          
-          <TabsContent value="pivot" className="space-y-4">
-            <PivotTableView data={data} selectedMonths={selectedMonths} location={actualLocation} />
-          </TabsContent>
+              <TabsContent value="tables" className="space-y-4">
+                <TablesView data={data} selectedMonths={selectedMonths} location={location} />
+              </TabsContent>
+              
+              <TabsContent value="pivot" className="space-y-4">
+                <PivotTableView data={data} selectedMonths={selectedMonths} location={location} />
+              </TabsContent>
+            </>
+          )}
         </Tabs>
       </div>
     </div>
