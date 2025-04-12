@@ -111,7 +111,7 @@ const RetentionView: React.FC<RetentionViewProps> = ({ data, selectedMonths, loc
 
   // Build Sankey funnel data
   const sankeyNodes = [
-    { id: 'leads', label: 'Leads created', value: totalNewCustomers, color: '#FF6E6E', position: 'top' as const, column: 0 },
+    { id: 'new', label: 'New Customers', value: totalNewCustomers, color: '#FF6E6E', position: 'top' as const, column: 0 },
     { id: 'intro-offer-yes', label: 'Bought Intro Offer', value: Math.floor(totalNewCustomers * 0.27), color: '#60A5FA', position: 'top' as const, column: 1 },
     { id: 'intro-offer-no', label: "Didn't buy Intro Offer", value: Math.floor(totalNewCustomers * 0.73), color: '#FF6E6E', position: 'bottom' as const, column: 1 },
     { id: 'booked-class-intro', label: 'Booked class with Intro Offer', value: Math.floor(totalNewCustomers * 0.27 * 0.81), color: '#60A5FA', position: 'top' as const, column: 2 },
@@ -123,8 +123,8 @@ const RetentionView: React.FC<RetentionViewProps> = ({ data, selectedMonths, loc
   ];
   
   const sankeyLinks = [
-    { source: 'leads', target: 'intro-offer-yes', value: Math.floor(totalNewCustomers * 0.27), color: '#60A5FA' },
-    { source: 'leads', target: 'intro-offer-no', value: Math.floor(totalNewCustomers * 0.73), color: '#FF6E6E' },
+    { source: 'new', target: 'intro-offer-yes', value: Math.floor(totalNewCustomers * 0.27), color: '#60A5FA' },
+    { source: 'new', target: 'intro-offer-no', value: Math.floor(totalNewCustomers * 0.73), color: '#FF6E6E' },
     { source: 'intro-offer-yes', target: 'booked-class-intro', value: Math.floor(totalNewCustomers * 0.27 * 0.81), color: '#60A5FA' },
     { source: 'intro-offer-yes', target: 'not-booked-intro', value: Math.floor(totalNewCustomers * 0.27 * 0.19), color: '#FF6E6E' },
     { source: 'booked-class-intro', target: 'bought-membership', value: Math.floor(totalNewCustomers * 0.27 * 0.81 * 0.30), color: '#10B981' },
@@ -289,7 +289,7 @@ const RetentionView: React.FC<RetentionViewProps> = ({ data, selectedMonths, loc
             links={sankeyLinks}
             ltv={totalNewCustomers * 582220.35 / 179} // Based on reference image LTV
             conversionRate={{
-              from: "Lead created",
+              from: "New Customers",
               to: "Booked class with Membership",
               rate: 6.15
             }}
