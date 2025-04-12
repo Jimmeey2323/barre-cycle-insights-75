@@ -1,5 +1,7 @@
 
-export interface FitnessRecord {
+export type ViewType = "overview" | "teachers" | "classes" | "financials" | "retention";
+
+export interface RawFitnessData {
   "Teacher ID": string;
   "Teacher Name": string;
   "Teacher Email": string;
@@ -23,14 +25,10 @@ export interface FitnessRecord {
   "New": string;
   "Retained": string;
   "Converted": string;
-  "Retention": string;
-  "Conversion": string;
-  "Class Avg - Barre": string;
-  "Class Avg - Cycle": string;
-  "Class Avg - Combined": string;
+  [key: string]: string;
 }
 
-export interface MonthlyStats {
+export interface MonthlyStat {
   monthYear: string;
   totalBarreSessions: number;
   totalCycleSessions: number;
@@ -42,16 +40,14 @@ export interface MonthlyStats {
   avgCycleClassSize: string;
   totalRetained: number;
   totalConverted: number;
+  totalNew: number;
 }
 
 export interface ProcessedData {
-  monthlyStats: MonthlyStats[];
-  rawData: FitnessRecord[];
+  rawData: RawFitnessData[];
+  monthlyStats: MonthlyStat[];
 }
 
-export type ViewType = 'overview' | 'teachers' | 'classes' | 'financials' | 'retention';
-export type ChartType = 'bar' | 'line' | 'pie' | 'area';
-
-// Recharts types for type safety
+// For typing Recharts data
 export type RechartsValueType = string | number | Array<string | number>;
 export type RechartsNameType = string | number;
