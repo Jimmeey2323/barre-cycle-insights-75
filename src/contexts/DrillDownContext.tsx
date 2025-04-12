@@ -1,15 +1,13 @@
 
 import React, { createContext, useState, useContext, ReactNode } from 'react';
-import { DrillDownContextProps } from '@/types/drillDownTypes';
+import { DrillDownContextProps, DrillDownData } from '@/types/drillDownTypes';
 
 // Create context with default values
 const DrillDownContext = createContext<DrillDownContextProps>({
   drillDownData: null,
-  showDrillDown: () => {},
-  hideDrillDown: () => {},
-  isVisible: false,
-  drillDownTitle: '',
-  drillDownType: '',
+  setDrillDown: () => {},
+  showDrillDown: false,
+  setShowDrillDown: () => {}
 });
 
 interface DrillDownProviderProps {
@@ -17,33 +15,19 @@ interface DrillDownProviderProps {
 }
 
 export const DrillDownProvider = ({ children }: DrillDownProviderProps) => {
-  const [drillDownData, setDrillDownData] = useState<any>(null);
-  const [isVisible, setIsVisible] = useState(false);
-  const [drillDownTitle, setDrillDownTitle] = useState('');
-  const [drillDownType, setDrillDownType] = useState<'teacher' | 'class' | 'location' | 'month' | 'financial' | 'retention' | ''>('');
+  const [drillDownData, setDrillDownData] = useState<DrillDownData | null>(null);
+  const [showDrillDown, setShowDrillDown] = useState(false);
 
-  const showDrillDown = (data: any, title: string, type: 'teacher' | 'class' | 'location' | 'month' | 'financial' | 'retention') => {
+  const setDrillDown = (data: DrillDownData | null) => {
     setDrillDownData(data);
-    setDrillDownTitle(title);
-    setDrillDownType(type);
-    setIsVisible(true);
-  };
-
-  const hideDrillDown = () => {
-    setIsVisible(false);
-    setDrillDownData(null);
-    setDrillDownTitle('');
-    setDrillDownType('');
   };
 
   return (
     <DrillDownContext.Provider value={{ 
       drillDownData, 
+      setDrillDown,
       showDrillDown,
-      hideDrillDown,
-      isVisible,
-      drillDownTitle,
-      drillDownType
+      setShowDrillDown
     }}>
       {children}
     </DrillDownContext.Provider>
