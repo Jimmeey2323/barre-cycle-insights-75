@@ -5,10 +5,11 @@ import { ProcessedData } from "@/types/fitnessTypes";
 import { LineChart, BarChart, PieChart, FunnelChart, Funnel, Line, Bar, Pie, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell, TooltipProps, LabelList } from 'recharts';
 import { formatINR, formatNumber, formatPercent } from "@/lib/formatters";
 import { useDrillDown } from "@/contexts/DrillDownContext";
-import { Users, BarChart as BarChartIcon, BarChart2, Activity, TrendingUp, TrendingDown, User, UserPlus, RefreshCcw, Dumbbell, Hourglass, Timer, IndianRupee, Zap } from "lucide-react";
+import { Users, BarChart as BarChartIcon, BarChart2, Activity, TrendingUp, TrendingDown, User, UserPlus, RefreshCcw, Dumbbell, Hourglass, Timer, IndianRupee, Zap, Award, Target, CalendarClock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import MetricsCard from "../dashboard/MetricsCard";
 import { motion } from "framer-motion";
+import { filterData } from "@/lib/utils";
 
 interface OverviewViewProps {
   data: ProcessedData;
@@ -17,22 +18,16 @@ interface OverviewViewProps {
 }
 
 const OverviewView: React.FC<OverviewViewProps> = ({ data, selectedMonths, location }) => {
-  const { setDrillDown, setShowDrillDown } = useDrillDown();
+  const { showDrillDown, setDrillDown, setShowDrillDown } = useDrillDown();
 
-  // Filter data based on selected months and location
-  const filteredStats = useMemo(() => {
-    return data.monthlyStats.filter(stat => 
-      (selectedMonths.length === 0 || selectedMonths.includes(stat.monthYear)) &&
-      (location === "" || location === "all" || stat.Location === location)
-    );
+  // Use the filterData utility to properly filter data based on location and months
+  const filteredData = useMemo(() => {
+    return filterData(data, selectedMonths, location);
   }, [data, selectedMonths, location]);
 
-  const filteredRawData = useMemo(() => {
-    return data.rawData.filter(record => 
-      (selectedMonths.length === 0 || selectedMonths.includes(String(record["Month Year"]))) &&
-      (location === "" || location === "all" || record.Location === location)
-    );
-  }, [data, selectedMonths, location]);
+  // Extract filtered stats and raw data
+  const filteredStats = filteredData.monthlyStats;
+  const filteredRawData = filteredData.rawData;
 
   // Add debug logging
   useEffect(() => {
@@ -59,48 +54,50 @@ const OverviewView: React.FC<OverviewViewProps> = ({ data, selectedMonths, locat
   const totalSessions = totalBarreSessions + totalCycleSessions;
 
   // Calculate total attendance
-  const totalBarreAttendance = useMemo(() => 
+  const totalBarreCustomers = useMemo(() => 
     filteredRawData.reduce((sum, record) => 
-      sum + parseInt(String(record["Barre Attendance"] || 0)), 0), 
+      sum + parseInt(String(record["Barre Customers"] || 0)), 0), 
     [filteredRawData]);
 
-  const totalCycleAttendance = useMemo(() => 
+  const totalCycleCustomers = useMemo(() => 
     filteredRawData.reduce((sum, record) => 
-      sum + parseInt(String(record["Cycle Attendance"] || 0)), 0), 
+      sum + parseInt(String(record["Cycle Customers"] || 0)), 0), 
     [filteredRawData]);
 
-  const totalAttendance = totalBarreAttendance + totalCycleAttendance;
+  const totalCustomers = totalBarreCustomers + totalCycleCustomers;
 
-  // Calculate total customers and revenue
-  const totalCustomers = useMemo(() => 
+  // Calculate total revenue
+  const totalBarrePaid = useMemo(() => 
     filteredRawData.reduce((sum, record) => 
-      sum + parseInt(String(record["Total Customers"] || 0)), 0), 
+      sum + parseFloat(String(record["Barre Paid"] || 0)), 0), 
     [filteredRawData]);
 
-  const totalRevenue = useMemo(() => 
+  const totalCyclePaid = useMemo(() => 
     filteredRawData.reduce((sum, record) => 
-      sum + parseInt(String(record["Total Revenue"] || 0)), 0), 
+      sum + parseFloat(String(record["Cycle Paid"] || 0)), 0), 
     [filteredRawData]);
+
+  const totalRevenue = totalBarrePaid + totalCyclePaid;
 
   // Calculate retention and conversion metrics for funnel
   const totalRetained = useMemo(() => 
     filteredRawData.reduce((sum, record) => 
-      sum + parseInt(String(record["Retained Customers"] || 0)), 0), 
+      sum + parseInt(String(record["Retained"] || 0)), 0), 
     [filteredRawData]);
 
   const totalConverted = useMemo(() => 
     filteredRawData.reduce((sum, record) => 
-      sum + parseInt(String(record["Converted Customers"] || 0)), 0), 
+      sum + parseInt(String(record["Converted"] || 0)), 0), 
     [filteredRawData]);
 
   const totalNewCustomers = useMemo(() => 
     filteredRawData.reduce((sum, record) => 
-      sum + parseInt(String(record["New Customers"] || 0)), 0), 
+      sum + parseInt(String(record["New"] || 0)), 0), 
     [filteredRawData]);
 
   // Calculate averages
-  const avgBarreClassSize = totalBarreSessions > 0 ? totalBarreAttendance / totalBarreSessions : 0;
-  const avgCycleClassSize = totalCycleSessions > 0 ? totalCycleAttendance / totalCycleSessions : 0;
+  const avgBarreClassSize = totalBarreSessions > 0 ? totalBarreCustomers / totalBarreSessions : 0;
+  const avgCycleClassSize = totalCycleSessions > 0 ? totalCycleCustomers / totalCycleSessions : 0;
   const avgRevPerClass = totalSessions > 0 ? totalRevenue / totalSessions : 0;
   const avgRevPerCustomer = totalCustomers > 0 ? totalRevenue / totalCustomers : 0;
 
@@ -109,15 +106,18 @@ const OverviewView: React.FC<OverviewViewProps> = ({ data, selectedMonths, locat
   const conversionRate = totalCustomers > 0 ? (totalConverted / totalCustomers) * 100 : 0;
   const newCustomerRate = totalCustomers > 0 ? (totalNewCustomers / totalCustomers) * 100 : 0;
 
-  // PREPARE CHART DATA
-  // Sessions comparison data
-  const sessionsComparisonData = filteredStats.map(stat => ({
-    name: stat.monthYear,
-    barre: parseInt(String(stat.totalBarreSessions)),
-    cycle: parseInt(String(stat.totalCycleSessions))
-  }));
+  // Calculate additional metrics
+  const avgSessionsPerCustomer = totalCustomers > 0 ? totalSessions / totalCustomers : 0;
+  const totalNonEmptyBarreSessions = filteredRawData.reduce((sum, record) => 
+    sum + parseInt(String(record["Non-Empty Barre Sessions"] || 0)), 0);
+  const totalNonEmptyCycleSessions = filteredRawData.reduce((sum, record) => 
+    sum + parseInt(String(record["Non-Empty Cycle Sessions"] || 0)), 0);
+  const avgAttendanceRate = (totalNonEmptyBarreSessions + totalNonEmptyCycleSessions) > 0 ? 
+    ((totalBarreCustomers + totalCycleCustomers) / (totalNonEmptyBarreSessions + totalNonEmptyCycleSessions)) : 0;
+  const revenuePerAttendee = totalCustomers > 0 ? totalRevenue / totalCustomers : 0;
 
-  // Customer funnel data
+  // PREPARE CHART DATA
+  // Customer funnel data - REPLACING sessions comparison chart with customer funnel
   const funnelData = [
     {
       name: "Total Customers",
@@ -140,8 +140,8 @@ const OverviewView: React.FC<OverviewViewProps> = ({ data, selectedMonths, locat
   const revenueTrendsData = filteredStats.map(stat => ({
     name: stat.monthYear,
     revenue: stat.totalRevenue,
-    barreRev: stat.barreRevenue || 0,
-    cycleRev: stat.cycleRevenue || 0
+    barreRev: stat.barrePaid || 0,
+    cycleRev: stat.cyclePaid || 0
   })).sort((a, b) => {
     // Sort by month/year
     const [aMonth, aYear] = a.name.split('-');
@@ -156,8 +156,8 @@ const OverviewView: React.FC<OverviewViewProps> = ({ data, selectedMonths, locat
   // Attendance comparison data
   const attendanceComparisonData = filteredStats.map(stat => ({
     name: stat.monthYear,
-    barreAttendance: stat.barreAttendance || 0,
-    cycleAttendance: stat.cycleAttendance || 0,
+    barreAttendance: stat.barreCustomers || 0,
+    cycleAttendance: stat.cycleCustomers || 0,
     barreAvg: stat.avgBarreClassSize || 0,
     cycleAvg: stat.avgCycleClassSize || 0
   })).sort((a, b) => {
@@ -170,6 +170,12 @@ const OverviewView: React.FC<OverviewViewProps> = ({ data, selectedMonths, locat
     if (aYear !== bYear) return parseInt(aYear) - parseInt(bYear);
     return monthOrder.indexOf(aMonth) - monthOrder.indexOf(bMonth);
   });
+
+  // Class distribution data for pie chart
+  const classDistributionData = [
+    { name: "Barre Classes", value: totalBarreSessions, fill: "#FF6F91" },
+    { name: "Cycle Classes", value: totalCycleSessions, fill: "#00C2A8" }
+  ];
 
   // Handle drill downs
   const handleDrillDown = (data: any, title: string) => {
@@ -198,7 +204,7 @@ const OverviewView: React.FC<OverviewViewProps> = ({ data, selectedMonths, locat
   const retainedColor = "#FFC75F";
   const convertedColor = "#F9F871";
 
-  // METRICS DATA FOR CARDS
+  // METRICS DATA FOR CARDS - Adding 4 more metric cards as requested
   const metricsData = [
     {
       title: "Total Sessions",
@@ -212,9 +218,9 @@ const OverviewView: React.FC<OverviewViewProps> = ({ data, selectedMonths, locat
     },
     {
       title: "Total Attendance",
-      value: formatNumber(totalAttendance),
+      value: formatNumber(totalCustomers),
       icon: <Users className="h-5 w-5 text-blue-500" />,
-      details: `${formatNumber(totalBarreAttendance)} Barre, ${formatNumber(totalCycleAttendance)} Cycle`,
+      details: `${formatNumber(totalBarreCustomers)} Barre, ${formatNumber(totalCycleCustomers)} Cycle`,
       trend: <Badge variant="outline" className="text-green-500">
         <TrendingUp className="h-3 w-3 mr-1" />
         +3%
@@ -282,6 +288,47 @@ const OverviewView: React.FC<OverviewViewProps> = ({ data, selectedMonths, locat
         +6%
       </Badge>
     },
+    // NEW METRICS (4 additional metrics as requested)
+    {
+      title: "Sessions per Customer",
+      value: avgSessionsPerCustomer.toFixed(1),
+      icon: <CalendarClock className="h-5 w-5 text-cyan-500" />,
+      details: `Avg attendance frequency`,
+      trend: <Badge variant="outline" className="text-green-500">
+        <TrendingUp className="h-3 w-3 mr-1" />
+        +2.5%
+      </Badge>
+    },
+    {
+      title: "Attendance Rate",
+      value: `${(avgAttendanceRate * 100).toFixed(1)}%`,
+      icon: <Target className="h-5 w-5 text-orange-500" />,
+      details: `Capacity utilization`,
+      trend: <Badge variant="outline" className="text-green-500">
+        <TrendingUp className="h-3 w-3 mr-1" />
+        +3.2%
+      </Badge>
+    },
+    {
+      title: "New Customer Rate",
+      value: `${newCustomerRate.toFixed(1)}%`,
+      icon: <UserPlus className="h-5 w-5 text-emerald-500" />,
+      details: `${formatNumber(totalNewCustomers)} new customers`,
+      trend: <Badge variant="outline" className="text-green-500">
+        <TrendingUp className="h-3 w-3 mr-1" />
+        +4.1%
+      </Badge>
+    },
+    {
+      title: "Popular Class",
+      value: totalBarreSessions > totalCycleSessions ? "Barre" : "Cycle",
+      icon: <Award className="h-5 w-5 text-yellow-500" />,
+      details: `Based on ${formatNumber(Math.max(totalBarreSessions, totalCycleSessions))} sessions`,
+      trend: <Badge variant="outline" className="text-blue-500">
+        <TrendingUp className="h-3 w-3 mr-1" />
+        Trending
+      </Badge>
+    },
   ];
 
   // ANIMATIONS CONFIGURATION
@@ -304,6 +351,15 @@ const OverviewView: React.FC<OverviewViewProps> = ({ data, selectedMonths, locat
     }
   };
 
+  const chartVariants = {
+    hidden: { opacity: 0, scale: 0.95 },
+    visible: {
+      opacity: 1,
+      scale: 1,
+      transition: { duration: 0.6, ease: "easeOut" }
+    }
+  };
+
   // Custom tooltip for charts
   const CustomTooltip = ({ active, payload, label }: TooltipProps<any, any>) => {
     if (active && payload && payload.length) {
@@ -315,7 +371,7 @@ const OverviewView: React.FC<OverviewViewProps> = ({ data, selectedMonths, locat
               <div className="h-2 w-2 rounded-full" style={{ backgroundColor: entry.color }}></div>
               <p className="text-xs">
                 <span className="font-medium">{entry.name}: </span>
-                {entry.name.toLowerCase().includes('revenue') 
+                {entry.name.toLowerCase().includes('revenue') || entry.name.toLowerCase().includes('rev')
                   ? formatINR(entry.value)
                   : entry.name.toLowerCase().includes('rate')
                     ? `${entry.value}%`
@@ -338,8 +394,8 @@ const OverviewView: React.FC<OverviewViewProps> = ({ data, selectedMonths, locat
     >
       <motion.div variants={itemVariants}>
         <div className="flex items-center justify-between mb-2">
-          <h2 className="text-3xl font-bold font-heading bg-gradient-to-r from-barre to-cycle bg-clip-text text-transparent">
-            Dashboard Overview
+          <h2 className="text-3xl font-bold font-heading bg-gradient-to-r from-purple-600 to-cyan-500 bg-clip-text text-transparent">
+            Dashboard Overview {location !== "" && location !== "all" ? `- ${location}` : ""}
           </h2>
           <Badge variant="outline" className="flex items-center px-3 py-1 rounded-full bg-background/60 backdrop-blur-sm">
             <BarChart2 className="mr-1 h-3.5 w-3.5 text-muted-foreground" />
@@ -355,7 +411,7 @@ const OverviewView: React.FC<OverviewViewProps> = ({ data, selectedMonths, locat
 
       {/* Metrics Grid */}
       <motion.div 
-        className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4"
+        className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4"
         variants={containerVariants}
       >
         {metricsData.map((metric, index) => (
@@ -376,11 +432,11 @@ const OverviewView: React.FC<OverviewViewProps> = ({ data, selectedMonths, locat
         className="grid grid-cols-1 gap-4 md:grid-cols-2"
         variants={containerVariants}
       >
-        <motion.div variants={itemVariants}>
-          <Card className="overflow-hidden backdrop-blur-sm border-border/50">
+        <motion.div variants={chartVariants}>
+          <Card className="overflow-hidden backdrop-blur-sm border-border/50 bg-gradient-to-br from-background to-background/80">
             <CardHeader className="pb-2">
               <CardTitle className="flex items-center">
-                <Users className="h-5 w-5 mr-2 text-customerColor" />
+                <Users className="h-5 w-5 mr-2 text-cyan-400" />
                 Customer Conversion Funnel
               </CardTitle>
             </CardHeader>
@@ -393,7 +449,7 @@ const OverviewView: React.FC<OverviewViewProps> = ({ data, selectedMonths, locat
                     data={funnelData}
                     isAnimationActive={true}
                     animationBegin={200}
-                    animationDuration={800}
+                    animationDuration={1500}
                   >
                     <LabelList 
                       position="right"
@@ -418,11 +474,11 @@ const OverviewView: React.FC<OverviewViewProps> = ({ data, selectedMonths, locat
           </Card>
         </motion.div>
 
-        <motion.div variants={itemVariants}>
-          <Card className="overflow-hidden backdrop-blur-sm border-border/50">
+        <motion.div variants={chartVariants}>
+          <Card className="overflow-hidden backdrop-blur-sm border-border/50 bg-gradient-to-br from-background to-background/80">
             <CardHeader className="pb-2">
               <CardTitle className="flex items-center">
-                <IndianRupee className="h-5 w-5 mr-2 text-revenueColor" />
+                <IndianRupee className="h-5 w-5 mr-2 text-green-400" />
                 Revenue Trends
               </CardTitle>
             </CardHeader>
@@ -482,66 +538,53 @@ const OverviewView: React.FC<OverviewViewProps> = ({ data, selectedMonths, locat
         </motion.div>
       </motion.div>
 
-      {/* Sessions Comparison & Class Attendance */}
+      {/* Class Distribution & Attendance */}
       <motion.div 
         className="grid grid-cols-1 gap-4 md:grid-cols-2"
         variants={containerVariants}
       >
-        <motion.div variants={itemVariants}>
-          <Card className="overflow-hidden backdrop-blur-sm border-border/50">
+        <motion.div variants={chartVariants}>
+          <Card className="overflow-hidden backdrop-blur-sm border-border/50 bg-gradient-to-br from-background to-background/80">
             <CardHeader className="pb-2">
               <CardTitle className="flex items-center">
-                <Activity className="h-5 w-5 mr-2 text-barreColor" />
-                Sessions Comparison
+                <Dumbbell className="h-5 w-5 mr-2 text-amber-400" />
+                Class Distribution
               </CardTitle>
             </CardHeader>
             <CardContent className="h-[350px]">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart 
-                  data={sessionsComparisonData}
-                  margin={{ top: 10, right: 30, left: 10, bottom: 30 }}
-                  onClick={(data) => handleDrillDown(data, 'Sessions for')}
-                >
-                  <CartesianGrid strokeDasharray="3 3" opacity={0.1} />
-                  <XAxis 
-                    dataKey="name" 
-                    angle={-45} 
-                    textAnchor="end" 
-                    height={60} 
-                    tick={{ fontSize: 12 }}
-                  />
-                  <YAxis />
-                  <Tooltip content={<CustomTooltip />} />
-                  <Legend verticalAlign="top" height={36} />
-                  <Bar 
-                    dataKey="barre" 
-                    name="Barre Sessions" 
-                    fill={barreColor}
-                    radius={[4, 4, 0, 0]}
+                <PieChart>
+                  <Pie
+                    data={classDistributionData}
+                    cx="50%"
+                    cy="50%"
+                    labelLine={false}
+                    outerRadius={120}
+                    fill="#8884d8"
+                    dataKey="value"
+                    nameKey="name"
+                    label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
                     isAnimationActive={true}
                     animationBegin={0}
-                    animationDuration={1200}
-                  />
-                  <Bar 
-                    dataKey="cycle" 
-                    name="Cycle Sessions" 
-                    fill={cycleColor}
-                    radius={[4, 4, 0, 0]}
-                    isAnimationActive={true}
-                    animationBegin={300}
-                    animationDuration={1200}
-                  />
-                </BarChart>
+                    animationDuration={1800}
+                  >
+                    {classDistributionData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.fill} />
+                    ))}
+                  </Pie>
+                  <Tooltip content={<CustomTooltip />} />
+                  <Legend verticalAlign="bottom" height={36} />
+                </PieChart>
               </ResponsiveContainer>
             </CardContent>
           </Card>
         </motion.div>
 
-        <motion.div variants={itemVariants}>
-          <Card className="overflow-hidden backdrop-blur-sm border-border/50">
+        <motion.div variants={chartVariants}>
+          <Card className="overflow-hidden backdrop-blur-sm border-border/50 bg-gradient-to-br from-background to-background/80">
             <CardHeader className="pb-2">
               <CardTitle className="flex items-center">
-                <Users className="h-5 w-5 mr-2 text-blue-500" />
+                <Users className="h-5 w-5 mr-2 text-blue-400" />
                 Class Attendance
               </CardTitle>
             </CardHeader>

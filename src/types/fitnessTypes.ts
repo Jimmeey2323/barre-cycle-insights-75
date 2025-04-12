@@ -21,7 +21,7 @@ export interface RawDataRecord {
 
 export interface MonthlyStats {
   month: string;
-  monthYear: string; // Added monthYear field
+  monthYear: string;
   totalSessions: number;
   barreSessions: number;
   cycleSessions: number;
@@ -31,7 +31,7 @@ export interface MonthlyStats {
   cyclePaid: number;
   totalRevenue: number;
   avgClassSize: number;
-  Location: string; // Added Location field to fix TypeScript errors
+  Location: string;
   // Additional calculated fields
   totalBarreSessions?: number;
   totalCycleSessions?: number;
@@ -41,6 +41,14 @@ export interface MonthlyStats {
   totalCyclePaid?: number;
   avgBarreClassSize?: number | string;
   avgCycleClassSize?: number | string;
+  barreRevenue?: number;  // Added for revenue chart
+  cycleRevenue?: number;  // Added for revenue chart
+  barreAttendance?: number;  // Added for attendance chart
+  cycleAttendance?: number;  // Added for attendance chart
+  totalRetained?: number;  // Added for funnel chart
+  totalConverted?: number;  // Added for funnel chart
+  totalNew?: number;  // Added for new customers metric
+  mostPopularClass?: string;  // Added for class popularity metric
 }
 
 export interface TeacherStats {
