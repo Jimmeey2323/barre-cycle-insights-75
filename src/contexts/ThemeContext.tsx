@@ -1,41 +1,32 @@
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useState, useContext, useEffect } from 'react';
 
 type ThemeType = 'light' | 'dark' | 'luxe' | 'physique57';
 
-interface ThemeContextProps {
+interface ThemeContextType {
   theme: ThemeType;
   setTheme: (theme: ThemeType) => void;
 }
 
-const ThemeContext = createContext<ThemeContextProps>({
-  theme: 'dark',
-  setTheme: () => {},
-});
+const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
-export const useTheme = () => useContext(ThemeContext);
-
-interface ThemeProviderProps {
-  children: ReactNode;
-}
-
-export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
-  const [theme, setTheme] = useState<ThemeType>('dark');
+export function ThemeProvider({ children }: { children: React.ReactNode }) {
+  const [theme, setTheme] = useState<ThemeType>('light');
 
   useEffect(() => {
-    // Check if user had a previously selected theme
+    // Get saved theme from localStorage
     const savedTheme = localStorage.getItem('theme') as ThemeType;
-    if (savedTheme && ['light', 'dark', 'luxe', 'physique57'].includes(savedTheme)) {
+    if (savedTheme) {
       setTheme(savedTheme);
+    } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+      setTheme('dark');
     }
   }, []);
 
   useEffect(() => {
-    // Apply theme CSS class
+    // Set the theme class on the document
     document.documentElement.classList.remove('light', 'dark', 'luxe', 'physique57');
     document.documentElement.classList.add(theme);
-    
-    // Save theme preference
     localStorage.setItem('theme', theme);
   }, [theme]);
 
@@ -44,4 +35,12 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
       {children}
     </ThemeContext.Provider>
   );
+}
+
+export const useTheme = () => {
+  const context = useContext(ThemeContext);
+  if (context === undefined) {
+    throw new Error('useTheme must be used within a ThemeProvider');
+  }
+  return context;
 };

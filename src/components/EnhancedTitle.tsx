@@ -56,33 +56,37 @@ const EnhancedTitle: React.FC = () => {
       
       <div className="fixed top-4 right-4 flex gap-2">
         <button 
-          className={`p-2 rounded-full transition-all duration-300 ${theme === 'light' ? 'bg-primary text-white' : 'bg-card/50 text-muted-foreground'}`}
+          className={`p-2 rounded-full transition-all duration-300 ${theme === 'light' ? 'bg-primary text-primary-foreground' : 'bg-card/50 text-muted-foreground'}`}
           onClick={() => setTheme('light')}
           aria-label="Light theme"
+          title="Light theme"
         >
           <Sun className="w-5 h-5" />
         </button>
         
         <button 
-          className={`p-2 rounded-full transition-all duration-300 ${theme === 'dark' ? 'bg-primary text-white' : 'bg-card/50 text-muted-foreground'}`}
+          className={`p-2 rounded-full transition-all duration-300 ${theme === 'dark' ? 'bg-primary text-primary-foreground' : 'bg-card/50 text-muted-foreground'}`}
           onClick={() => setTheme('dark')}
           aria-label="Dark theme"
+          title="Dark theme"
         >
           <Moon className="w-5 h-5" />
         </button>
         
         <button 
-          className={`p-2 rounded-full transition-all duration-300 ${theme === 'luxe' ? 'bg-primary text-white' : 'bg-card/50 text-muted-foreground'}`}
+          className={`p-2 rounded-full transition-all duration-300 ${theme === 'luxe' ? 'bg-primary text-primary-foreground' : 'bg-card/50 text-muted-foreground'}`}
           onClick={() => setTheme('luxe')}
           aria-label="Luxe theme"
+          title="Luxe theme"
         >
           <SunMoon className="w-5 h-5" />
         </button>
         
         <button 
-          className={`p-2 rounded-full transition-all duration-300 ${theme === 'physique57' ? 'bg-primary text-white' : 'bg-card/50 text-muted-foreground'}`}
+          className={`p-2 rounded-full transition-all duration-300 ${theme === 'physique57' ? 'bg-primary text-primary-foreground' : 'bg-card/50 text-muted-foreground'}`}
           onClick={() => setTheme('physique57')}
           aria-label="Physique 57 theme"
+          title="Physique 57 theme"
         >
           <div className="w-5 h-5 flex items-center justify-center font-bold text-xs">57</div>
         </button>

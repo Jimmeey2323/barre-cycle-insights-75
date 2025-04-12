@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ProcessedData, ViewType } from "@/types/fitnessTypes";
 import { 
@@ -40,6 +40,14 @@ interface DashboardLayoutProps {
   setLocation: (location: string) => void;
 }
 
+const LoadingMessages = [
+  "Gathering Attendance...",
+  "Compiling Report...",
+  "Drawing Charts...",
+  "Adding Filters...",
+  "Adding J Factor..."
+];
+
 const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   data,
   isLoading,
@@ -54,6 +62,17 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   const [searchQuery, setSearchQuery] = useState("");
   const [trainers, setTrainers] = useState<string[]>([]);
   const [classTypes, setClassTypes] = useState<string[]>([]);
+  const [loadingMessageIndex, setLoadingMessageIndex] = useState(0);
+  
+  useEffect(() => {
+    if (isLoading) {
+      const interval = setInterval(() => {
+        setLoadingMessageIndex(prev => (prev + 1) % LoadingMessages.length);
+      }, 1000);
+      
+      return () => clearInterval(interval);
+    }
+  }, [isLoading]);
   
   const handleSearch = (query: string) => {
     setSearchQuery(query);
@@ -70,12 +89,34 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
     return Array.from(uniqueLocations);
   }, [data?.rawData]);
 
+  // Extract unique trainers
+  const uniqueTrainers = React.useMemo(() => {
+    if (!data?.rawData) return [];
+    const teachers = new Set<string>();
+    data.rawData.forEach(record => {
+      if (record["Teacher Name"]) teachers.add(String(record["Teacher Name"]));
+    });
+    return Array.from(teachers);
+  }, [data?.rawData]);
+
+  // Extract unique class types
+  const uniqueClassTypes = React.useMemo(() => {
+    if (!data?.rawData) return [];
+    const types = new Set<string>();
+    // Based on the sample data, we have "Barre" and "Cycle" class types
+    types.add("Barre");
+    types.add("Cycle");
+    return Array.from(types);
+  }, [data?.rawData]);
+
   console.log("DashboardLayout rendering with:", { 
     hasData: !!data, 
     isLoading, 
     hasError: !!error,
     selectedMonths,
-    location
+    location,
+    uniqueTrainers: uniqueTrainers.length,
+    uniqueClassTypes: uniqueClassTypes.length
   });
 
   if (isLoading) {
@@ -83,7 +124,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
       <div className="flex h-screen items-center justify-center bg-gradient-to-br from-background to-muted/30">
         <div className="text-center premium-card p-8 rounded-xl animate-fade-in">
           <ActivityIcon className="mx-auto h-12 w-12 animate-spin text-primary" />
-          <h2 className="mt-4 text-2xl font-bold font-heading">Loading fitness data...</h2>
+          <h2 className="mt-4 text-2xl font-bold font-heading">{LoadingMessages[loadingMessageIndex]}</h2>
           <p className="mt-2 text-muted-foreground">Fetching data from Google Sheets</p>
         </div>
       </div>
@@ -120,8 +161,9 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   const filteredCount = data.rawData.filter(record => 
     (selectedMonths.length === 0 || selectedMonths.includes(String(record["Month Year"]))) &&
     (location === "" || location === "all" || record.Location === location) &&
-    (trainers.length === 0 || (record.Teacher && trainers.includes(String(record.Teacher)))) &&
-    (classTypes.length === 0 || (record.Type && classTypes.includes(String(record.Type))))
+    (trainers.length === 0 || (record["Teacher Name"] && trainers.includes(String(record["Teacher Name"])))) &&
+    (classTypes.length === 0 || ((record["Barre Sessions"] && record["Barre Sessions"] > 0 && classTypes.includes("Barre")) || 
+                                (record["Cycle Sessions"] && record["Cycle Sessions"] > 0 && classTypes.includes("Cycle"))))
   ).length;
   
   const filterPercentage = totalRecords > 0 ? Math.round((filteredCount / totalRecords) * 100) : 0;
@@ -209,7 +251,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="start" className="w-[200px] p-2 rounded-lg shadow-lg backdrop-blur-sm bg-popover/95 animate-scale-in">
-                    {data && data.rawData && Array.from(new Set(data.rawData.map(record => String(record.Teacher)))).filter(Boolean).map(teacher => (
+                    {uniqueTrainers.map(teacher => (
                       <DropdownMenuItem 
                         key={teacher}
                         className="flex items-center gap-2 rounded-md cursor-pointer"
@@ -242,7 +284,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="start" className="w-[200px] p-2 rounded-lg shadow-lg backdrop-blur-sm bg-popover/95 animate-scale-in">
-                    {data && data.rawData && Array.from(new Set(data.rawData.map(record => String(record.Type)))).filter(Boolean).map(type => (
+                    {uniqueClassTypes.map(type => (
                       <DropdownMenuItem 
                         key={type}
                         className="flex items-center gap-2 rounded-md cursor-pointer"
@@ -286,31 +328,31 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
         <Tabs value={currentView} onValueChange={(value) => setCurrentView(value as ViewType)} className="space-y-4">
           <div className="bg-card/70 backdrop-blur-xl rounded-lg p-1 border border-border/50 sticky top-4 z-10 shadow-md">
             <TabsList className="grid w-full grid-cols-3 md:grid-cols-7">
-              <TabsTrigger value="overview" className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-white transition-all duration-300">
+              <TabsTrigger value="overview" className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all duration-300">
                 <BarChart className="h-4 w-4" />
                 <span className="hidden md:inline">Overview</span>
               </TabsTrigger>
-              <TabsTrigger value="teachers" className="flex items-center gap-2 data-[state=active]:bg-barre data-[state=active]:text-white transition-all duration-300">
+              <TabsTrigger value="teachers" className="flex items-center gap-2 data-[state=active]:bg-barre data-[state=active]:text-barre-foreground transition-all duration-300">
                 <Users className="h-4 w-4" />
                 <span className="hidden md:inline">Teachers</span>
               </TabsTrigger>
-              <TabsTrigger value="classes" className="flex items-center gap-2 data-[state=active]:bg-cycle data-[state=active]:text-white transition-all duration-300">
+              <TabsTrigger value="classes" className="flex items-center gap-2 data-[state=active]:bg-cycle data-[state=active]:text-cycle-foreground transition-all duration-300">
                 <ActivityIcon className="h-4 w-4" />
                 <span className="hidden md:inline">Classes</span>
               </TabsTrigger>
-              <TabsTrigger value="financials" className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-white transition-all duration-300">
+              <TabsTrigger value="financials" className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all duration-300">
                 <IndianRupee className="h-4 w-4" />
                 <span className="hidden md:inline">Financials</span>
               </TabsTrigger>
-              <TabsTrigger value="retention" className="flex items-center gap-2 data-[state=active]:bg-barre data-[state=active]:text-white transition-all duration-300">
+              <TabsTrigger value="retention" className="flex items-center gap-2 data-[state=active]:bg-barre data-[state=active]:text-barre-foreground transition-all duration-300">
                 <RefreshCw className="h-4 w-4" />
                 <span className="hidden md:inline">Retention</span>
               </TabsTrigger>
-              <TabsTrigger value="tables" className="flex items-center gap-2 data-[state=active]:bg-cycle data-[state=active]:text-white transition-all duration-300">
+              <TabsTrigger value="tables" className="flex items-center gap-2 data-[state=active]:bg-cycle data-[state=active]:text-cycle-foreground transition-all duration-300">
                 <Database className="h-4 w-4" />
                 <span className="hidden md:inline">Tables</span>
               </TabsTrigger>
-              <TabsTrigger value="pivot" className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-white transition-all duration-300">
+              <TabsTrigger value="pivot" className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all duration-300">
                 <TableProperties className="h-4 w-4" />
                 <span className="hidden md:inline">Pivot</span>
               </TabsTrigger>
