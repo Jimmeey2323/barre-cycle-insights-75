@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ProcessedData } from "@/types/fitnessTypes";
@@ -60,7 +61,7 @@ const TablesView: React.FC<TablesViewProps> = ({ data, selectedMonths, location 
   const filteredStats = React.useMemo(() => {
     return data.monthlyStats.filter(stat => 
       (selectedMonths.length === 0 || selectedMonths.includes(stat.monthYear)) &&
-      (location === "" || location === "all" || String(stat.Location) === location)
+      (location === "" || location === "all" || stat.Location === location)
     );
   }, [data, selectedMonths, location]);
 

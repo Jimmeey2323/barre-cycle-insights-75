@@ -1,4 +1,3 @@
-
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { RawDataRecord, MonthlyStats, ProcessedData } from "@/types/fitnessTypes";
@@ -67,6 +66,7 @@ export function filterData(
       return {
         month,
         monthYear,
+        Location: location,
         totalSessions,
         barreSessions: totalBarreSessions,
         cycleSessions: totalCycleSessions,

@@ -112,6 +112,9 @@ export function processFitnessData(rawData: any[]) {
     const monthlyStats = monthYears.map(monthYear => {
       const monthData = rawData.filter(item => item["Month Year"] === monthYear);
       
+      // Extract location (using the first entry's location as a placeholder when there are multiple)
+      const sampleLocation = monthData[0]?.Location || "";
+      
       const totalBarreSessions = monthData.reduce((sum, item) => sum + parseInt(item["Barre Sessions"] || "0"), 0);
       const totalCycleSessions = monthData.reduce((sum, item) => sum + parseInt(item["Cycle Sessions"] || "0"), 0);
       
@@ -141,6 +144,7 @@ export function processFitnessData(rawData: any[]) {
       return {
         monthYear,
         month: monthYear.split('-')[0],
+        Location: sampleLocation, // Add Location to monthlyStats
         totalSessions: totalBarreSessions + totalCycleSessions,
         barreSessions: totalBarreSessions,
         cycleSessions: totalCycleSessions,

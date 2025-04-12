@@ -14,7 +14,7 @@ interface RetentionViewProps {
 const RetentionView: React.FC<RetentionViewProps> = ({ data, selectedMonths, location }) => {
   const filteredStats = data.monthlyStats.filter(stat => 
     (selectedMonths.length === 0 || selectedMonths.includes(stat.monthYear)) &&
-    (location === "" || location === "all" || String(stat.Location) === location)
+    (location === "" || location === "all" || stat.Location === location)
   );
 
   const filteredRawData = data.rawData.filter(record => 

@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ProcessedData, RechartsValueType } from "@/types/fitnessTypes";
@@ -21,7 +20,7 @@ const FinancialsView: React.FC<FinancialsViewProps> = ({ data, selectedMonths, l
   const filteredStats = useMemo(() => {
     return data.monthlyStats.filter(stat =>
       (selectedMonths.length === 0 || selectedMonths.includes(stat.monthYear)) &&
-      (location === "" || location === "all" || String(stat.Location) === location)
+      (location === "" || location === "all" || stat.Location === location)
     );
   }, [data, selectedMonths, location]);
 

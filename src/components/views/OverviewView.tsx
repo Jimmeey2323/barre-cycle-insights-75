@@ -24,7 +24,7 @@ const OverviewView: React.FC<OverviewViewProps> = ({ data, selectedMonths, locat
 
   const filteredStats = data.monthlyStats.filter(stat => 
     (selectedMonths.length === 0 || selectedMonths.includes(stat.monthYear)) &&
-    (location === "" || location === "all" || String(stat.Location) === location)
+    (location === "" || location === "all" || stat.Location === location)
   );
 
   const filteredRawData = data.rawData.filter(record => 
@@ -78,11 +78,15 @@ const OverviewView: React.FC<OverviewViewProps> = ({ data, selectedMonths, locat
   const classSizeData = filteredStats.map(stat => {
     const data: any = {
       name: stat.monthYear,
-      barre: parseFloat(stat.avgBarreClassSize),
+      barre: typeof stat.avgBarreClassSize === 'string' ? 
+        parseFloat(stat.avgBarreClassSize) : 
+        stat.avgBarreClassSize,
     };
     
     if (showCycleMetrics) {
-      data.cycle = parseFloat(stat.avgCycleClassSize);
+      data.cycle = typeof stat.avgCycleClassSize === 'string' ? 
+        parseFloat(String(stat.avgCycleClassSize)) : 
+        stat.avgCycleClassSize;
     }
     
     return data;

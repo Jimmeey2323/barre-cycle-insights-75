@@ -31,6 +31,7 @@ export interface MonthlyStats {
   cyclePaid: number;
   totalRevenue: number;
   avgClassSize: number;
+  Location: string; // Added Location field to fix TypeScript errors
   // Additional calculated fields
   totalBarreSessions?: number;
   totalCycleSessions?: number;
