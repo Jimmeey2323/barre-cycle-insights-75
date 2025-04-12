@@ -1,17 +1,12 @@
-
 import React, { useEffect, useRef } from 'react';
 import { Badge } from "@/components/ui/badge";
 import { Dumbbell, Activity } from "lucide-react";
-
 const EnhancedTitle: React.FC = () => {
   const titleRef = useRef<HTMLHeadingElement>(null);
-  
   useEffect(() => {
     if (!titleRef.current) return;
-    
     const letters = titleRef.current.innerText.split('');
     titleRef.current.innerHTML = '';
-    
     letters.forEach((letter, index) => {
       const span = document.createElement('span');
       span.textContent = letter;
@@ -22,18 +17,15 @@ const EnhancedTitle: React.FC = () => {
       span.style.transitionDelay = `${index * 0.03}s`;
       titleRef.current?.appendChild(span);
     });
-    
     setTimeout(() => {
       const spans = titleRef.current?.querySelectorAll('span');
-      spans?.forEach((span) => {
+      spans?.forEach(span => {
         span.style.opacity = '1';
         span.style.transform = 'translateY(0)';
       });
     }, 100);
   }, []);
-
-  return (
-    <div className="flex flex-col items-center md:items-start">
+  return <div className="flex flex-col items-center md:items-start">
       <div className="flex items-center mb-2 gap-2">
         <div className="w-10 h-10 rounded-full flex items-center justify-center bg-gradient-to-br from-barre to-cycle-dark shadow-lg">
           <Dumbbell className="text-white w-6 h-6" />
@@ -45,14 +37,12 @@ const EnhancedTitle: React.FC = () => {
           <Activity className="w-3 h-3 mr-1" /> LIVE
         </Badge>
       </div>
-      <div className="flex gap-2 text-sm mt-1">
+      <div className="flex gap-2 text-3xl ">
         <span className="text-gradient-barre font-semibold">Barre</span> 
         <span className="text-muted-foreground">vs</span> 
         <span className="text-gradient-cycle font-semibold">Cycle</span>
         <span className="text-muted-foreground hidden md:inline-block">Performance Metrics & Comparison Dashboard</span>
       </div>
-    </div>
-  );
+    </div>;
 };
-
 export default EnhancedTitle;
