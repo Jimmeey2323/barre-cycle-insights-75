@@ -141,7 +141,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
       <div className="container mx-auto px-4 py-8">
         <div className="mb-8 flex flex-row justify-between items-center gap-4">
           <div className="flex items-center gap-2">
-            <Dumbbell className="h-6 w-6 text-primary" /> 
+             
             <EnhancedTitle />
             
           </div>
