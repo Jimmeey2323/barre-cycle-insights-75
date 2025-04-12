@@ -63,7 +63,7 @@ const FinancialsView: React.FC<FinancialsViewProps> = ({ data, selectedMonths, l
   const revenueByLocation = useMemo(() => {
     return filteredRawData.reduce((acc: { [key: string]: number }, record) => {
       const locationName = String(record.Location);
-      const classRevenue = parseInt(String(record["Class Revenue"] || "0"));
+      const classRevenue = parseFloat(String(record["Class Revenue"] || "0"));
       acc[locationName] = (acc[locationName] || 0) + classRevenue;
       return acc;
     }, {});
