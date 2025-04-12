@@ -173,33 +173,33 @@ const OverviewView: React.FC<OverviewViewProps> = ({ data, selectedMonths, locat
   // Define nodes and links for the Sankey funnel chart based on actual data
   const funnelNodes = [
     {
-      id: "visitors",
-      label: "Visitors",
-      value: totalVisitors > 0 ? totalVisitors : totalCustomers * 1.2, // Fallback if no visitor data
+      id: "new",
+      label: "New Customers",
+      value: totalNewCustomers > 0 ? totalNewCustomers : totalCustomers * 0.3, // Changed from "visitors" to "new"
       color: "#818cf8",
       position: "top" as const,
       column: 0
     },
     {
-      id: "leads",
-      label: "Leads",
-      value: totalLeads > 0 ? totalLeads : totalNewCustomers * 1.1, // Fallback if no leads data
+      id: "customers",
+      label: "Customers",
+      value: totalCustomers,
       color: "#93c5fd",
       position: "top" as const,
       column: 1
     },
     {
-      id: "customers",
-      label: "Customers",
-      value: totalCustomers,
+      id: "retained",
+      label: "Retained",
+      value: totalRetainedCustomers > 0 ? totalRetainedCustomers : totalCustomers * 0.65,
       color: "#34d399",
       position: "top" as const,
       column: 2
     },
     {
-      id: "retained",
-      label: "Retained",
-      value: totalRetainedCustomers > 0 ? totalRetainedCustomers : totalCustomers * 0.65, // Fallback if no retention data
+      id: "converted",
+      label: "Converted",
+      value: totalConvertedCustomers > 0 ? totalConvertedCustomers : totalNewCustomers * 0.2,
       color: "#10b981",
       position: "top" as const,
       column: 3
@@ -208,21 +208,21 @@ const OverviewView: React.FC<OverviewViewProps> = ({ data, selectedMonths, locat
   
   const funnelLinks = [
     {
-      source: "visitors",
-      target: "leads",
-      value: totalLeads > 0 ? totalLeads : totalNewCustomers * 1.1,
+      source: "new",
+      target: "customers",
+      value: totalCustomers,
       color: "#818cf8"
     },
     {
-      source: "leads",
-      target: "customers",
-      value: totalCustomers,
+      source: "customers", 
+      target: "retained",
+      value: totalRetainedCustomers > 0 ? totalRetainedCustomers : totalCustomers * 0.65,
       color: "#93c5fd"
     },
     {
       source: "customers",
-      target: "retained",
-      value: totalRetainedCustomers > 0 ? totalRetainedCustomers : totalCustomers * 0.65,
+      target: "converted",
+      value: totalConvertedCustomers > 0 ? totalConvertedCustomers : totalNewCustomers * 0.2,
       color: "#34d399"
     }
   ];
@@ -489,8 +489,8 @@ const OverviewView: React.FC<OverviewViewProps> = ({ data, selectedMonths, locat
                 links={funnelLinks}
                 ltv={avgRevPerCustomer * 2.5} // Estimated LTV based on actual revenue
                 conversionRate={{
-                  from: "Leads",
-                  to: "Customers",
+                  from: "New Customers",
+                  to: "Converted",
                   rate: conversionRate
                 }}
               />
