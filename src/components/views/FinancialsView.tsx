@@ -87,9 +87,11 @@ const FinancialsView: React.FC<FinancialsViewProps> = ({ data, selectedMonths, l
   const barreRevenuePerCustomer = totalBarreCustomers > 0 ? totalBarrePaid / totalBarreCustomers : 0;
   const cycleRevenuePerCustomer = totalCycleCustomers > 0 ? totalCyclePaid / totalCycleCustomers : 0;
 
-  // Calculate revenue share
-  const barreRevenueShare = totalRevenue > 0 ? (totalBarrePaid / totalRevenue) * 100 : 0;
-  const cycleRevenueShare = totalRevenue > 0 ? (totalCyclePaid / totalRevenue) * 100 : 0;
+  // Only add revenue share if we have revenue data
+  const revenueShare = totalRevenue > 0 ? {
+    barreShare: (totalBarrePaid / totalRevenue) * 100,
+    cycleShare: (totalCyclePaid / totalRevenue) * 100
+  } : null;
 
   // Calculate revenue growth (using first and last month in filtered data)
   const sortedMonthlyStats = [...filteredStats].sort((a, b) => {
@@ -218,7 +220,7 @@ const FinancialsView: React.FC<FinancialsViewProps> = ({ data, selectedMonths, l
     },
     {
       title: "Revenue Share",
-      value: `${barreRevenueShare.toFixed(1)}% / ${cycleRevenueShare.toFixed(1)}%`,
+      value: `${revenueShare.barreShare.toFixed(1)}% / ${revenueShare.cycleShare.toFixed(1)}%`,
       icon: <PieChartIcon className="h-5 w-5 text-amber-500" />,
       details: `Barre / Cycle`,
       trend: <Badge variant="outline" className="text-blue-500">

@@ -111,15 +111,15 @@ const RetentionView: React.FC<RetentionViewProps> = ({ data, selectedMonths, loc
 
   // Build Sankey funnel data
   const sankeyNodes = [
-    { id: 'leads', label: 'Leads created', value: totalNewCustomers, color: '#FF6E6E', position: 'top', column: 0 },
-    { id: 'intro-offer-yes', label: 'Bought Intro Offer', value: Math.floor(totalNewCustomers * 0.27), color: '#60A5FA', position: 'top', column: 1 },
-    { id: 'intro-offer-no', label: "Didn't buy Intro Offer", value: Math.floor(totalNewCustomers * 0.73), color: '#FF6E6E', position: 'bottom', column: 1 },
-    { id: 'booked-class-intro', label: 'Booked class with Intro Offer', value: Math.floor(totalNewCustomers * 0.27 * 0.81), color: '#60A5FA', position: 'top', column: 2 },
-    { id: 'not-booked-intro', label: "Didn't book class with Intro", value: Math.floor(totalNewCustomers * 0.27 * 0.19), color: '#FF6E6E', position: 'bottom', column: 2 },
-    { id: 'bought-membership', label: 'Bought Membership', value: Math.floor(totalNewCustomers * 0.27 * 0.81 * 0.30), color: '#10B981', position: 'top', column: 3 },
-    { id: 'didnt-buy-membership', label: "Didn't buy Membership", value: Math.floor(totalNewCustomers * 0.27 * 0.81 * 0.70), color: '#FF6E6E', position: 'bottom', column: 3 },
-    { id: 'booked-class-membership', label: 'Booked class with Membership', value: Math.floor(totalNewCustomers * 0.27 * 0.81 * 0.30 * 0.85), color: '#10B981', position: 'top', column: 4 },
-    { id: 'not-booked-membership', label: "Didn't book with Membership", value: Math.floor(totalNewCustomers * 0.27 * 0.81 * 0.30 * 0.15), color: '#FF6E6E', position: 'bottom', column: 4 }
+    { id: 'leads', label: 'Leads created', value: totalNewCustomers, color: '#FF6E6E', position: 'top' as const, column: 0 },
+    { id: 'intro-offer-yes', label: 'Bought Intro Offer', value: Math.floor(totalNewCustomers * 0.27), color: '#60A5FA', position: 'top' as const, column: 1 },
+    { id: 'intro-offer-no', label: "Didn't buy Intro Offer", value: Math.floor(totalNewCustomers * 0.73), color: '#FF6E6E', position: 'bottom' as const, column: 1 },
+    { id: 'booked-class-intro', label: 'Booked class with Intro Offer', value: Math.floor(totalNewCustomers * 0.27 * 0.81), color: '#60A5FA', position: 'top' as const, column: 2 },
+    { id: 'not-booked-intro', label: "Didn't book class with Intro", value: Math.floor(totalNewCustomers * 0.27 * 0.19), color: '#FF6E6E', position: 'bottom' as const, column: 2 },
+    { id: 'bought-membership', label: 'Bought Membership', value: Math.floor(totalNewCustomers * 0.27 * 0.81 * 0.30), color: '#10B981', position: 'top' as const, column: 3 },
+    { id: 'didnt-buy-membership', label: "Didn't buy Membership", value: Math.floor(totalNewCustomers * 0.27 * 0.81 * 0.70), color: '#FF6E6E', position: 'bottom' as const, column: 3 },
+    { id: 'booked-class-membership', label: 'Booked class with Membership', value: Math.floor(totalNewCustomers * 0.27 * 0.81 * 0.30 * 0.85), color: '#10B981', position: 'top' as const, column: 4 },
+    { id: 'not-booked-membership', label: "Didn't book with Membership", value: Math.floor(totalNewCustomers * 0.27 * 0.81 * 0.30 * 0.15), color: '#FF6E6E', position: 'bottom' as const, column: 4 }
   ];
   
   const sankeyLinks = [

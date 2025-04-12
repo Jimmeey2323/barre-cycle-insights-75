@@ -118,7 +118,7 @@ const OverviewView: React.FC<OverviewViewProps> = ({ data, selectedMonths, locat
   // Get actual metrics for the funnel from the raw data
   const totalLeads = useMemo(() => 
     filteredRawData.reduce((sum, record) => {
-      const leads = parseInt(String(record["Leads"] || 0));
+      const leads = Number(record["Leads"] || 0);
       return sum + (isNaN(leads) ? 0 : leads);
     }, 0), 
     [filteredRawData]);
