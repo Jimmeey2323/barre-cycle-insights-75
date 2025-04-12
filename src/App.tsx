@@ -5,6 +5,8 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { DrillDownProvider } from "./contexts/DrillDownContext";
+import { ThemeProvider } from "./contexts/ThemeContext";
+import DrillDownView from "./components/DrillDownView";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 
@@ -21,17 +23,20 @@ const queryClient = new QueryClient({
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
-      <DrillDownProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
-      </DrillDownProvider>
+      <ThemeProvider>
+        <DrillDownProvider>
+          <Toaster />
+          <Sonner />
+          <DrillDownView />
+          <BrowserRouter>
+            <Routes>
+              <Route path="/" element={<Index />} />
+              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+        </DrillDownProvider>
+      </ThemeProvider>
     </TooltipProvider>
   </QueryClientProvider>
 );

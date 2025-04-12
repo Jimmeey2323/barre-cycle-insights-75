@@ -4,20 +4,41 @@ import { ProcessedData, ViewType } from "@/types/fitnessTypes";
 import { useToast } from "@/components/ui/use-toast";
 import { fetchSheetData, processFitnessData } from "@/services/googleSheetsService";
 import DashboardLayout from "@/components/DashboardLayout";
+import { ActivityIcon } from "lucide-react";
 
 const SPREADSHEET_ID = "1JG6yAClbjr3iF1kapJHS-pf0G539afUpo-OdcMylnOI";
 const SHEET_NAME = "◉ Payroll";
+
+const LOADING_MESSAGES = [
+  "Gathering Attendance",
+  "Compiling Report",
+  "Drawing Charts",
+  "Adding Filters",
+  "Adding J Factor"
+];
 
 const Index = () => {
   const [data, setData] = useState<ProcessedData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
   const { toast } = useToast();
+  const [loadingMessageIndex, setLoadingMessageIndex] = useState(0);
   
   // Include 'pivot' in the ViewType
   const [currentView, setCurrentView] = useState<ViewType>("overview");
   const [selectedMonths, setSelectedMonths] = useState<string[]>([]);
   const [location, setLocation] = useState("all");
+
+  // Cycle through loading messages
+  useEffect(() => {
+    if (!isLoading) return;
+    
+    const interval = setInterval(() => {
+      setLoadingMessageIndex(prev => (prev + 1) % LOADING_MESSAGES.length);
+    }, 1000);
+    
+    return () => clearInterval(interval);
+  }, [isLoading]);
 
   useEffect(() => {
     const loadData = async () => {
@@ -106,6 +127,20 @@ const Index = () => {
   }, [currentView]);
 
   console.log("Index rendering with data:", data ? "available" : "null", "isLoading:", isLoading);
+
+  if (isLoading) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-gradient-to-br from-background to-muted/30">
+        <div className="text-center premium-card p-8 rounded-xl animate-fade-in">
+          <ActivityIcon className="mx-auto h-12 w-12 animate-spin text-primary" />
+          <h2 className="mt-4 text-2xl font-bold font-heading animate-pulse">
+            {LOADING_MESSAGES[loadingMessageIndex]}...
+          </h2>
+          <p className="mt-2 text-muted-foreground">Making your data beautiful</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-muted/30">
