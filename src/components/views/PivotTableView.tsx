@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo, useCallback } from 'react';
 import {
   Card,
@@ -52,13 +53,6 @@ import {
   Search
 } from "lucide-react";
 import {
-  ColumnDef,
-  flexRender,
-  getCoreRowModel,
-  getSortedRowModel,
-  useReactTable,
-} from "@tanstack/react-table"
-import {
   Select,
   SelectContent,
   SelectItem,
@@ -66,26 +60,30 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { useToast } from "@/components/ui/use-toast"
-import { useDebounce } from "@/hooks/use-debounce"
-import {
-  CSVDownloader,
-  ExcelDownloader,
-  JSONDownloader,
-} from "@/components/data-table/downloaders"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Switch } from "@/components/ui/switch"
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
 
 interface PivotTableViewProps {
   data: any[];
+}
+
+// Create a simple useDebounce hook
+function useDebounce<T>(value: T, delay: number): T {
+  const [debouncedValue, setDebouncedValue] = useState<T>(value);
+
+  React.useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [value, delay]);
+
+  return debouncedValue;
 }
 
 const PivotTableView: React.FC<PivotTableViewProps> = ({ data }) => {
@@ -129,6 +127,7 @@ const PivotTableView: React.FC<PivotTableViewProps> = ({ data }) => {
   }, [data, rowHeader, colHeader, valueField]);
 
   const rowKeys = useMemo(() => Object.keys(groupedData), [groupedData]);
+  
   const colKeys = useMemo(() => {
     const keys = new Set<string>();
     Object.values(groupedData).forEach((row) => {
@@ -147,34 +146,7 @@ const PivotTableView: React.FC<PivotTableViewProps> = ({ data }) => {
     });
   }, [groupedData, rowKeys, colKeys, rowHeader]);
 
-  const columns = useMemo<ColumnDef<any>[]>(() => {
-    const baseColumns: ColumnDef<any>[] = rowHeader ? [
-      {
-        accessorKey: rowHeader,
-        header: rowHeader,
-      }
-    ] : [];
-
-    const dynamicColumns: ColumnDef<any>[] = colKeys.map(colKey => ({
-      accessorKey: colKey,
-      header: colKey,
-    }));
-
-    return [...baseColumns, ...dynamicColumns];
-  }, [colKeys, rowHeader]);
-
-  const [sorting, setSorting] = useState([])
-
-  const table = useReactTable({
-    data: tableData,
-    columns,
-    getCoreRowModel: getCoreRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    onSortingChange: setSorting,
-    state: {
-      sorting,
-    },
-  })
+  const [sorting, setSorting] = useState<any[]>([]);
 
   return (
     <div className="w-full space-y-4">
