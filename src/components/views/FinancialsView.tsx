@@ -108,7 +108,7 @@ const FinancialsView: React.FC<FinancialsViewProps> = ({ data, selectedMonths, l
   const firstMonth = sortedMonthlyStats[0];
   const lastMonth = sortedMonthlyStats[sortedMonthlyStats.length - 1];
   
-  // Fixed: Changed Boolean to a simple conditional expression
+  // Fixed Boolean call signature error - change Boolean to a conditional expression
   const revenueGrowth = firstMonth && lastMonth && firstMonth.totalRevenue > 0 
     ? ((lastMonth.totalRevenue - firstMonth.totalRevenue) / firstMonth.totalRevenue) * 100 
     : 0;
