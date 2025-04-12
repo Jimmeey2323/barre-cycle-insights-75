@@ -45,6 +45,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   const [trainers, setTrainers] = useState<string[]>([]);
   const [classTypes, setClassTypes] = useState<string[]>([]);
   const [loadingMessageIndex, setLoadingMessageIndex] = useState(0);
+  
   useEffect(() => {
     if (isLoading) {
       const interval = setInterval(() => {
@@ -53,6 +54,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
       return () => clearInterval(interval);
     }
   }, [isLoading]);
+  
   const handleSearch = (query: string) => {
     setSearchQuery(query);
     // You could implement actual search functionality here
@@ -95,6 +97,37 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
     });
     return Array.from(types);
   }, [data?.rawData]);
+  
+  // Select all trainers
+  const selectAllTrainers = () => {
+    setTrainers(uniqueTrainers);
+  };
+
+  // Clear all trainers
+  const clearTrainers = () => {
+    setTrainers([]);
+  };
+
+  // Select all class types
+  const selectAllClassTypes = () => {
+    setClassTypes(uniqueClassTypes);
+  };
+
+  // Clear all class types
+  const clearClassTypes = () => {
+    setClassTypes([]);
+  };
+
+  // Select all months
+  const selectAllMonths = () => {
+    setSelectedMonths(data?.monthlyStats.map(stat => stat.monthYear) || []);
+  };
+
+  // Clear all months
+  const clearSelectedMonths = () => {
+    setSelectedMonths([]);
+  };
+
   console.log("DashboardLayout rendering with:", {
     hasData: !!data,
     isLoading,
@@ -104,6 +137,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
     uniqueTrainers: uniqueTrainers.length,
     uniqueClassTypes: uniqueClassTypes.length
   });
+  
   if (isLoading) {
     return <div className="flex h-screen items-center justify-center bg-gradient-to-br from-background to-muted/30">
         <div className="text-center premium-card p-8 rounded-xl animate-fade-in">
@@ -113,6 +147,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
         </div>
       </div>;
   }
+  
   if (error) {
     return <div className="flex h-screen items-center justify-center bg-gradient-to-br from-background to-muted/30">
         <div className="text-center max-w-md mx-auto premium-card p-8 rounded-xl">
@@ -137,21 +172,20 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   const totalRecords = data.rawData.length;
   const filteredCount = data.rawData.filter(record => (selectedMonths.length === 0 || selectedMonths.includes(String(record["Month Year"]))) && (location === "" || location === "all" || record.Location === location) && (trainers.length === 0 || record["Teacher Name"] && trainers.includes(String(record["Teacher Name"]))) && (classTypes.length === 0 || record["Barre Sessions"] && parseInt(String(record["Barre Sessions"])) > 0 && classTypes.includes("Barre") || record["Cycle Sessions"] && parseInt(String(record["Cycle Sessions"])) > 0 && classTypes.includes("Cycle"))).length;
   const filterPercentage = totalRecords > 0 ? Math.round(filteredCount / totalRecords * 100) : 0;
+  
   return <div className="min-h-screen bg-gradient-to-br from-background to-muted/30 pb-8 font-sans">
       <div className="container mx-auto px-4 py-8">
         <div className="mb-8 flex flex-row justify-between items-center gap-4">
-          <div className="flex items-center gap-2">
-             
+          <div className="flex-1">
             <EnhancedTitle />
-            
           </div>
           
-          <div className="flex items-center gap-2">
-            <VoiceSearch onSearch={handleSearch} />
-            
-            <ThemeToggle />
-            
-            <Button variant="outline" size="icon" className="bg-background/70 backdrop-blur-sm">
+          <div className="flex items-center gap-4 flex-shrink-0">
+            <VoiceSearch onSearch={handleSearch} className="search-bar w-[250px]" />
+            <div className="flex-shrink-0">
+              <ThemeToggle />
+            </div>
+            <Button variant="outline" size="icon" className="bg-background/70 backdrop-blur-sm flex-shrink-0">
               <ArrowUpRightSquare className="h-4 w-4" />
             </Button>
           </div>
@@ -171,6 +205,20 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="start" className="w-[200px] p-2 rounded-lg shadow-lg backdrop-blur-sm bg-popover/95 animate-scale-in">
+                    <div className="flex justify-between px-2 py-1 border-b mb-1">
+                      <button 
+                        className="text-xs text-primary hover:text-primary/80 font-medium"
+                        onClick={selectAllMonths}
+                      >
+                        Select All
+                      </button>
+                      <button 
+                        className="text-xs text-muted-foreground hover:text-foreground"
+                        onClick={clearSelectedMonths}
+                      >
+                        Clear
+                      </button>
+                    </div>
                     {data.monthlyStats.map(stat => <DropdownMenuItem key={stat.monthYear} className="flex items-center gap-2 rounded-md cursor-pointer" onClick={() => {
                     if (selectedMonths.includes(stat.monthYear)) {
                       setSelectedMonths(selectedMonths.filter(m => m !== stat.monthYear));
@@ -213,6 +261,20 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="start" className="w-[200px] p-2 rounded-lg shadow-lg backdrop-blur-sm bg-popover/95 animate-scale-in max-h-[300px] overflow-y-auto">
+                    <div className="flex justify-between px-2 py-1 border-b mb-1">
+                      <button 
+                        className="text-xs text-primary hover:text-primary/80 font-medium"
+                        onClick={selectAllTrainers}
+                      >
+                        Select All
+                      </button>
+                      <button 
+                        className="text-xs text-muted-foreground hover:text-foreground"
+                        onClick={clearTrainers}
+                      >
+                        Clear
+                      </button>
+                    </div>
                     {uniqueTrainers.map(teacher => <DropdownMenuItem key={teacher} className="flex items-center gap-2 rounded-md cursor-pointer" onClick={() => {
                     if (trainers.includes(teacher)) {
                       setTrainers(trainers.filter(t => t !== teacher));
@@ -240,6 +302,20 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="start" className="w-[200px] p-2 rounded-lg shadow-lg backdrop-blur-sm bg-popover/95 animate-scale-in">
+                    <div className="flex justify-between px-2 py-1 border-b mb-1">
+                      <button 
+                        className="text-xs text-primary hover:text-primary/80 font-medium"
+                        onClick={selectAllClassTypes}
+                      >
+                        Select All
+                      </button>
+                      <button 
+                        className="text-xs text-muted-foreground hover:text-foreground"
+                        onClick={clearClassTypes}
+                      >
+                        Clear
+                      </button>
+                    </div>
                     {uniqueClassTypes.map(type => <DropdownMenuItem key={type} className="flex items-center gap-2 rounded-md cursor-pointer" onClick={() => {
                     if (classTypes.includes(type)) {
                       setClassTypes(classTypes.filter(t => t !== type));
@@ -271,31 +347,31 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
         <Tabs value={currentView} onValueChange={value => setCurrentView(value as ViewType)} className="space-y-4">
           <div className="bg-card/70 backdrop-blur-xl rounded-lg p-1 border border-border/50 sticky top-4 z-10 shadow-md">
             <TabsList className="grid w-full grid-cols-3 md:grid-cols-7">
-              <TabsTrigger value="overview" className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all duration-300">
+              <TabsTrigger value="overview" className="flex items-center gap-2 transition-all duration-300">
                 <BarChart className="h-4 w-4" />
                 <span className="hidden md:inline">Overview</span>
               </TabsTrigger>
-              <TabsTrigger value="teachers" className="flex items-center gap-2 data-[state=active]:bg-barre data-[state=active]:text-barre-foreground transition-all duration-300">
+              <TabsTrigger value="teachers" className="flex items-center gap-2 transition-all duration-300">
                 <Users className="h-4 w-4" />
                 <span className="hidden md:inline">Teachers</span>
               </TabsTrigger>
-              <TabsTrigger value="classes" className="flex items-center gap-2 data-[state=active]:bg-cycle data-[state=active]:text-cycle-foreground transition-all duration-300">
+              <TabsTrigger value="classes" className="flex items-center gap-2 transition-all duration-300">
                 <ActivityIcon className="h-4 w-4" />
                 <span className="hidden md:inline">Classes</span>
               </TabsTrigger>
-              <TabsTrigger value="financials" className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all duration-300">
+              <TabsTrigger value="financials" className="flex items-center gap-2 transition-all duration-300">
                 <IndianRupee className="h-4 w-4" />
                 <span className="hidden md:inline">Financials</span>
               </TabsTrigger>
-              <TabsTrigger value="retention" className="flex items-center gap-2 data-[state=active]:bg-barre data-[state=active]:text-barre-foreground transition-all duration-300">
+              <TabsTrigger value="retention" className="flex items-center gap-2 transition-all duration-300">
                 <RefreshCw className="h-4 w-4" />
                 <span className="hidden md:inline">Retention</span>
               </TabsTrigger>
-              <TabsTrigger value="tables" className="flex items-center gap-2 data-[state=active]:bg-cycle data-[state=active]:text-cycle-foreground transition-all duration-300">
+              <TabsTrigger value="tables" className="flex items-center gap-2 transition-all duration-300">
                 <Database className="h-4 w-4" />
                 <span className="hidden md:inline">Tables</span>
               </TabsTrigger>
-              <TabsTrigger value="pivot" className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all duration-300">
+              <TabsTrigger value="pivot" className="flex items-center gap-2 transition-all duration-300">
                 <TableProperties className="h-4 w-4" />
                 <span className="hidden md:inline">Pivot</span>
               </TabsTrigger>
@@ -341,4 +417,5 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
       </div>
     </div>;
 };
+
 export default DashboardLayout;

@@ -28,6 +28,25 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     document.documentElement.classList.remove('light', 'dark', 'luxe', 'physique57');
     document.documentElement.classList.add(theme);
     localStorage.setItem('theme', theme);
+
+    // Apply global CSS variables based on theme
+    if (theme === 'physique57') {
+      document.documentElement.style.setProperty('--chart-primary', '#0d5c8f');
+      document.documentElement.style.setProperty('--chart-secondary', '#1a7cb8');
+      document.documentElement.style.setProperty('--chart-accent', '#2e9be0');
+    } else if (theme === 'luxe') {
+      document.documentElement.style.setProperty('--chart-primary', '#d4af37');
+      document.documentElement.style.setProperty('--chart-secondary', '#c6a02e');
+      document.documentElement.style.setProperty('--chart-accent', '#e3bc4c');
+    } else if (theme === 'dark') {
+      document.documentElement.style.setProperty('--chart-primary', '#64748b');
+      document.documentElement.style.setProperty('--chart-secondary', '#94a3b8');
+      document.documentElement.style.setProperty('--chart-accent', '#cbd5e1');
+    } else {
+      document.documentElement.style.setProperty('--chart-primary', '#3b82f6');
+      document.documentElement.style.setProperty('--chart-secondary', '#60a5fa');
+      document.documentElement.style.setProperty('--chart-accent', '#93c5fd');
+    }
   }, [theme]);
 
   return (

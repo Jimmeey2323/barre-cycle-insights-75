@@ -1,10 +1,12 @@
+
 import * as React from "react"
 import * as RechartsPrimitive from "recharts"
 
 import { cn } from "@/lib/utils"
+import { useTheme } from "@/contexts/ThemeContext"
 
 // Format: { THEME_NAME: CSS_SELECTOR }
-const THEMES = { light: "", dark: ".dark" } as const
+const THEMES = { light: "", dark: ".dark", luxe: ".luxe", physique57: ".physique57" } as const
 
 export type ChartConfig = {
   [k in string]: {
@@ -43,10 +45,28 @@ const ChartContainer = React.forwardRef<
 >(({ id, className, children, config, ...props }, ref) => {
   const uniqueId = React.useId()
   const chartId = `chart-${id || uniqueId.replace(/:/g, "")}`
+  const { theme } = useTheme()
+
+  // Apply theme-specific styling
+  React.useEffect(() => {
+    const chartContainer = document.getElementById(chartId);
+    if (chartContainer) {
+      // Apply theme-specific styling based on the current theme
+      chartContainer.querySelectorAll('.recharts-layer.recharts-bar-rectangle path').forEach(el => {
+        (el as SVGElement).style.fill = `var(--chart-primary)`;
+        (el as SVGElement).style.stroke = `var(--chart-primary)`;
+      });
+      
+      chartContainer.querySelectorAll('.recharts-layer.recharts-line-curve').forEach(el => {
+        (el as SVGElement).style.stroke = `var(--chart-primary)`;
+      });
+    }
+  }, [chartId, theme]);
 
   return (
     <ChartContext.Provider value={{ config }}>
       <div
+        id={chartId}
         data-chart={chartId}
         ref={ref}
         className={cn(
@@ -66,13 +86,30 @@ const ChartContainer = React.forwardRef<
 ChartContainer.displayName = "Chart"
 
 const ChartStyle = ({ id, config }: { id: string; config: ChartConfig }) => {
+  const { theme } = useTheme();
   const colorConfig = Object.entries(config).filter(
     ([_, config]) => config.theme || config.color
-  )
+  );
 
   if (!colorConfig.length) {
-    return null
+    return null;
   }
+
+  // Get theme-specific colors
+  const getThemeColor = () => {
+    switch (theme) {
+      case 'dark': 
+        return { primary: '#64748b', secondary: '#94a3b8', accent: '#cbd5e1' };
+      case 'luxe': 
+        return { primary: '#d4af37', secondary: '#c6a02e', accent: '#e3bc4c' };
+      case 'physique57': 
+        return { primary: '#0d5c8f', secondary: '#1a7cb8', accent: '#2e9be0' };
+      default: 
+        return { primary: '#3b82f6', secondary: '#60a5fa', accent: '#93c5fd' };
+    }
+  };
+
+  const themeColors = getThemeColor();
 
   return (
     <style
@@ -83,11 +120,15 @@ const ChartStyle = ({ id, config }: { id: string; config: ChartConfig }) => {
 ${prefix} [data-chart=${id}] {
 ${colorConfig
   .map(([key, itemConfig]) => {
+    // Use the theme-specific colors if no specific color is provided
     const color =
       itemConfig.theme?.[theme as keyof typeof itemConfig.theme] ||
-      itemConfig.color
-    return color ? `  --color-${key}: ${color};` : null
+      itemConfig.color ||
+      (key === 'primary' ? themeColors.primary : 
+       key === 'secondary' ? themeColors.secondary : themeColors.accent);
+    return color ? `  --color-${key}: ${color};` : null;
   })
+  .filter(Boolean)
   .join("\n")}
 }
 `

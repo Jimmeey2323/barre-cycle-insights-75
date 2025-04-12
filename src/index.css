@@ -36,6 +36,11 @@
     --ring: 222.2 84% 4.9%;
 
     --radius: 0.75rem;
+    
+    /* Custom chart colors */
+    --chart-primary: #3b82f6;
+    --chart-secondary: #60a5fa;
+    --chart-accent: #93c5fd;
   }
   
   .dark {
@@ -66,6 +71,11 @@
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
     --ring: 212.7 26.8% 83.9%;
+    
+    /* Custom chart colors for dark theme */
+    --chart-primary: #64748b;
+    --chart-secondary: #94a3b8;
+    --chart-accent: #cbd5e1;
   }
   
   .luxe {
@@ -99,6 +109,11 @@
     
     --barre: 30 60% 60%;
     --cycle: 150 50% 50%;
+    
+    /* Custom chart colors for luxe theme */
+    --chart-primary: #d4af37;
+    --chart-secondary: #c6a02e;
+    --chart-accent: #e3bc4c;
   }
   
   .physique57 {
@@ -111,7 +126,7 @@
     --popover: 0 0% 100%;
     --popover-foreground: 215 14% 35%;
     
-    --primary: 196 75% 49%;
+    --primary: 205 75% 35%;
     --primary-foreground: 0 0% 100%;
     
     --secondary: 210 20% 96%;
@@ -120,7 +135,7 @@
     --muted: 210 20% 96%;
     --muted-foreground: 215 14% 45%;
     
-    --accent: 196 75% 49%;
+    --accent: 205 75% 35%;
     --accent-foreground: 0 0% 100%;
     
     --destructive: 0 84.2% 60.2%;
@@ -128,10 +143,15 @@
     
     --border: 210 20% 90%;
     --input: 210 20% 90%;
-    --ring: 196 75% 49%;
+    --ring: 205 75% 35%;
     
     --barre: 339 75% 65%;
     --cycle: 173 75% 45%;
+    
+    /* Custom chart colors for physique57 theme */
+    --chart-primary: #0d5c8f;
+    --chart-secondary: #1a7cb8;
+    --chart-accent: #2e9be0;
   }
 }
 
@@ -147,6 +167,7 @@
 
   .light {
     font-family: 'Playfair Display', serif;
+    font-weight: 500;
   }
 
   .dark, .luxe, .physique57 {
@@ -197,6 +218,26 @@
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
 }
 
+/* Enhanced title animation */
+.title-char {
+  display: inline-block;
+  transition: transform 0.3s ease, color 0.3s ease;
+}
+
+.title-char:hover {
+  transform: translateY(-5px) scale(1.1);
+  color: var(--chart-accent);
+}
+
+/* Animate title icons */
+.title-icon {
+  transition: transform 0.4s ease;
+}
+
+.title-icon:hover {
+  transform: rotate(15deg) scale(1.2);
+}
+
 /* Add performance optimization */
 .recharts-wrapper {
   transform: translate3d(0, 0, 0);
@@ -204,4 +245,46 @@
 
 .recharts-surface {
   transform: translate3d(0, 0, 0);
+}
+
+/* Apply theme colors to charts */
+.recharts-cartesian-axis-line,
+.recharts-cartesian-grid-horizontal line,
+.recharts-cartesian-grid-vertical line {
+  stroke: var(--border) !important;
+}
+
+.recharts-bar-rectangle path,
+.recharts-reference-line line {
+  stroke: var(--chart-primary) !important;
+  fill: var(--chart-primary) !important;
+}
+
+.recharts-line-curve {
+  stroke: var(--chart-primary) !important;
+}
+
+.recharts-pie-sector {
+  stroke: var(--background) !important;
+}
+
+/* Apply theme to tabs */
+.tab-active {
+  background-color: var(--primary) !important;
+  color: var(--primary-foreground) !important;
+}
+
+/* Enhanced search bar */
+.search-bar {
+  width: 250px;
+  transition: width 0.3s ease;
+}
+
+.search-bar:focus {
+  width: 300px;
+}
+
+/* Clear selection button */
+.clear-button {
+  @apply text-sm text-muted-foreground hover:text-foreground transition-colors;
 }
