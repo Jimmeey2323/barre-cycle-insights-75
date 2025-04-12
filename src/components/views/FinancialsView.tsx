@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ProcessedData, RechartsValueType } from "@/types/fitnessTypes";
@@ -20,7 +21,7 @@ const FinancialsView: React.FC<FinancialsViewProps> = ({ data, selectedMonths, l
   const filteredStats = useMemo(() => {
     return data.monthlyStats.filter(stat =>
       (selectedMonths.length === 0 || selectedMonths.includes(stat.monthYear)) &&
-      (location === "" || location === "all" || stat.location === location)
+      (location === "" || location === "all" || String(stat.Location) === location)
     );
   }, [data, selectedMonths, location]);
 
@@ -89,7 +90,7 @@ const FinancialsView: React.FC<FinancialsViewProps> = ({ data, selectedMonths, l
   const classTypeColors = ["#8884d8", "#82ca9d", "#ffc658", "#a4de6c", "#d0ed57"];
   const locationColors = ["#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd"];
 
-  // This function now correctly uses setShowDrillDown
+  // This function now correctly handles drill down
   const handleDrillDown = (dataItem: any, dataKey: string, dataLabel: string) => {
     // Format and set drill down data
     const detailedData = data.rawData.filter(record => {
@@ -109,7 +110,6 @@ const FinancialsView: React.FC<FinancialsViewProps> = ({ data, selectedMonths, l
       type: dataKey
     });
     
-    // This is now the correct property
     drillDown.setShowDrillDown(true);
   };
 
@@ -139,6 +139,14 @@ const FinancialsView: React.FC<FinancialsViewProps> = ({ data, selectedMonths, l
       change: "Based on revenue"
     }
   ];
+
+  // Handle chart click events safely
+  const handleChartClick = (data: any, dataKey: string, dataLabel: string) => {
+    if (data && data.activePayload && data.activePayload.length) {
+      const dataItem = data.activePayload[0].payload;
+      handleDrillDown(dataItem, dataKey, dataLabel);
+    }
+  };
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -183,12 +191,7 @@ const FinancialsView: React.FC<FinancialsViewProps> = ({ data, selectedMonths, l
           </CardHeader>
           <CardContent className="h-[350px]">
             <ResponsiveContainer width="100%" height="100%">
-              <PieChart onClick={(e) => {
-                  if (e && e.activeShape && e.activeShape.payload) {
-                    const dataItem = e.activeShape.payload;
-                    handleDrillDown(dataItem, "type", "Class Type");
-                  }
-                }}>
+              <PieChart onClick={(data) => handleChartClick(data, "type", "Class Type")}>
                 <Pie
                   data={revenueByClassTypeData}
                   cx="50%"
@@ -230,12 +233,7 @@ const FinancialsView: React.FC<FinancialsViewProps> = ({ data, selectedMonths, l
           </CardHeader>
           <CardContent className="h-[350px]">
             <ResponsiveContainer width="100%" height="100%">
-              <PieChart onClick={(e) => {
-                  if (e && e.activeShape && e.activeShape.payload) {
-                    const dataItem = e.activeShape.payload;
-                    handleDrillDown(dataItem, "location", "Location");
-                  }
-                }}>
+              <PieChart onClick={(data) => handleChartClick(data, "location", "Location")}>
                 <Pie
                   data={revenueByLocationData}
                   cx="50%"
@@ -281,12 +279,7 @@ const FinancialsView: React.FC<FinancialsViewProps> = ({ data, selectedMonths, l
             <LineChart
               data={revenueOverTime}
               margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
-              onClick={(e) => {
-                  if (e && e.activeShape && e.activeShape.payload) {
-                    const dataItem = e.activeShape.payload;
-                    handleDrillDown(dataItem, "month", "Month");
-                  }
-                }}
+              onClick={(data) => handleChartClick(data, "month", "Month")}
             >
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
               <XAxis dataKey="name" tick={{ fill: 'var(--foreground)', fontSize: 12 }} />

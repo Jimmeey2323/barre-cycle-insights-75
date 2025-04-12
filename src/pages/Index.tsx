@@ -5,6 +5,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { fetchSheetData, processFitnessData } from "@/services/googleSheetsService";
 import DashboardLayout from "@/components/DashboardLayout";
 import { ActivityIcon } from "lucide-react";
+import { useTheme } from "@/contexts/ThemeContext";
 
 const SPREADSHEET_ID = "1JG6yAClbjr3iF1kapJHS-pf0G539afUpo-OdcMylnOI";
 const SHEET_NAME = "◉ Payroll";
@@ -23,6 +24,7 @@ const Index = () => {
   const [error, setError] = useState<Error | null>(null);
   const { toast } = useToast();
   const [loadingMessageIndex, setLoadingMessageIndex] = useState(0);
+  const { theme } = useTheme();
   
   // Include 'pivot' in the ViewType
   const [currentView, setCurrentView] = useState<ViewType>("overview");

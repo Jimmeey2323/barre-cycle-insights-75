@@ -5,7 +5,7 @@ import { ProcessedData, ViewType } from "@/types/fitnessTypes";
 import { 
   BarChart, LineChart, PieChart, ActivityIcon, Users, IndianRupee, 
   RefreshCw, Database, TableProperties, SearchIcon, ArrowUpRightSquare, 
-  ChevronDown, FilterIcon, MapPinIcon
+  ChevronDown, FilterIcon, MapPinIcon, Dumbbell
 } from "lucide-react";
 import OverviewView from "./views/OverviewView";
 import TeachersView from "./views/TeachersView";
@@ -17,6 +17,7 @@ import PivotTableView from "./views/PivotTableView";
 import EnhancedFilters from "./EnhancedFilters";
 import EnhancedTitle from "./EnhancedTitle";
 import VoiceSearch from "./VoiceSearch";
+import { ThemeToggle } from "./ThemeToggle";
 import { Button } from "./ui/button";
 import { Card, CardContent } from "./ui/card";
 import {
@@ -103,9 +104,17 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   const uniqueClassTypes = React.useMemo(() => {
     if (!data?.rawData) return [];
     const types = new Set<string>();
-    // Based on the sample data, we have "Barre" and "Cycle" class types
-    types.add("Barre");
-    types.add("Cycle");
+    data.rawData.forEach(record => {
+      // Check if record has Barre Sessions
+      if (record["Barre Sessions"] && parseInt(String(record["Barre Sessions"])) > 0) {
+        types.add("Barre");
+      }
+      
+      // Check if record has Cycle Sessions
+      if (record["Cycle Sessions"] && parseInt(String(record["Cycle Sessions"])) > 0) {
+        types.add("Cycle");
+      }
+    });
     return Array.from(types);
   }, [data?.rawData]);
 
@@ -162,8 +171,8 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
     (selectedMonths.length === 0 || selectedMonths.includes(String(record["Month Year"]))) &&
     (location === "" || location === "all" || record.Location === location) &&
     (trainers.length === 0 || (record["Teacher Name"] && trainers.includes(String(record["Teacher Name"])))) &&
-    (classTypes.length === 0 || ((record["Barre Sessions"] && record["Barre Sessions"] > 0 && classTypes.includes("Barre")) || 
-                                (record["Cycle Sessions"] && record["Cycle Sessions"] > 0 && classTypes.includes("Cycle"))))
+    (classTypes.length === 0 || ((record["Barre Sessions"] && parseInt(String(record["Barre Sessions"])) > 0 && classTypes.includes("Barre")) || 
+                                (record["Cycle Sessions"] && parseInt(String(record["Cycle Sessions"])) > 0 && classTypes.includes("Cycle"))))
   ).length;
   
   const filterPercentage = totalRecords > 0 ? Math.round((filteredCount / totalRecords) * 100) : 0;
@@ -171,11 +180,17 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-muted/30 pb-8 font-sans">
       <div className="container mx-auto px-4 py-8">
-        <div className="mb-8 flex flex-col md:flex-row justify-between items-start gap-4">
-          <EnhancedTitle />
+        <div className="mb-8 flex flex-row justify-between items-center gap-4">
+          <div className="flex items-center gap-2">
+            <Dumbbell className="h-6 w-6 text-primary" /> 
+            <EnhancedTitle />
+            <ActivityIcon className="h-6 w-6 text-barre animate-pulse" />
+          </div>
           
-          <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
+          <div className="flex items-center gap-2">
             <VoiceSearch onSearch={handleSearch} />
+            
+            <ThemeToggle />
             
             <Button 
               variant="outline" 
@@ -250,7 +265,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                       <ChevronDown className="h-4 w-4 opacity-50" />
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="start" className="w-[200px] p-2 rounded-lg shadow-lg backdrop-blur-sm bg-popover/95 animate-scale-in">
+                  <DropdownMenuContent align="start" className="w-[200px] p-2 rounded-lg shadow-lg backdrop-blur-sm bg-popover/95 animate-scale-in max-h-[300px] overflow-y-auto">
                     {uniqueTrainers.map(teacher => (
                       <DropdownMenuItem 
                         key={teacher}

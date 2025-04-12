@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ProcessedData, RechartsValueType } from "@/types/fitnessTypes";
@@ -23,7 +24,7 @@ const OverviewView: React.FC<OverviewViewProps> = ({ data, selectedMonths, locat
 
   const filteredStats = data.monthlyStats.filter(stat => 
     (selectedMonths.length === 0 || selectedMonths.includes(stat.monthYear)) &&
-    (location === "" || location === "all" || stat.location === location)
+    (location === "" || location === "all" || String(stat.Location) === location)
   );
 
   const filteredRawData = data.rawData.filter(record => 
@@ -168,15 +169,15 @@ const OverviewView: React.FC<OverviewViewProps> = ({ data, selectedMonths, locat
         <MetricsCard
           title="Average Class Size"
           value={showCycleMetrics ? 
-            ((parseFloat(String(avgBarreClassSize)) + parseFloat(String(avgCycleClassSize))) / 2).toFixed(1) : 
-            String(avgBarreClassSize)
+            ((parseFloat(avgBarreClassSize) + parseFloat(avgCycleClassSize)) / 2).toFixed(1) : 
+            avgBarreClassSize
           }
           icon={<TrendingUp className="h-5 w-5 text-primary" />}
           details={
             <>
-              <span className="font-semibold text-barre">{String(avgBarreClassSize)} Barre</span>
+              <span className="font-semibold text-barre">{avgBarreClassSize} Barre</span>
               {showCycleMetrics && (
-                <> / <span className="font-semibold text-cycle-dark">{String(avgCycleClassSize)} Cycle</span></>
+                <> / <span className="font-semibold text-cycle-dark">{avgCycleClassSize} Cycle</span></>
               )}
             </>
           }

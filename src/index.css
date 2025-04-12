@@ -1,4 +1,6 @@
 
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -94,6 +96,9 @@
     --border: 36 30% 80%;
     --input: 36 30% 80%;
     --ring: 36 60% 50%;
+    
+    --barre: 30 60% 60%;
+    --cycle: 150 50% 50%;
   }
   
   .physique57 {
@@ -124,6 +129,9 @@
     --border: 210 20% 90%;
     --input: 210 20% 90%;
     --ring: 196 75% 49%;
+    
+    --barre: 339 75% 65%;
+    --cycle: 173 75% 45%;
   }
 }
 
@@ -135,6 +143,14 @@
   body {
     @apply bg-background text-foreground;
     font-feature-settings: "rlig" 1, "calt" 1;
+  }
+
+  .light {
+    font-family: 'Playfair Display', serif;
+  }
+
+  .dark, .luxe, .physique57 {
+    font-family: 'Inter', sans-serif;
   }
 }
 
@@ -179,4 +195,13 @@
   border-radius: 1rem;
   background-color: var(--background);
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+}
+
+/* Add performance optimization */
+.recharts-wrapper {
+  transform: translate3d(0, 0, 0);
+}
+
+.recharts-surface {
+  transform: translate3d(0, 0, 0);
 }

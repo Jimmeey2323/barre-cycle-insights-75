@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ProcessedData } from "@/types/fitnessTypes";
@@ -30,7 +29,6 @@ const TablesView: React.FC<TablesViewProps> = ({ data, selectedMonths, location 
   const { toast } = useToast();
   const debouncedSearchTerm = useDebounce(searchQuery, 300);
   
-  // Extract unique teachers and class types
   const teachers = useMemo(() => {
     const uniqueTeachers = new Set<string>();
     data.rawData.forEach(record => {
@@ -47,7 +45,6 @@ const TablesView: React.FC<TablesViewProps> = ({ data, selectedMonths, location 
     return Array.from(uniqueTypes);
   }, [data.rawData]);
 
-  // Filter data based on selected months, location, teachers, types and search query
   const filteredRawData = useMemo(() => {
     return data.rawData.filter(record =>
       (selectedMonths.length === 0 || selectedMonths.includes(String(record["Month Year"]))) &&
@@ -60,30 +57,24 @@ const TablesView: React.FC<TablesViewProps> = ({ data, selectedMonths, location 
     );
   }, [data.rawData, selectedMonths, location, debouncedSearchTerm, selectedTeachers, selectedTypes]);
 
-  const filteredMonthlyStats = useMemo(() => {
-    return data.monthlyStats.filter(stat =>
+  const filteredStats = React.useMemo(() => {
+    return data.monthlyStats.filter(stat => 
       (selectedMonths.length === 0 || selectedMonths.includes(stat.monthYear)) &&
-      (location === "" || location === "all" || stat.location === location) &&
-      Object.values(stat).some(value =>
-        String(value).toLowerCase().includes(debouncedSearchTerm.toLowerCase())
-      )
+      (location === "" || location === "all" || String(stat.Location) === location)
     );
-  }, [data.monthlyStats, selectedMonths, location, debouncedSearchTerm]);
+  }, [data, selectedMonths, location]);
 
-  // Sort data
   const sortedRawData = useMemo(() => {
     return [...filteredRawData].sort((a, b) => {
       const aValue = a[sortColumn as keyof typeof a];
       const bValue = b[sortColumn as keyof typeof b];
       
-      // Handle numerical sorting
       if (!isNaN(Number(aValue)) && !isNaN(Number(bValue))) {
         return sortDirection === "asc" 
           ? Number(aValue) - Number(bValue)
           : Number(bValue) - Number(aValue);
       }
       
-      // Handle string sorting
       const aStr = String(aValue || "");
       const bStr = String(bValue || "");
       
@@ -93,19 +84,17 @@ const TablesView: React.FC<TablesViewProps> = ({ data, selectedMonths, location 
     });
   }, [filteredRawData, sortColumn, sortDirection]);
 
-  const sortedMonthlyStats = useMemo(() => {
-    return [...filteredMonthlyStats].sort((a, b) => {
+  const sortedStats = useMemo(() => {
+    return [...filteredStats].sort((a, b) => {
       const aValue = a[sortColumn as keyof typeof a];
       const bValue = b[sortColumn as keyof typeof b];
       
-      // Handle numerical sorting
       if (!isNaN(Number(aValue)) && !isNaN(Number(bValue))) {
         return sortDirection === "asc" 
           ? Number(aValue) - Number(bValue)
           : Number(bValue) - Number(aValue);
       }
       
-      // Handle string sorting
       const aStr = String(aValue || "");
       const bStr = String(bValue || "");
       
@@ -113,9 +102,8 @@ const TablesView: React.FC<TablesViewProps> = ({ data, selectedMonths, location 
         ? aStr.localeCompare(bStr)
         : bStr.localeCompare(aStr);
     });
-  }, [filteredMonthlyStats, sortColumn, sortDirection]);
+  }, [filteredStats, sortColumn, sortDirection]);
 
-  // Handlers
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
   };
@@ -130,7 +118,7 @@ const TablesView: React.FC<TablesViewProps> = ({ data, selectedMonths, location 
   };
   
   const handleExportCSV = () => {
-    const dataToExport = activeTable === "rawData" ? sortedRawData : sortedMonthlyStats;
+    const dataToExport = activeTable === "rawData" ? sortedRawData : sortedStats;
     if (dataToExport.length === 0) {
       toast({
         title: "No data to export",
@@ -140,10 +128,8 @@ const TablesView: React.FC<TablesViewProps> = ({ data, selectedMonths, location 
       return;
     }
     
-    // Get headers
     const headers = Object.keys(dataToExport[0]);
     
-    // Convert data to CSV
     const csvContent = [
       headers.join(','),
       ...dataToExport.map(row => 
@@ -158,7 +144,6 @@ const TablesView: React.FC<TablesViewProps> = ({ data, selectedMonths, location 
       )
     ].join('\n');
     
-    // Create download link
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
@@ -261,8 +246,8 @@ const TablesView: React.FC<TablesViewProps> = ({ data, selectedMonths, location 
           </TableRow>
         </TableHeader>
         <TableBody>
-          {sortedMonthlyStats.length > 0 ? (
-            sortedMonthlyStats.map((item, index) => (
+          {sortedStats.length > 0 ? (
+            sortedStats.map((item, index) => (
               <TableRow key={index} className="hover:bg-muted/30 transition-colors animate-fade-in" style={{ animationDelay: `${index * 0.03}s` }}>
                 {Object.entries(item).map(([key, value], i) => (
                   <TableCell key={i} className="py-2 whitespace-nowrap">
@@ -295,7 +280,7 @@ const TablesView: React.FC<TablesViewProps> = ({ data, selectedMonths, location 
         </h2>
         <Badge variant="outline" className="flex items-center px-3 py-1 rounded-full bg-background/60 backdrop-blur-sm">
           <Filter className="mr-1 h-3.5 w-3.5 text-muted-foreground" />
-          <span className="text-xs text-muted-foreground">Showing {activeTable === "rawData" ? sortedRawData.length : sortedMonthlyStats.length} records</span>
+          <span className="text-xs text-muted-foreground">Showing {activeTable === "rawData" ? sortedRawData.length : sortedStats.length} records</span>
         </Badge>
       </div>
       
@@ -450,7 +435,7 @@ const TablesView: React.FC<TablesViewProps> = ({ data, selectedMonths, location 
                 {activeTable === "rawData" ? "Raw Data" : "Monthly Stats"}
               </div>
               <div className="text-xs text-muted-foreground">
-                Showing {activeTable === "rawData" ? sortedRawData.length : sortedMonthlyStats.length} records
+                Showing {activeTable === "rawData" ? sortedRawData.length : sortedStats.length} records
               </div>
             </div>
             

@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ProcessedData, RechartsValueType, RechartsNameType } from "@/types/fitnessTypes";
@@ -13,10 +12,9 @@ interface RetentionViewProps {
 }
 
 const RetentionView: React.FC<RetentionViewProps> = ({ data, selectedMonths, location }) => {
-  // Filter data based on selected months and location
   const filteredStats = data.monthlyStats.filter(stat => 
     (selectedMonths.length === 0 || selectedMonths.includes(stat.monthYear)) &&
-    (location === "" || location === "all" || stat.location === location)
+    (location === "" || location === "all" || String(stat.Location) === location)
   );
 
   const filteredRawData = data.rawData.filter(record => 
@@ -24,9 +22,7 @@ const RetentionView: React.FC<RetentionViewProps> = ({ data, selectedMonths, loc
     (location === "" || location === "all" || record.Location === location)
   );
 
-  // Sort by month year
   filteredStats.sort((a, b) => {
-    // Parse "MMM-YYYY" format
     const [aMonth, aYear] = a.monthYear.split('-');
     const [bMonth, bYear] = b.monthYear.split('-');
     
@@ -38,7 +34,6 @@ const RetentionView: React.FC<RetentionViewProps> = ({ data, selectedMonths, loc
     return monthOrder.indexOf(aMonth) - monthOrder.indexOf(bMonth);
   });
 
-  // Aggregate retention and conversion data by month
   const retentionDataByMonth = filteredRawData.reduce((acc: Record<string, any>, record) => {
     const monthYear = String(record["Month Year"]);
     
@@ -58,7 +53,6 @@ const RetentionView: React.FC<RetentionViewProps> = ({ data, selectedMonths, loc
     return acc;
   }, {});
 
-  // Convert to array and calculate rates
   const retentionData = Object.values(retentionDataByMonth).map((item: any) => {
     const retentionRate = (item.newCustomers + item.retainedCustomers) > 0 
       ? (item.retainedCustomers / (item.newCustomers + item.retainedCustomers)) * 100 
@@ -77,7 +71,6 @@ const RetentionView: React.FC<RetentionViewProps> = ({ data, selectedMonths, loc
       conversionRate
     };
   }).sort((a, b) => {
-    // Parse "MMM-YYYY" format
     const [aMonth, aYear] = a.name.split('-');
     const [bMonth, bYear] = b.name.split('-');
     
@@ -89,7 +82,6 @@ const RetentionView: React.FC<RetentionViewProps> = ({ data, selectedMonths, loc
     return monthOrder.indexOf(aMonth) - monthOrder.indexOf(bMonth);
   });
 
-  // Calculate overall retention metrics
   const totalNewCustomers = retentionData.reduce((sum, item) => sum + (item.new || 0), 0);
   const totalRetainedCustomers = retentionData.reduce((sum, item) => sum + (item.retained || 0), 0);
   const totalConvertedCustomers = retentionData.reduce((sum, item) => sum + (item.converted || 0), 0);
