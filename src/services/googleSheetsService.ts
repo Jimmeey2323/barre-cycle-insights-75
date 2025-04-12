@@ -55,7 +55,7 @@ export async function fetchSheetData(sheetId: string, sheetName: string) {
     
     const encodedSheetName = encodeURIComponent(sheetName);
     const response = await axios.get(
-      `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${encodedSheetName}!A:ZZ`,
+      `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${encodedSheetName}!A:AB`,
       {
         headers: {
           'Authorization': `Bearer ${token}`
