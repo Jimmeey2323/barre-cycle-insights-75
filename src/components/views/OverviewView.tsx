@@ -158,7 +158,7 @@ const OverviewView: React.FC<OverviewViewProps> = ({ data, selectedMonths, locat
     const firstMonth = sortedStats[0];
     const lastMonth = sortedStats[sortedStats.length - 1];
     
-    // FIX: Changed Boolean to a simple conditional expression
+    // Fixed: Changed Boolean to a simple conditional expression
     const revenue = firstMonth.totalRevenue && firstMonth.totalRevenue > 0
       ? ((lastMonth.totalRevenue - firstMonth.totalRevenue) / firstMonth.totalRevenue) * 100
       : 0;
@@ -285,11 +285,11 @@ const OverviewView: React.FC<OverviewViewProps> = ({ data, selectedMonths, locat
   // CHART TOOLTIPS HAVE BEEN REFACTORED TO USE THE COMMON TOOLTIPCOMPONENT FROM UI
   // Chart configuration for styling
   const chartConfig = {
-    primary: { theme: { light: "var(--chart-primary)", dark: "var(--chart-primary)", luxe: "var(--chart-primary)" } },
-    secondary: { theme: { light: "var(--chart-secondary)", dark: "var(--chart-secondary)", luxe: "var(--chart-secondary)" } },
-    accent: { theme: { light: "var(--chart-accent)", dark: "var(--chart-accent)", luxe: "var(--chart-accent)" } },
-    barre: { theme: { light: "hsl(var(--barre))", dark: "hsl(var(--barre))", luxe: "hsl(var(--barre))" } },
-    cycle: { theme: { light: "hsl(var(--cycle))", dark: "hsl(var(--cycle))", luxe: "hsl(var(--cycle))" } },
+    primary: { theme: { light: "var(--chart-primary)", dark: "var(--chart-primary)", luxe: "var(--chart-primary)", physique57: "var(--chart-primary)" } },
+    secondary: { theme: { light: "var(--chart-secondary)", dark: "var(--chart-secondary)", luxe: "var(--chart-secondary)", physique57: "var(--chart-secondary)" } },
+    accent: { theme: { light: "var(--chart-accent)", dark: "var(--chart-accent)", luxe: "var(--chart-accent)", physique57: "var(--chart-accent)" } },
+    barre: { theme: { light: "hsl(var(--barre))", dark: "hsl(var(--barre))", luxe: "hsl(var(--barre))", physique57: "hsl(var(--barre))" } },
+    cycle: { theme: { light: "hsl(var(--cycle))", dark: "hsl(var(--cycle))", luxe: "hsl(var(--cycle))", physique57: "hsl(var(--cycle))" } },
   };
 
   return (
@@ -384,7 +384,7 @@ const OverviewView: React.FC<OverviewViewProps> = ({ data, selectedMonths, locat
                       height={70}
                     />
                     <YAxis 
-                      tickFormatter={(value) => formatNumber(value)}
+                      tickFormatter={formatNumber}
                       tick={{ fill: 'var(--foreground)', fontSize: 12 }}
                     />
                     <Tooltip 
@@ -427,7 +427,7 @@ const OverviewView: React.FC<OverviewViewProps> = ({ data, selectedMonths, locat
                       height={70}
                     />
                     <YAxis 
-                      tickFormatter={(value) => formatINR(value)} 
+                      tickFormatter={formatINR} 
                       tick={{ fill: 'var(--foreground)', fontSize: 12 }}
                     />
                     <Tooltip 
@@ -472,7 +472,7 @@ const OverviewView: React.FC<OverviewViewProps> = ({ data, selectedMonths, locat
                       height={70}
                     />
                     <YAxis 
-                      tickFormatter={(value) => formatNumber(value)}
+                      tickFormatter={formatNumber}
                       tick={{ fill: 'var(--foreground)', fontSize: 12 }}
                     />
                     <Tooltip 
@@ -565,9 +565,18 @@ const OverviewView: React.FC<OverviewViewProps> = ({ data, selectedMonths, locat
               <div className="h-full">
                 {totals.newCustomers || totals.retainedCustomers || totals.convertedCustomers ? (
                   <SankeyFunnelChart 
-                    data={chartData.customerFunnel}
-                    startColor="hsl(var(--barre))"
-                    endColor="hsl(var(--cycle))"
+                    title="Customer Journey"
+                    nodes={[
+                      { id: "new", label: "New", value: totals.newCustomers || 0, color: "hsl(var(--barre))", position: "top", column: 0 },
+                      { id: "retained", label: "Retained", value: totals.retainedCustomers || 0, color: "hsl(var(--primary))", position: "top", column: 1 },
+                      { id: "converted", label: "Converted", value: totals.convertedCustomers || 0, color: "hsl(var(--cycle))", position: "bottom", column: 2 },
+                      { id: "churned", label: "Churned", value: totals.churnedCustomers || 0, color: "hsl(var(--destructive))", position: "bottom", column: 3 }
+                    ]}
+                    links={[
+                      { source: "new", target: "retained", value: totals.retainedCustomers || 0, color: "hsl(var(--barre))" },
+                      { source: "retained", target: "converted", value: totals.convertedCustomers || 0, color: "hsl(var(--primary))" },
+                      { source: "retained", target: "churned", value: totals.churnedCustomers || 0, color: "hsl(var(--destructive))" }
+                    ]}
                   />
                 ) : (
                   <div className="flex h-full items-center justify-center">

@@ -108,7 +108,7 @@ const FinancialsView: React.FC<FinancialsViewProps> = ({ data, selectedMonths, l
   const firstMonth = sortedMonthlyStats[0];
   const lastMonth = sortedMonthlyStats[sortedMonthlyStats.length - 1];
   
-  // FIX: Changed Boolean to a simple conditional expression
+  // Fixed: Changed Boolean to a simple conditional expression
   const revenueGrowth = firstMonth && lastMonth && firstMonth.totalRevenue > 0 
     ? ((lastMonth.totalRevenue - firstMonth.totalRevenue) / firstMonth.totalRevenue) * 100 
     : 0;
@@ -421,7 +421,7 @@ const FinancialsView: React.FC<FinancialsViewProps> = ({ data, selectedMonths, l
                         padding={{ left: 10, right: 10 }}
                       />
                       <YAxis 
-                        tickFormatter={(value) => formatINR(value)} 
+                        tickFormatter={formatINR} 
                         tick={{ fill: 'var(--foreground)', fontSize: 12 }}
                       />
                       <Tooltip 
@@ -539,7 +539,7 @@ const FinancialsView: React.FC<FinancialsViewProps> = ({ data, selectedMonths, l
                         padding={{ left: 10, right: 10 }}
                       />
                       <YAxis 
-                        tickFormatter={(value) => formatINR(value)} 
+                        tickFormatter={formatINR} 
                         tick={{ fill: 'var(--foreground)', fontSize: 12 }}
                       />
                       <Tooltip 
@@ -612,7 +612,7 @@ const FinancialsView: React.FC<FinancialsViewProps> = ({ data, selectedMonths, l
                         padding={{ left: 10, right: 10 }}
                       />
                       <YAxis 
-                        tickFormatter={(value) => formatINR(value)} 
+                        tickFormatter={formatINR} 
                         tick={{ fill: 'var(--foreground)', fontSize: 12 }}
                       />
                       <Tooltip 
