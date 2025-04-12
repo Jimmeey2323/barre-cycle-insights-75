@@ -1,12 +1,13 @@
+
 import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ProcessedData, RechartsValueType } from "@/types/fitnessTypes";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from 'recharts';
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell, TableFooter } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Search, Users, TrendingUp, IndianRupee, ActivitySquare, BadgeIndianRupee, Award } from "lucide-react";
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
+import { Badge } from "@/components/ui/badge";
+import { Search, Users, TrendingUp, IndianRupee, BadgeIndianRupee, Award, ActivityIcon } from "lucide-react";
+import { useDebounce } from "@/hooks/use-debounce";
 
 interface TeachersViewProps {
   data: ProcessedData;
@@ -16,26 +17,27 @@ interface TeachersViewProps {
 
 const TeachersView: React.FC<TeachersViewProps> = ({ data, selectedMonths, location }) => {
   const [searchTerm, setSearchTerm] = useState("");
+  const debouncedSearchTerm = useDebounce(searchTerm, 300);
   
   // Filter data based on selected months and location
   const filteredData = data.rawData.filter(record => 
-    (selectedMonths.length === 0 || selectedMonths.includes(record["Month Year"])) &&
-    (location === "" || record.Location === location)
+    (selectedMonths.length === 0 || selectedMonths.includes(String(record["Month Year"]))) &&
+    (location === "" || location === "all" || record.Location === location)
   );
 
   // Further filter by search term
   const searchFilteredData = filteredData.filter(record => 
-    record["Teacher Name"].toLowerCase().includes(searchTerm.toLowerCase())
+    String(record["Teacher Name"]).toLowerCase().includes(debouncedSearchTerm.toLowerCase())
   );
 
   // Group by teacher
   const teacherData = searchFilteredData.reduce((acc: { [key: string]: any }, record) => {
-    const teacherName = record["Teacher Name"];
+    const teacherName = String(record["Teacher Name"]);
     
     if (!acc[teacherName]) {
       acc[teacherName] = {
         name: teacherName,
-        email: record["Teacher Email"],
+        email: String(record["Teacher Email"]),
         barreSessions: 0,
         cycleSessions: 0,
         barreCustomers: 0,
@@ -106,8 +108,16 @@ const TeachersView: React.FC<TeachersViewProps> = ({ data, selectedMonths, locat
     cycle: teacher.cyclePaid
   }));
 
-  const barreColor = "#FF6F91";
-  const cycleColor = "#9FD8CB";
+  // Revenue over time data
+  const revenueByTeacher = teacherList.slice(0, 5).map((teacher: any) => ({
+    name: teacher.name.split(' ')[0],
+    revenue: teacher.barrePaid + teacher.cyclePaid,
+    barreRevenue: teacher.barrePaid,
+    cycleRevenue: teacher.cyclePaid
+  }));
+
+  const barreColor = "#845EC2"; // Purple for barre
+  const cycleColor = "#00C2A8"; // Teal for cycle
 
   // Metrics for animated display
   const metrics = [
@@ -120,7 +130,7 @@ const TeachersView: React.FC<TeachersViewProps> = ({ data, selectedMonths, locat
     { 
       title: "Top Teacher Sessions", 
       value: teacherList.length > 0 ? teacherList[0].totalSessions : 0, 
-      icon: <ActivitySquare className="h-5 w-5 text-secondary" />,
+      icon: <ActivityIcon className="h-5 w-5 text-barre" />,
       change: teacherList.length > 0 ? `by ${teacherList[0].name.split(' ')[0]}` : ""
     },
     { 
@@ -133,20 +143,31 @@ const TeachersView: React.FC<TeachersViewProps> = ({ data, selectedMonths, locat
     { 
       title: "Avg Class Size", 
       value: ((averages.avgBarreClassSize + averages.avgCycleClassSize) / 2).toFixed(1),
-      icon: <Award className="h-5 w-5 text-barre" />,
+      icon: <Award className="h-5 w-5 text-cycle" />,
       change: "across all teachers"
     }
   ];
 
+  const COLORS = ['#845EC2', '#D65DB1', '#FF6F91', '#FF9671', '#FFC75F'];
+
+  // For pie chart
+  const pieData = teacherList.slice(0, 5).map((teacher: any, index) => ({
+    name: teacher.name.split(' ')[0],
+    value: teacher.totalSessions,
+    color: COLORS[index % COLORS.length]
+  }));
+
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold">Teacher Performance</h2>
+    <div className="space-y-6 animate-fade-in">
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="text-3xl font-bold font-heading bg-gradient-to-r from-barre to-cycle bg-clip-text text-transparent">
+          Teacher Performance
+        </h2>
         <div className="relative max-w-sm">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Search teachers..."
-            className="pl-8"
+            className="pl-8 bg-background/70"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
@@ -156,12 +177,12 @@ const TeachersView: React.FC<TeachersViewProps> = ({ data, selectedMonths, locat
       {/* Animated Metrics Section */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {metrics.map((metric, index) => (
-          <Card key={index} className="animate-fade-in overflow-hidden" style={{ animationDelay: `${index * 0.1}s` }}>
+          <Card key={index} className="animate-fade-in premium-card overflow-hidden transform transition-all duration-300 hover:shadow-xl hover:-translate-y-1" style={{ animationDelay: `${index * 0.1}s` }}>
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">{metric.title}</p>
-                  <h3 className="text-2xl font-bold mt-1 animate-fade-up" style={{ animationDelay: `${index * 0.1 + 0.2}s` }}>
+                  <h3 className="text-2xl font-bold mt-1 animate-fade-up bg-gradient-to-r from-primary to-barre bg-clip-text text-transparent" style={{ animationDelay: `${index * 0.1 + 0.2}s` }}>
                     {metric.value}
                   </h3>
                   <p className="text-xs text-muted-foreground mt-1">{metric.change}</p>
@@ -175,10 +196,13 @@ const TeachersView: React.FC<TeachersViewProps> = ({ data, selectedMonths, locat
         ))}
       </div>
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-        <Card className="animate-fade-up">
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
+        <Card className="animate-fade-in premium-card xl:col-span-2 overflow-hidden transform transition-all duration-300 hover:shadow-xl">
           <CardHeader>
-            <CardTitle>Top Teachers by Sessions</CardTitle>
+            <CardTitle className="flex items-center">
+              <ActivityIcon className="h-5 w-5 mr-2 text-barre" />
+              Top Teachers by Sessions
+            </CardTitle>
           </CardHeader>
           <CardContent className="h-[350px]">
             <ResponsiveContainer width="100%" height="100%">
@@ -187,21 +211,95 @@ const TeachersView: React.FC<TeachersViewProps> = ({ data, selectedMonths, locat
                 margin={{ top: 10, right: 30, left: 0, bottom: 20 }}
                 layout="vertical"
               >
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis type="number" />
-                <YAxis dataKey="name" type="category" width={80} />
-                <Tooltip />
-                <Legend />
-                <Bar dataKey="barre" name="Barre Sessions" fill={barreColor} />
-                <Bar dataKey="cycle" name="Cycle Sessions" fill={cycleColor} />
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
+                <XAxis type="number" tick={{ fill: 'var(--foreground)', fontSize: 12 }} />
+                <YAxis dataKey="name" type="category" width={80} tick={{ fill: 'var(--foreground)', fontSize: 12 }} />
+                <Tooltip 
+                  contentStyle={{ 
+                    backgroundColor: 'rgba(255,255,255,0.1)', 
+                    backdropFilter: 'blur(10px)',
+                    borderRadius: '10px',
+                    border: '1px solid rgba(255,255,255,0.2)',
+                    color: 'var(--foreground)',
+                    boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' 
+                  }}
+                  cursor={{ fill: 'rgba(255,255,255,0.05)' }} 
+                />
+                <Legend iconType="circle" iconSize={8} />
+                <Bar 
+                  dataKey="barre" 
+                  name="Barre Sessions" 
+                  fill={barreColor}
+                  radius={[0, 4, 4, 0]}
+                  animationDuration={1500}
+                  animationEasing="ease-out"
+                />
+                <Bar 
+                  dataKey="cycle" 
+                  name="Cycle Sessions" 
+                  fill={cycleColor}
+                  radius={[0, 4, 4, 0]}
+                  animationDuration={1500}
+                  animationEasing="ease-out"
+                  animationBegin={300}
+                />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
         </Card>
 
-        <Card className="animate-fade-up" style={{ animationDelay: "0.1s" }}>
+        <Card className="animate-fade-up premium-card overflow-hidden transform transition-all duration-300 hover:shadow-xl" style={{ animationDelay: "0.1s" }}>
           <CardHeader>
-            <CardTitle>Top Teachers by Revenue</CardTitle>
+            <CardTitle className="flex items-center">
+              <BadgeIndianRupee className="h-5 w-5 mr-2 text-cycle" />
+              Revenue Distribution
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="h-[350px] flex items-center justify-center">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={pieData}
+                  cx="50%"
+                  cy="50%"
+                  labelLine={false}
+                  outerRadius={120}
+                  fill="#8884d8"
+                  dataKey="value"
+                  animationDuration={1500}
+                  animationEasing="ease-out"
+                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                >
+                  {pieData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Pie>
+                <Tooltip 
+                  formatter={(value: RechartsValueType) => {
+                    return [`${typeof value === 'number' ? value.toLocaleString() : value} sessions`, ""];
+                  }}
+                  contentStyle={{ 
+                    backgroundColor: 'rgba(255,255,255,0.1)', 
+                    backdropFilter: 'blur(10px)',
+                    borderRadius: '10px',
+                    border: '1px solid rgba(255,255,255,0.2)',
+                    color: 'var(--foreground)',
+                    boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' 
+                  }}
+                />
+              </PieChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+        <Card className="animate-fade-up premium-card overflow-hidden transform transition-all duration-300 hover:shadow-xl" style={{ animationDelay: "0.2s" }}>
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <IndianRupee className="h-5 w-5 mr-2 text-barre" />
+              Top Teachers by Revenue
+            </CardTitle>
           </CardHeader>
           <CardContent className="h-[350px]">
             <ResponsiveContainer width="100%" height="100%">
@@ -210,74 +308,170 @@ const TeachersView: React.FC<TeachersViewProps> = ({ data, selectedMonths, locat
                 margin={{ top: 10, right: 30, left: 0, bottom: 20 }}
                 layout="vertical"
               >
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis type="number" />
-                <YAxis dataKey="name" type="category" width={80} />
-                <Tooltip formatter={(value: RechartsValueType) => {
-                  return [`₹${typeof value === 'number' ? value.toLocaleString() : value}`, ""];
-                }} />
-                <Legend />
-                <Bar dataKey="barre" name="Barre Revenue" fill={barreColor} />
-                <Bar dataKey="cycle" name="Cycle Revenue" fill={cycleColor} />
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
+                <XAxis type="number" tick={{ fill: 'var(--foreground)', fontSize: 12 }} />
+                <YAxis dataKey="name" type="category" width={80} tick={{ fill: 'var(--foreground)', fontSize: 12 }} />
+                <Tooltip 
+                  formatter={(value: RechartsValueType) => {
+                    return [`₹${typeof value === 'number' ? value.toLocaleString() : value}`, ""];
+                  }}
+                  contentStyle={{ 
+                    backgroundColor: 'rgba(255,255,255,0.1)', 
+                    backdropFilter: 'blur(10px)',
+                    borderRadius: '10px',
+                    border: '1px solid rgba(255,255,255,0.2)',
+                    color: 'var(--foreground)',
+                    boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' 
+                  }}
+                  cursor={{ fill: 'rgba(255,255,255,0.05)' }} 
+                />
+                <Legend iconType="circle" iconSize={8} />
+                <Bar 
+                  dataKey="barre" 
+                  name="Barre Revenue" 
+                  fill={barreColor}
+                  radius={[0, 4, 4, 0]}
+                  animationDuration={1500}
+                  animationEasing="ease-out"
+                />
+                <Bar 
+                  dataKey="cycle" 
+                  name="Cycle Revenue" 
+                  fill={cycleColor}
+                  radius={[0, 4, 4, 0]}
+                  animationDuration={1500}
+                  animationEasing="ease-out"
+                  animationBegin={300}
+                />
               </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+
+        <Card className="animate-fade-up premium-card overflow-hidden transform transition-all duration-300 hover:shadow-xl" style={{ animationDelay: "0.3s" }}>
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <TrendingUp className="h-5 w-5 mr-2 text-cycle" />
+              Revenue Comparison
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="h-[350px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart
+                data={revenueByTeacher}
+                margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
+                <XAxis dataKey="name" tick={{ fill: 'var(--foreground)', fontSize: 12 }} />
+                <YAxis tick={{ fill: 'var(--foreground)', fontSize: 12 }} />
+                <Tooltip 
+                  formatter={(value: RechartsValueType) => {
+                    return [`₹${typeof value === 'number' ? value.toLocaleString() : value}`, ""];
+                  }}
+                  contentStyle={{ 
+                    backgroundColor: 'rgba(255,255,255,0.1)', 
+                    backdropFilter: 'blur(10px)',
+                    borderRadius: '10px',
+                    border: '1px solid rgba(255,255,255,0.2)',
+                    color: 'var(--foreground)',
+                    boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' 
+                  }}
+                  cursor={{ stroke: 'rgba(255,255,255,0.2)', strokeWidth: 1 }}
+                />
+                <Legend iconType="circle" iconSize={8} />
+                <Line 
+                  type="monotone" 
+                  dataKey="revenue" 
+                  name="Total Revenue" 
+                  stroke="#FFD700"
+                  strokeWidth={3}
+                  dot={{ fill: '#FFD700', r: 6, strokeWidth: 0 }}
+                  activeDot={{ r: 8, strokeWidth: 0 }}
+                  animationDuration={1500}
+                  animationEasing="ease-out"
+                />
+                <Line 
+                  type="monotone" 
+                  dataKey="barreRevenue" 
+                  name="Barre Revenue" 
+                  stroke={barreColor}
+                  strokeWidth={2}
+                  dot={{ fill: barreColor, r: 5, strokeWidth: 0 }}
+                  activeDot={{ r: 7, strokeWidth: 0 }}
+                  animationDuration={1500}
+                  animationEasing="ease-out"
+                  animationBegin={300}
+                />
+                <Line 
+                  type="monotone" 
+                  dataKey="cycleRevenue" 
+                  name="Cycle Revenue" 
+                  stroke={cycleColor}
+                  strokeWidth={2}
+                  dot={{ fill: cycleColor, r: 5, strokeWidth: 0 }}
+                  activeDot={{ r: 7, strokeWidth: 0 }}
+                  animationDuration={1500}
+                  animationEasing="ease-out"
+                  animationBegin={600}
+                />
+              </LineChart>
             </ResponsiveContainer>
           </CardContent>
         </Card>
       </div>
 
-      <Card className="animate-fade-up" style={{ animationDelay: "0.2s" }}>
+      <Card className="animate-fade-up premium-card overflow-hidden transform transition-all duration-300 hover:shadow-xl" style={{ animationDelay: "0.4s" }}>
         <CardHeader>
           <CardTitle className="flex items-center">
-            <Users className="mr-2 h-5 w-5" /> Teacher Performance Details
+            <Users className="mr-2 h-5 w-5" /> 
+            Teacher Performance Details
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="rounded-md border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Teacher</TableHead>
-                  <TableHead className="text-right">Barre Sessions</TableHead>
-                  <TableHead className="text-right">Cycle Sessions</TableHead>
-                  <TableHead className="text-right">Barre Revenue</TableHead>
-                  <TableHead className="text-right">Cycle Revenue</TableHead>
-                  <TableHead className="text-right">Avg Class Size (Barre)</TableHead>
-                  <TableHead className="text-right">Avg Class Size (Cycle)</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {teacherList.map((teacher: any, index: number) => (
-                  <TableRow key={index}>
-                    <TableCell className="font-medium">{teacher.name}</TableCell>
-                    <TableCell isNumeric>{teacher.barreSessions}</TableCell>
-                    <TableCell isNumeric>{teacher.cycleSessions}</TableCell>
-                    <TableCell isNumeric isCurrency>₹{Math.floor(teacher.barrePaid).toLocaleString()}</TableCell>
-                    <TableCell isNumeric isCurrency>₹{Math.floor(teacher.cyclePaid).toLocaleString()}</TableCell>
-                    <TableCell isNumeric isAverage>{teacher.avgBarreClassSize}</TableCell>
-                    <TableCell isNumeric isAverage>{teacher.avgCycleClassSize}</TableCell>
+          <div className="rounded-md border shadow-inner">
+            <div className="max-h-[500px] overflow-auto">
+              <Table>
+                <TableHeader className="sticky top-0 z-10 bg-muted/40 backdrop-blur-sm">
+                  <TableRow>
+                    <TableHead className="font-heading">Teacher</TableHead>
+                    <TableHead className="text-right font-heading">Barre Sessions</TableHead>
+                    <TableHead className="text-right font-heading">Cycle Sessions</TableHead>
+                    <TableHead className="text-right font-heading">Barre Revenue</TableHead>
+                    <TableHead className="text-right font-heading">Cycle Revenue</TableHead>
+                    <TableHead className="text-right font-heading">Avg Class Size (Barre)</TableHead>
+                    <TableHead className="text-right font-heading">Avg Class Size (Cycle)</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-              <TableFooter>
-                <TableRow isSubtotal>
-                  <TableCell className="font-semibold">Subtotal</TableCell>
-                  <TableCell isNumeric>{totals.barreSessions}</TableCell>
-                  <TableCell isNumeric>{totals.cycleSessions}</TableCell>
-                  <TableCell isNumeric isCurrency>₹{Math.floor(totals.barrePaid).toLocaleString()}</TableCell>
-                  <TableCell isNumeric isCurrency>₹{Math.floor(totals.cyclePaid).toLocaleString()}</TableCell>
-                  <TableCell isNumeric isAverage>{averages.avgBarreClassSize.toFixed(1)}</TableCell>
-                  <TableCell isNumeric isAverage>{averages.avgCycleClassSize.toFixed(1)}</TableCell>
-                </TableRow>
-                <TableRow isTotal>
-                  <TableCell className="font-bold">Total</TableCell>
-                  <TableCell isNumeric colSpan={2}>{totals.totalSessions} Sessions</TableCell>
-                  <TableCell isNumeric isCurrency colSpan={2}>₹{Math.floor(totals.barrePaid + totals.cyclePaid).toLocaleString()}</TableCell>
-                  <TableCell isNumeric isAverage colSpan={2}>
-                    {((averages.avgBarreClassSize + averages.avgCycleClassSize) / 2).toFixed(1)} Avg Class Size
-                  </TableCell>
-                </TableRow>
-              </TableFooter>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {teacherList.map((teacher: any, index: number) => (
+                    <TableRow key={index} className="animate-fade-in hover:bg-muted/20 transition-colors duration-200" style={{ animationDelay: `${index * 0.05 + 0.5}s` }}>
+                      <TableCell className="font-medium">{teacher.name}</TableCell>
+                      <TableCell className="text-right">
+                        <Badge className="bg-barre">{teacher.barreSessions}</Badge>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Badge className="bg-cycle">{teacher.cycleSessions}</Badge>
+                      </TableCell>
+                      <TableCell className="text-right font-mono">₹{Math.floor(teacher.barrePaid).toLocaleString()}</TableCell>
+                      <TableCell className="text-right font-mono">₹{Math.floor(teacher.cyclePaid).toLocaleString()}</TableCell>
+                      <TableCell className="text-right">{teacher.avgBarreClassSize}</TableCell>
+                      <TableCell className="text-right">{teacher.avgCycleClassSize}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+                <TableFooter>
+                  <TableRow>
+                    <TableCell className="font-bold">Totals</TableCell>
+                    <TableCell className="text-right">{totals.barreSessions}</TableCell>
+                    <TableCell className="text-right">{totals.cycleSessions}</TableCell>
+                    <TableCell className="text-right font-mono">₹{Math.floor(totals.barrePaid).toLocaleString()}</TableCell>
+                    <TableCell className="text-right font-mono">₹{Math.floor(totals.cyclePaid).toLocaleString()}</TableCell>
+                    <TableCell className="text-right">{averages.avgBarreClassSize.toFixed(1)}</TableCell>
+                    <TableCell className="text-right">{averages.avgCycleClassSize.toFixed(1)}</TableCell>
+                  </TableRow>
+                </TableFooter>
+              </Table>
+            </div>
           </div>
         </CardContent>
       </Card>

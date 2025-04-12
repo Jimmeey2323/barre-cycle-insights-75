@@ -22,12 +22,13 @@ const OverviewView: React.FC<OverviewViewProps> = ({ data, selectedMonths, locat
   }, [location]);
 
   const filteredStats = data.monthlyStats.filter(stat => 
-    (selectedMonths.length === 0 || selectedMonths.includes(stat.monthYear))
+    (selectedMonths.length === 0 || selectedMonths.includes(stat.monthYear)) &&
+    (location === "" || location === "all" || stat.location === location)
   );
 
   const filteredRawData = data.rawData.filter(record => 
-    (selectedMonths.length === 0 || selectedMonths.includes(record["Month Year"])) &&
-    (location === "" || record.Location === location)
+    (selectedMonths.length === 0 || selectedMonths.includes(String(record["Month Year"]))) &&
+    (location === "" || location === "all" || record.Location === location)
   );
 
   const sessionComparisonData = filteredStats.map(stat => {

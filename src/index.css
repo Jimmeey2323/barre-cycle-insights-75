@@ -1,10 +1,41 @@
 
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   :root {
+    --background: 240 10% 3.9%;
+    --foreground: 0 0% 98%;
+    --card: 240 10% 3.9%;
+    --card-foreground: 0 0% 98%;
+    --popover: 240 10% 3.9%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 262 83% 58%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 262 83% 58%;
+    --radius: 0.75rem;
+    --barre: 262 83% 58%;
+    --barre-light: 263 80% 70%;
+    --barre-dark: 263 83% 48%;
+    --cycle: 173 80% 40%;
+    --cycle-light: 173 65% 60%;
+    --cycle-dark: 173 83% 30%;
+  }
+
+  .light {
     --background: 0 0% 100%;
     --foreground: 222.2 84% 4.9%;
     --card: 0 0% 100%;
@@ -24,45 +55,38 @@
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
     --ring: 262 83% 58%;
-    --radius: 0.5rem;
-  }
-
-  .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 262 83% 58%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 262 83% 58%;
+    --barre: 262 83% 58%;
+    --barre-light: 263 80% 70%;
+    --barre-dark: 263 83% 48%;
+    --cycle: 173 80% 40%;
+    --cycle-light: 173 65% 60%;
+    --cycle-dark: 173 83% 30%;
   }
 }
 
 @layer base {
   * {
     @apply border-border;
+    @apply selection:bg-primary/20 selection:text-primary;
   }
-  body {
-    @apply bg-background text-foreground;
+  
+  html {
+    @apply scroll-smooth;
     font-feature-settings: "rlig" 1, "calt" 1;
+  }
+  
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-heading font-bold tracking-tight;
   }
 }
 
 @layer components {
   .card-glass {
-    @apply border border-border/50 bg-card/50 backdrop-blur-sm shadow-sm;
+    @apply backdrop-blur-xl border border-white/10 bg-white/5 shadow-[0_4px_24px_rgba(0,0,0,0.15)];
   }
   
   .premium-card {
@@ -75,20 +99,52 @@
   
   /* Custom gradient border definition */
   .border-gradient-to-r {
-    border-width: 4px;
+    border-width: 2px;
     border-style: solid;
     border-image: linear-gradient(to right, hsl(var(--primary)), hsl(var(--barre)), hsl(var(--cycle))) 1;
+  }
+  
+  .filter-button {
+    @apply flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all bg-card/50 hover:bg-card/80 border border-border/50;
+  }
+  
+  .stat-card {
+    @apply bg-gradient-to-br from-background via-background/80 to-primary/5 border border-border/60 rounded-xl shadow-xl p-5 transition-all duration-300 hover:shadow-2xl hover:-translate-y-1;
+  }
+  
+  .chart-card {
+    @apply bg-gradient-to-br from-background via-background/80 to-primary/5 border border-border/60 rounded-xl shadow-xl overflow-hidden transition-all duration-300 hover:shadow-2xl;
+  }
+  
+  .data-table {
+    @apply rounded-lg border border-border/60 shadow-lg overflow-hidden;
+  }
+  
+  .data-table-header {
+    @apply bg-muted/20 backdrop-blur-sm sticky top-0 z-10;
+  }
+  
+  .tab-button {
+    @apply flex items-center gap-2 px-4 py-2.5 rounded-lg transition-all duration-300;
+  }
+  
+  .tab-button-active {
+    @apply bg-primary text-white shadow-md;
   }
 }
 
 @layer utilities {
   /* Define our custom animation classes within the utilities layer */
   .animate-fade-in {
-    animation: fade-in 0.5s ease-out forwards;
+    animation: fade-in 0.8s ease-out forwards;
+  }
+  
+  .animate-fade-up {
+    animation: fade-up 0.6s ease-out forwards;
   }
   
   .animate-scale-in {
-    animation: scale-in 0.3s ease-out forwards;
+    animation: scale-in 0.4s ease-out forwards;
   }
   
   .animate-float {
@@ -112,8 +168,29 @@
     animation: typing 3.5s steps(40, end), blink-caret 0.75s step-end infinite;
   }
   
-  .animate-scale-up {
-    animation: scale-up-center 0.4s cubic-bezier(0.390, 0.575, 0.565, 1.000) both;
+  .animate-bounce-subtle {
+    animation: bounce-subtle 2s ease-in-out infinite;
+  }
+  
+  .animate-gradient {
+    background-size: 200% 200%;
+    animation: gradient-shift 8s ease infinite;
+  }
+  
+  .glass-morphism {
+    @apply backdrop-blur-xl bg-white/5 border border-white/10 shadow-[0_4px_12px_-2px_rgba(0,0,0,0.3)];
+  }
+  
+  .text-gradient {
+    @apply bg-gradient-to-br from-white via-white/90 to-white/70 bg-clip-text text-transparent;
+  }
+  
+  .font-heading {
+    font-family: 'Playfair Display', serif;
+  }
+  
+  .font-sans {
+    font-family: 'Inter', sans-serif;
   }
 }
 
@@ -123,6 +200,14 @@
 
 .text-gradient-cycle {
   @apply bg-gradient-to-r from-cycle-dark to-cycle bg-clip-text text-transparent;
+}
+
+.bg-gradient-barre {
+  @apply bg-gradient-to-r from-barre to-barre-dark;
+}
+
+.bg-gradient-cycle {
+  @apply bg-gradient-to-r from-cycle-dark to-cycle;
 }
 
 /* Custom table styles */
@@ -153,7 +238,7 @@
 
 /* Enhanced tooltip styles for charts */
 .recharts-tooltip-wrapper .recharts-default-tooltip {
-  @apply shadow-lg rounded-lg border border-gray-200 !bg-white/95 backdrop-blur-sm p-2;
+  @apply shadow-lg rounded-lg border border-border/40 !bg-card/95 backdrop-blur-sm p-2;
 }
 
 .recharts-tooltip-wrapper .recharts-default-tooltip .recharts-tooltip-label {
@@ -192,18 +277,23 @@
 
 /* Drilldown overlay */
 .drill-down-overlay {
-  @apply fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50;
+  @apply fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50;
   animation: fade-in 0.5s ease-out forwards;
 }
 
 .drill-down-content {
-  @apply bg-white rounded-lg w-11/12 max-w-5xl max-h-[90vh] overflow-auto shadow-xl;
+  @apply bg-card rounded-lg w-11/12 max-w-5xl max-h-[90vh] overflow-auto shadow-xl border border-border/30;
   animation: scale-in 0.3s ease-out forwards;
 }
 
 /* Enhanced Animations */
 @keyframes fade-in {
-  0% { opacity: 0; transform: translateY(10px); }
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+@keyframes fade-up {
+  0% { opacity: 0; transform: translateY(20px); }
   100% { opacity: 1; transform: translateY(0); }
 }
 
@@ -239,9 +329,15 @@
   50% { border-color: currentColor; }
 }
 
-@keyframes scale-up-center {
-  0% { transform: scale(0.8); opacity: 0; }
-  100% { transform: scale(1); opacity: 1; }
+@keyframes bounce-subtle {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
+
+@keyframes gradient-shift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
 }
 
 /* Chart style enhancements */
@@ -271,7 +367,7 @@ table {
 }
 
 th {
-  @apply bg-muted/50 font-semibold;
+  @apply bg-muted/30 font-semibold;
 }
 
 thead tr {
@@ -279,11 +375,11 @@ thead tr {
 }
 
 tbody tr:nth-child(even) {
-  @apply bg-muted/20;
+  @apply bg-muted/10;
 }
 
 tbody tr:hover {
-  @apply bg-muted/40 transition-colors duration-150;
+  @apply bg-muted/30 transition-colors duration-150;
 }
 
 /* Premium styles */
@@ -297,9 +393,15 @@ tbody tr:hover {
 }
 
 .premium-shadow {
-  @apply shadow-[0_8px_30px_rgb(0,0,0,0.12)];
+  @apply shadow-[0_8px_30px_rgba(0,0,0,0.3)];
 }
 
 .premium-bg-gradient {
   @apply bg-gradient-to-br from-background via-background/80 to-primary/5;
+}
+
+/* Custom transitions */
+.transition-all {
+  transition-property: all;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
 }

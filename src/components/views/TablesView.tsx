@@ -6,13 +6,13 @@ import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { ArrowDown, ArrowUp, ChevronsUpDown, Download, Filter, MoreHorizontal, Search } from "lucide-react";
+import { ArrowDown, ArrowUp, ChevronsUpDown, Download, Filter, MoreHorizontal, SearchIcon, Table2, TableIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatINR } from "@/lib/formatters";
 import { Button } from "@/components/ui/button";
-import { MultiSelect } from "@/components/ui/multi-select";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
+import { Badge } from "@/components/ui/badge";
+import { useDebounce } from "@/hooks/use-debounce";
 
 interface TablesViewProps {
   data: ProcessedData;
@@ -28,6 +28,7 @@ const TablesView: React.FC<TablesViewProps> = ({ data, selectedMonths, location 
   const [selectedTeachers, setSelectedTeachers] = useState<string[]>([]);
   const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
   const { toast } = useToast();
+  const debouncedSearchTerm = useDebounce(searchQuery, 300);
   
   // Extract unique teachers and class types
   const teachers = useMemo(() => {
@@ -46,15 +47,6 @@ const TablesView: React.FC<TablesViewProps> = ({ data, selectedMonths, location 
     return Array.from(uniqueTypes);
   }, [data.rawData]);
 
-  // Convert teachers and types to option format for MultiSelect
-  const teacherOptions = useMemo(() => 
-    teachers.map(teacher => ({ label: teacher, value: teacher })),
-  [teachers]);
-  
-  const typeOptions = useMemo(() => 
-    classTypes.map(type => ({ label: type, value: type })),
-  [classTypes]);
-
   // Filter data based on selected months, location, teachers, types and search query
   const filteredRawData = useMemo(() => {
     return data.rawData.filter(record =>
@@ -63,19 +55,20 @@ const TablesView: React.FC<TablesViewProps> = ({ data, selectedMonths, location 
       (selectedTeachers.length === 0 || (record.Teacher && selectedTeachers.includes(String(record.Teacher)))) &&
       (selectedTypes.length === 0 || (record.Type && selectedTypes.includes(String(record.Type)))) &&
       Object.values(record).some(value =>
-        String(value).toLowerCase().includes(searchQuery.toLowerCase())
+        String(value).toLowerCase().includes(debouncedSearchTerm.toLowerCase())
       )
     );
-  }, [data.rawData, selectedMonths, location, searchQuery, selectedTeachers, selectedTypes]);
+  }, [data.rawData, selectedMonths, location, debouncedSearchTerm, selectedTeachers, selectedTypes]);
 
   const filteredMonthlyStats = useMemo(() => {
     return data.monthlyStats.filter(stat =>
       (selectedMonths.length === 0 || selectedMonths.includes(stat.monthYear)) &&
+      (location === "" || location === "all" || stat.location === location) &&
       Object.values(stat).some(value =>
-        String(value).toLowerCase().includes(searchQuery.toLowerCase())
+        String(value).toLowerCase().includes(debouncedSearchTerm.toLowerCase())
       )
     );
-  }, [data.monthlyStats, selectedMonths, searchQuery]);
+  }, [data.monthlyStats, selectedMonths, location, debouncedSearchTerm]);
 
   // Sort data
   const sortedRawData = useMemo(() => {
@@ -137,8 +130,8 @@ const TablesView: React.FC<TablesViewProps> = ({ data, selectedMonths, location 
   };
   
   const handleExportCSV = () => {
-    const data = activeTable === "rawData" ? sortedRawData : sortedMonthlyStats;
-    if (data.length === 0) {
+    const dataToExport = activeTable === "rawData" ? sortedRawData : sortedMonthlyStats;
+    if (dataToExport.length === 0) {
       toast({
         title: "No data to export",
         description: "The filtered table is empty.",
@@ -148,12 +141,12 @@ const TablesView: React.FC<TablesViewProps> = ({ data, selectedMonths, location 
     }
     
     // Get headers
-    const headers = Object.keys(data[0]);
+    const headers = Object.keys(dataToExport[0]);
     
     // Convert data to CSV
     const csvContent = [
       headers.join(','),
-      ...data.map(row => 
+      ...dataToExport.map(row => 
         headers
           .map(header => {
             const value = row[header as keyof typeof row];
@@ -189,24 +182,28 @@ const TablesView: React.FC<TablesViewProps> = ({ data, selectedMonths, location 
       description: "All table filters have been reset."
     });
   };
+  
+  const handleTableTypeChange = (value: string) => {
+    setActiveTable(value as "rawData" | "monthlyStats");
+  };
 
   const RawDataTable = () => (
     <div className="rounded-md border overflow-x-auto">
       <Table className="min-w-full table-compact">
-        <TableHeader className="bg-muted/40 sticky top-0">
+        <TableHeader className="bg-muted/40 backdrop-blur-sm sticky top-0">
           <TableRow>
             {Object.keys(data.rawData[0]).map((header) => (
               <TableHead 
                 key={header} 
                 onClick={() => handleSort(header)}
-                className="cursor-pointer hover:bg-muted transition-colors py-3 whitespace-nowrap"
+                className="cursor-pointer hover:bg-muted transition-colors py-3 whitespace-nowrap font-heading"
               >
                 <div className="flex items-center gap-1">
                   {header}
                   {sortColumn === header && (
                     sortDirection === "asc" ? 
-                      <ArrowUp className="h-4 w-4 inline-block" /> : 
-                      <ArrowDown className="h-4 w-4 inline-block" />
+                      <ArrowUp className="h-4 w-4 inline-block text-primary" /> : 
+                      <ArrowDown className="h-4 w-4 inline-block text-primary" />
                   )}
                   {sortColumn !== header && <ChevronsUpDown className="h-3 w-3 opacity-30" />}
                 </div>
@@ -217,7 +214,7 @@ const TablesView: React.FC<TablesViewProps> = ({ data, selectedMonths, location 
         <TableBody>
           {sortedRawData.length > 0 ? (
             sortedRawData.map((record, index) => (
-              <TableRow key={index} className="hover:bg-muted/30 transition-colors">
+              <TableRow key={index} className="hover:bg-muted/30 transition-colors animate-fade-in" style={{ animationDelay: `${index * 0.03}s` }}>
                 {Object.entries(record).map(([key, value], i) => (
                   <TableCell key={i} className="py-2 whitespace-nowrap">
                     {typeof value === 'number' && !isNaN(value) && key.toLowerCase().includes('paid') 
@@ -242,20 +239,20 @@ const TablesView: React.FC<TablesViewProps> = ({ data, selectedMonths, location 
   const MonthlyStatsTable = () => (
     <div className="rounded-md border overflow-x-auto">
       <Table className="min-w-full table-compact">
-        <TableHeader className="bg-muted/40 sticky top-0">
+        <TableHeader className="bg-muted/40 backdrop-blur-sm sticky top-0">
           <TableRow>
             {Object.keys(data.monthlyStats[0]).map((header) => (
               <TableHead 
                 key={header} 
                 onClick={() => handleSort(header)}
-                className="cursor-pointer hover:bg-muted transition-colors py-3 whitespace-nowrap"
+                className="cursor-pointer hover:bg-muted transition-colors py-3 whitespace-nowrap font-heading"
               >
                 <div className="flex items-center gap-1">
                   {header}
                   {sortColumn === header && (
                     sortDirection === "asc" ? 
-                      <ArrowUp className="h-4 w-4 inline-block" /> : 
-                      <ArrowDown className="h-4 w-4 inline-block" />
+                      <ArrowUp className="h-4 w-4 inline-block text-primary" /> : 
+                      <ArrowDown className="h-4 w-4 inline-block text-primary" />
                   )}
                   {sortColumn !== header && <ChevronsUpDown className="h-3 w-3 opacity-30" />}
                 </div>
@@ -266,26 +263,16 @@ const TablesView: React.FC<TablesViewProps> = ({ data, selectedMonths, location 
         <TableBody>
           {sortedMonthlyStats.length > 0 ? (
             sortedMonthlyStats.map((item, index) => (
-              <TableRow key={index} className="hover:bg-muted/30 transition-colors">
-                <TableCell>{item.month}</TableCell>
-                <TableCell>{item.monthYear}</TableCell>
-                <TableCell>{parseInt(String(item.totalSessions))}</TableCell>
-                <TableCell>{parseInt(String(item.barreSessions))}</TableCell>
-                <TableCell>{parseInt(String(item.cycleSessions))}</TableCell>
-                <TableCell>{parseInt(String(item.barreCustomers))}</TableCell>
-                <TableCell>{parseInt(String(item.cycleCustomers))}</TableCell>
-                <TableCell>{formatINR(item.barrePaid)}</TableCell>
-                <TableCell>{formatINR(item.cyclePaid)}</TableCell>
-                <TableCell>{formatINR(item.totalRevenue)}</TableCell>
-                <TableCell>{typeof item.avgClassSize === 'number' ? item.avgClassSize.toFixed(1) : item.avgClassSize}</TableCell>
-                <TableCell>{item.totalBarreSessions}</TableCell>
-                <TableCell>{item.totalCycleSessions}</TableCell>
-                <TableCell>{item.totalBarreCustomers}</TableCell>
-                <TableCell>{item.totalCycleCustomers}</TableCell>
-                <TableCell>{item.totalBarrePaid}</TableCell>
-                <TableCell>{item.totalCyclePaid}</TableCell>
-                <TableCell>{item.avgBarreClassSize}</TableCell>
-                <TableCell>{item.avgCycleClassSize}</TableCell>
+              <TableRow key={index} className="hover:bg-muted/30 transition-colors animate-fade-in" style={{ animationDelay: `${index * 0.03}s` }}>
+                {Object.entries(item).map(([key, value], i) => (
+                  <TableCell key={i} className="py-2 whitespace-nowrap">
+                    {key.toLowerCase().includes('paid') || key.toLowerCase().includes('revenue') 
+                      ? formatINR(Number(value)) 
+                      : key.toLowerCase().includes('size') 
+                        ? typeof value === 'number' ? value.toFixed(1) : value
+                        : value}
+                  </TableCell>
+                ))}
               </TableRow>
             ))
           ) : (
@@ -301,125 +288,163 @@ const TablesView: React.FC<TablesViewProps> = ({ data, selectedMonths, location 
   );
 
   return (
-    <div className="space-y-6">
-      <Card className="overflow-hidden border border-border/50 bg-card/50 backdrop-blur-sm shadow-sm">
-        <CardHeader className="pb-2">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-            <CardTitle className="text-xl font-semibold">Data Tables</CardTitle>
-            <div className="flex gap-2">
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={handleExportCSV}
-                className="flex items-center gap-1 text-xs"
-              >
-                <Download className="h-3.5 w-3.5" />
-                Export CSV
-              </Button>
-              
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm" className="flex items-center gap-1 text-xs">
-                    <MoreHorizontal className="h-3.5 w-3.5" />
-                    Options
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={clearAllFilters}>
-                    Clear All Filters
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => {
-                    setActiveTable(activeTable === "rawData" ? "monthlyStats" : "rawData");
-                  }}>
-                    {activeTable === "rawData" ? "Switch to Monthly Stats" : "Switch to Raw Data"}
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
+    <div className="space-y-6 animate-fade-in">
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="text-3xl font-bold font-heading bg-gradient-to-r from-barre to-cycle bg-clip-text text-transparent">
+          Data Tables
+        </h2>
+        <Badge variant="outline" className="flex items-center px-3 py-1 rounded-full bg-background/60 backdrop-blur-sm">
+          <Filter className="mr-1 h-3.5 w-3.5 text-muted-foreground" />
+          <span className="text-xs text-muted-foreground">Showing {activeTable === "rawData" ? sortedRawData.length : sortedMonthlyStats.length} records</span>
+        </Badge>
+      </div>
+      
+      <Card className="overflow-hidden premium-card">
+        <CardHeader className="pb-2 flex flex-row items-center justify-between">
+          <CardTitle className="text-xl font-semibold flex items-center">
+            <TableIcon className="h-5 w-5 mr-2 text-primary" />
+            {activeTable === "rawData" ? "Raw Data Table" : "Monthly Statistics"}
+          </CardTitle>
+          <div className="flex gap-2">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={handleExportCSV}
+              className="flex items-center gap-1 text-xs bg-background/70 hover:bg-background"
+            >
+              <Download className="h-3.5 w-3.5" />
+              Export CSV
+            </Button>
+            
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="flex items-center gap-1 text-xs bg-background/70 hover:bg-background">
+                  <MoreHorizontal className="h-3.5 w-3.5" />
+                  Options
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="p-2 rounded-lg shadow-lg backdrop-blur-sm bg-popover/95 animate-scale-in">
+                <DropdownMenuItem onClick={clearAllFilters} className="flex items-center gap-2 cursor-pointer">
+                  <Filter className="h-4 w-4" />
+                  Clear All Filters
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleTableTypeChange(activeTable === "rawData" ? "monthlyStats" : "rawData")} className="flex items-center gap-2 cursor-pointer">
+                  <Table2 className="h-4 w-4" />
+                  {activeTable === "rawData" ? "Switch to Monthly Stats" : "Switch to Raw Data"}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </CardHeader>
         <CardContent>
-          <div className="grid gap-4 md:grid-cols-4 mb-4">
+          <div className="grid gap-4 md:grid-cols-3 mb-4">
             <div className="relative">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <SearchIcon className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
                 type="search"
                 placeholder="Search table..."
                 value={searchQuery}
                 onChange={handleSearchChange}
-                className="pl-8"
+                className="pl-8 bg-background/70"
               />
             </div>
             
             <Select 
               value={activeTable} 
-              onValueChange={(value: "rawData" | "monthlyStats") => setActiveTable(value)}
+              onValueChange={handleTableTypeChange}
             >
-              <SelectTrigger>
-                <SelectValue placeholder="Select Table" />
+              <SelectTrigger className="bg-background/70">
+                <div className="flex items-center gap-2">
+                  <Table2 className="h-4 w-4 text-primary" />
+                  <SelectValue placeholder="Select Table" />
+                </div>
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="rounded-lg shadow-lg backdrop-blur-sm bg-popover/95 animate-scale-in">
                 <SelectItem value="rawData">Raw Data</SelectItem>
                 <SelectItem value="monthlyStats">Monthly Stats</SelectItem>
               </SelectContent>
             </Select>
             
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button variant="outline" className="w-full flex justify-between">
-                  <span className="flex items-center gap-1">
-                    <Filter className="h-4 w-4" />
-                    Teachers
-                    {selectedTeachers.length > 0 && (
-                      <span className="ml-1 rounded-full bg-primary w-5 h-5 text-[10px] flex items-center justify-center text-primary-foreground">
-                        {selectedTeachers.length}
-                      </span>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="w-full flex justify-between bg-background/70 hover:bg-background">
+                  <div className="flex items-center gap-2">
+                    <Filter className="h-4 w-4 text-primary" />
+                    <span>Filter options</span>
+                    {(selectedTeachers.length > 0 || selectedTypes.length > 0) && (
+                      <Badge className="ml-1 bg-primary hover:bg-primary">
+                        {selectedTeachers.length + selectedTypes.length}
+                      </Badge>
                     )}
-                  </span>
+                  </div>
                   <ChevronsUpDown className="h-4 w-4 opacity-50" />
                 </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-full p-0" align="start">
-                <div className="p-4 max-h-[300px] overflow-auto">
-                  <MultiSelect
-                    options={teacherOptions}
-                    selected={selectedTeachers}
-                    onChange={setSelectedTeachers}
-                    placeholder="Select teachers..."
-                  />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-[300px] p-3 rounded-lg shadow-lg backdrop-blur-sm bg-popover/95 animate-scale-in">
+                <div className="space-y-4">
+                  <div>
+                    <h3 className="text-sm font-semibold mb-2">Teachers ({selectedTeachers.length}/{teachers.length})</h3>
+                    <div className="grid grid-cols-2 gap-1 max-h-[120px] overflow-y-auto">
+                      {teachers.map(teacher => (
+                        <div
+                          key={teacher}
+                          className={`text-xs flex items-center gap-1 px-2 py-1 rounded-md cursor-pointer ${selectedTeachers.includes(teacher) ? 'bg-primary/20' : 'hover:bg-muted/20'}`}
+                          onClick={() => {
+                            if (selectedTeachers.includes(teacher)) {
+                              setSelectedTeachers(selectedTeachers.filter(t => t !== teacher));
+                            } else {
+                              setSelectedTeachers([...selectedTeachers, teacher]);
+                            }
+                          }}
+                        >
+                          <div className={`w-3 h-3 rounded-sm ${selectedTeachers.includes(teacher) ? 'bg-primary' : 'border border-muted-foreground'}`} />
+                          <span className="truncate">{teacher}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <h3 className="text-sm font-semibold mb-2">Class Types ({selectedTypes.length}/{classTypes.length})</h3>
+                    <div className="grid grid-cols-2 gap-1 max-h-[120px] overflow-y-auto">
+                      {classTypes.map(type => (
+                        <div
+                          key={type}
+                          className={`text-xs flex items-center gap-1 px-2 py-1 rounded-md cursor-pointer ${selectedTypes.includes(type) ? 'bg-primary/20' : 'hover:bg-muted/20'}`}
+                          onClick={() => {
+                            if (selectedTypes.includes(type)) {
+                              setSelectedTypes(selectedTypes.filter(t => t !== type));
+                            } else {
+                              setSelectedTypes([...selectedTypes, type]);
+                            }
+                          }}
+                        >
+                          <div className={`w-3 h-3 rounded-sm ${selectedTypes.includes(type) ? 'bg-primary' : 'border border-muted-foreground'}`} />
+                          <span className="truncate">{type}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  
+                  {(selectedTeachers.length > 0 || selectedTypes.length > 0) && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        setSelectedTeachers([]);
+                        setSelectedTypes([]);
+                      }}
+                      className="w-full text-xs"
+                    >
+                      Clear filters
+                    </Button>
+                  )}
                 </div>
-              </PopoverContent>
-            </Popover>
-            
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button variant="outline" className="w-full flex justify-between">
-                  <span className="flex items-center gap-1">
-                    <Filter className="h-4 w-4" />
-                    Class Types
-                    {selectedTypes.length > 0 && (
-                      <span className="ml-1 rounded-full bg-primary w-5 h-5 text-[10px] flex items-center justify-center text-primary-foreground">
-                        {selectedTypes.length}
-                      </span>
-                    )}
-                  </span>
-                  <ChevronsUpDown className="h-4 w-4 opacity-50" />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-full p-0" align="start">
-                <div className="p-4 max-h-[300px] overflow-auto">
-                  <MultiSelect
-                    options={typeOptions}
-                    selected={selectedTypes}
-                    onChange={setSelectedTypes}
-                    placeholder="Select class types..."
-                  />
-                </div>
-              </PopoverContent>
-            </Popover>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
           
-          <div className="rounded-md border overflow-hidden mb-4">
+          <div className="rounded-md border overflow-hidden mb-4 shadow-md bg-card/50">
             <div className="p-2 bg-muted/20 border-b flex items-center justify-between">
               <div className="text-sm font-medium">
                 {activeTable === "rawData" ? "Raw Data" : "Monthly Stats"}
