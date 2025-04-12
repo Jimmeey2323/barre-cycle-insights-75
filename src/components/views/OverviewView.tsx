@@ -1,3 +1,4 @@
+
 import React, { useMemo, useState } from "react";
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, 
@@ -369,141 +370,135 @@ const OverviewView: React.FC<OverviewViewProps> = ({ data, selectedMonths, locat
                 config={chartConfig}
               >
                 {activeChart === "attendance" && (
-                  <ResponsiveContainer>
-                    <BarChart
-                      data={chartData.monthlyTrends}
-                      margin={{ top: 10, right: 30, left: 10, bottom: 40 }}
-                      onClick={(data) => handleDrillDown(data, 'Attendance for')}
-                    >
-                      <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
-                      <XAxis 
-                        dataKey="name" 
-                        tick={{ fill: 'var(--foreground)', fontSize: 12 }}
-                        angle={-45}
-                        textAnchor="end"
-                        height={70}
-                      />
-                      <YAxis 
-                        tickFormatter={formatNumber}
-                        tick={{ fill: 'var(--foreground)', fontSize: 12 }}
-                      />
-                      <Tooltip 
-                        content={<ChartTooltipContent labelFormatter={(label) => `Month: ${label}`} />} 
-                        wrapperStyle={{ zIndex: 1000 }}
-                      />
-                      <Legend verticalAlign="top" height={36} />
-                      <Bar 
-                        dataKey="barreAttendance" 
-                        name="Barre Sessions" 
-                        fill="hsl(var(--barre))"
-                        radius={[4, 4, 0, 0]}
-                        isAnimationActive={true}
-                        animationBegin={300}
-                        animationDuration={1500}
-                      />
-                      <Bar 
-                        dataKey="cycleAttendance" 
-                        name="Cycle Sessions" 
-                        fill="hsl(var(--cycle))"
-                        radius={[4, 4, 0, 0]}
-                        isAnimationActive={true}
-                        animationBegin={600}
-                        animationDuration={1500}
-                      />
-                    </BarChart>
-                  </ResponsiveContainer>
+                  <BarChart
+                    data={chartData.monthlyTrends}
+                    margin={{ top: 10, right: 30, left: 10, bottom: 40 }}
+                    onClick={(data) => handleDrillDown(data, 'Attendance for')}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
+                    <XAxis 
+                      dataKey="name" 
+                      tick={{ fill: 'var(--foreground)', fontSize: 12 }}
+                      angle={-45}
+                      textAnchor="end"
+                      height={70}
+                    />
+                    <YAxis 
+                      tickFormatter={formatNumber}
+                      tick={{ fill: 'var(--foreground)', fontSize: 12 }}
+                    />
+                    <Tooltip 
+                      content={<ChartTooltipContent labelFormatter={(label) => `Month: ${label}`} />} 
+                      wrapperStyle={{ zIndex: 1000 }}
+                    />
+                    <Legend verticalAlign="top" height={36} />
+                    <Bar 
+                      dataKey="barreAttendance" 
+                      name="Barre Sessions" 
+                      fill="hsl(var(--barre))"
+                      radius={[4, 4, 0, 0]}
+                      isAnimationActive={true}
+                      animationBegin={300}
+                      animationDuration={1500}
+                    />
+                    <Bar 
+                      dataKey="cycleAttendance" 
+                      name="Cycle Sessions" 
+                      fill="hsl(var(--cycle))"
+                      radius={[4, 4, 0, 0]}
+                      isAnimationActive={true}
+                      animationBegin={600}
+                      animationDuration={1500}
+                    />
+                  </BarChart>
                 )}
                 {activeChart === "revenue" && (
-                  <ResponsiveContainer>
-                    <LineChart
-                      data={chartData.monthlyTrends}
-                      margin={{ top: 10, right: 30, left: 10, bottom: 40 }}
-                      onClick={(data) => handleDrillDown(data, 'Revenue for')}
-                    >
-                      <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
-                      <XAxis 
-                        dataKey="name" 
-                        tick={{ fill: 'var(--foreground)', fontSize: 12 }}
-                        angle={-45}
-                        textAnchor="end"
-                        height={70}
-                      />
-                      <YAxis 
-                        tickFormatter={formatINR} 
-                        tick={{ fill: 'var(--foreground)', fontSize: 12 }}
-                      />
-                      <Tooltip 
-                        content={<ChartTooltipContent labelFormatter={(label) => `Month: ${label}`} />} 
-                        wrapperStyle={{ zIndex: 1000 }}
-                      />
-                      <Legend verticalAlign="top" height={36} />
-                      <Line 
-                        type="monotone" 
-                        dataKey="barreRevenue" 
-                        name="Barre Revenue" 
-                        stroke="hsl(var(--barre))" 
-                        activeDot={{ r: 8 }}
-                        isAnimationActive={true}
-                        animationBegin={300}
-                        animationDuration={1500}
-                      />
-                      <Line 
-                        type="monotone" 
-                        dataKey="cycleRevenue" 
-                        name="Cycle Revenue" 
-                        stroke="hsl(var(--cycle))" 
-                        activeDot={{ r: 8 }}
-                        isAnimationActive={true}
-                        animationBegin={600}
-                        animationDuration={1500}
-                      />
-                    </LineChart>
-                  </ResponsiveContainer>
+                  <LineChart
+                    data={chartData.monthlyTrends}
+                    margin={{ top: 10, right: 30, left: 10, bottom: 40 }}
+                    onClick={(data) => handleDrillDown(data, 'Revenue for')}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
+                    <XAxis 
+                      dataKey="name" 
+                      tick={{ fill: 'var(--foreground)', fontSize: 12 }}
+                      angle={-45}
+                      textAnchor="end"
+                      height={70}
+                    />
+                    <YAxis 
+                      tickFormatter={formatINR} 
+                      tick={{ fill: 'var(--foreground)', fontSize: 12 }}
+                    />
+                    <Tooltip 
+                      content={<ChartTooltipContent labelFormatter={(label) => `Month: ${label}`} />} 
+                      wrapperStyle={{ zIndex: 1000 }}
+                    />
+                    <Legend verticalAlign="top" height={36} />
+                    <Line 
+                      type="monotone" 
+                      dataKey="barreRevenue" 
+                      name="Barre Revenue" 
+                      stroke="hsl(var(--barre))" 
+                      activeDot={{ r: 8 }}
+                      isAnimationActive={true}
+                      animationBegin={300}
+                      animationDuration={1500}
+                    />
+                    <Line 
+                      type="monotone" 
+                      dataKey="cycleRevenue" 
+                      name="Cycle Revenue" 
+                      stroke="hsl(var(--cycle))" 
+                      activeDot={{ r: 8 }}
+                      isAnimationActive={true}
+                      animationBegin={600}
+                      animationDuration={1500}
+                    />
+                  </LineChart>
                 )}
                 {activeChart === "customers" && (
-                  <ResponsiveContainer>
-                    <BarChart
-                      data={chartData.monthlyTrends}
-                      margin={{ top: 10, right: 30, left: 10, bottom: 40 }}
-                      onClick={(data) => handleDrillDown(data, 'Customers for')}
-                    >
-                      <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
-                      <XAxis 
-                        dataKey="name" 
-                        tick={{ fill: 'var(--foreground)', fontSize: 12 }}
-                        angle={-45}
-                        textAnchor="end"
-                        height={70}
-                      />
-                      <YAxis 
-                        tickFormatter={formatNumber}
-                        tick={{ fill: 'var(--foreground)', fontSize: 12 }}
-                      />
-                      <Tooltip 
-                        content={<ChartTooltipContent labelFormatter={(label) => `Month: ${label}`} />} 
-                        wrapperStyle={{ zIndex: 1000 }}
-                      />
-                      <Legend verticalAlign="top" height={36} />
-                      <Bar 
-                        dataKey="barreCustomers" 
-                        name="Barre Customers" 
-                        fill="hsl(var(--barre))"
-                        radius={[4, 4, 0, 0]}
-                        isAnimationActive={true}
-                        animationBegin={300}
-                        animationDuration={1500}
-                      />
-                      <Bar 
-                        dataKey="cycleCustomers" 
-                        name="Cycle Customers" 
-                        fill="hsl(var(--cycle))"
-                        radius={[4, 4, 0, 0]}
-                        isAnimationActive={true}
-                        animationBegin={600}
-                        animationDuration={1500}
-                      />
-                    </BarChart>
-                  </ResponsiveContainer>
+                  <BarChart
+                    data={chartData.monthlyTrends}
+                    margin={{ top: 10, right: 30, left: 10, bottom: 40 }}
+                    onClick={(data) => handleDrillDown(data, 'Customers for')}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
+                    <XAxis 
+                      dataKey="name" 
+                      tick={{ fill: 'var(--foreground)', fontSize: 12 }}
+                      angle={-45}
+                      textAnchor="end"
+                      height={70}
+                    />
+                    <YAxis 
+                      tickFormatter={formatNumber}
+                      tick={{ fill: 'var(--foreground)', fontSize: 12 }}
+                    />
+                    <Tooltip 
+                      content={<ChartTooltipContent labelFormatter={(label) => `Month: ${label}`} />} 
+                      wrapperStyle={{ zIndex: 1000 }}
+                    />
+                    <Legend verticalAlign="top" height={36} />
+                    <Bar 
+                      dataKey="barreCustomers" 
+                      name="Barre Customers" 
+                      fill="hsl(var(--barre))"
+                      radius={[4, 4, 0, 0]}
+                      isAnimationActive={true}
+                      animationBegin={300}
+                      animationDuration={1500}
+                    />
+                    <Bar 
+                      dataKey="cycleCustomers" 
+                      name="Cycle Customers" 
+                      fill="hsl(var(--cycle))"
+                      radius={[4, 4, 0, 0]}
+                      isAnimationActive={true}
+                      animationBegin={600}
+                      animationDuration={1500}
+                    />
+                  </BarChart>
                 )}
               </ChartContainer>
             </CardContent>

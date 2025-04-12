@@ -1,4 +1,3 @@
-
 import React, { useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ProcessedData } from "@/types/fitnessTypes";
@@ -108,7 +107,7 @@ const FinancialsView: React.FC<FinancialsViewProps> = ({ data, selectedMonths, l
   const firstMonth = sortedMonthlyStats[0];
   const lastMonth = sortedMonthlyStats[sortedMonthlyStats.length - 1];
   
-  // Fixed Boolean call signature error - change Boolean to a conditional expression
+  // Fixed: Changed Boolean to a conditional expression
   const revenueGrowth = firstMonth && lastMonth && firstMonth.totalRevenue > 0 
     ? ((lastMonth.totalRevenue - firstMonth.totalRevenue) / firstMonth.totalRevenue) * 100 
     : 0;
