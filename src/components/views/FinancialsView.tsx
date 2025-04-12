@@ -19,7 +19,7 @@ import { filterData } from "@/lib/utils";
 import { ChartContainer, ChartTooltipContent } from "@/components/ui/chart";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useTheme } from "@/contexts/ThemeContext";
-import { Sparkline, SparklinesLine, SparklinesSpots } from 'react-sparklines';
+import { Sparklines, SparklinesLine, SparklinesSpots } from 'react-sparklines';
 
 interface FinancialsViewProps {
   data: ProcessedData;
@@ -108,6 +108,7 @@ const FinancialsView: React.FC<FinancialsViewProps> = ({ data, selectedMonths, l
   const firstMonth = sortedMonthlyStats[0];
   const lastMonth = sortedMonthlyStats[sortedMonthlyStats.length - 1];
   
+  // FIX: Changed Boolean to a simple conditional expression
   const revenueGrowth = firstMonth && lastMonth && firstMonth.totalRevenue > 0 
     ? ((lastMonth.totalRevenue - firstMonth.totalRevenue) / firstMonth.totalRevenue) * 100 
     : 0;
@@ -369,10 +370,10 @@ const FinancialsView: React.FC<FinancialsViewProps> = ({ data, selectedMonths, l
                     {/* Add sparkline if data is available */}
                     {metric.sparkline && metric.sparkline.length > 0 && (
                       <div className="h-8 mt-2">
-                        <Sparkline data={metric.sparkline} width={100} height={30}>
+                        <Sparklines data={metric.sparkline} width={100} height={30}>
                           <SparklinesLine color="var(--chart-primary)" style={{ fill: "none" }} />
                           <SparklinesSpots size={2} style={{ fill: "var(--chart-primary)" }} />
-                        </Sparkline>
+                        </Sparklines>
                       </div>
                     )}
                   </div>
