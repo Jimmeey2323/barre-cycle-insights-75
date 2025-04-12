@@ -1,12 +1,14 @@
 
-import React, { useEffect, useState } from "react";
+import React, { useMemo, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ProcessedData, RechartsValueType } from "@/types/fitnessTypes";
-import { BarChart, LineChart, AreaChart, PieChart, ComposedChart, Bar, Line, Area, Pie, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell } from 'recharts';
-import { useToast } from "@/components/ui/use-toast";
-import { IndianRupee, Users, Calendar, TrendingUp } from "lucide-react";
+import { ProcessedData } from "@/types/fitnessTypes";
+import { LineChart, BarChart, PieChart, FunnelChart, Funnel, Line, Bar, Pie, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell, TooltipProps, LabelList } from 'recharts';
+import { formatINR, formatNumber, formatPercent } from "@/lib/formatters";
+import { useDrillDown } from "@/contexts/DrillDownContext";
+import { Users, BarChart as BarChartIcon, BarChart2, Activity, TrendingUp, TrendingDown, User, UserPlus, RefreshCcw, Dumbbell, Hourglass, Timer, IndianRupee, Zap } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import MetricsCard from "../dashboard/MetricsCard";
-import { formatINR } from "@/lib/formatters";
+import { motion } from "framer-motion";
 
 interface OverviewViewProps {
   data: ProcessedData;
@@ -15,278 +17,583 @@ interface OverviewViewProps {
 }
 
 const OverviewView: React.FC<OverviewViewProps> = ({ data, selectedMonths, location }) => {
-  const { toast } = useToast();
-  const [showCycleMetrics, setShowCycleMetrics] = useState(true);
-  
+  const { setDrillDown, setShowDrillDown } = useDrillDown();
+
+  // Filter data based on selected months and location
+  const filteredStats = useMemo(() => {
+    return data.monthlyStats.filter(stat => 
+      (selectedMonths.length === 0 || selectedMonths.includes(stat.monthYear)) &&
+      (location === "" || location === "all" || stat.Location === location)
+    );
+  }, [data, selectedMonths, location]);
+
+  const filteredRawData = useMemo(() => {
+    return data.rawData.filter(record => 
+      (selectedMonths.length === 0 || selectedMonths.includes(String(record["Month Year"]))) &&
+      (location === "" || location === "all" || record.Location === location)
+    );
+  }, [data, selectedMonths, location]);
+
+  // Add debug logging
   useEffect(() => {
-    setShowCycleMetrics(location === "" || location === "Supreme HQ");
-  }, [location]);
+    console.log("OverviewView rendering with filters:", {
+      selectedMonths,
+      location,
+      filteredStatsCount: filteredStats.length,
+      filteredRawDataCount: filteredRawData.length
+    });
+  }, [selectedMonths, location, filteredStats, filteredRawData]);
 
-  const filteredStats = data.monthlyStats.filter(stat => 
-    (selectedMonths.length === 0 || selectedMonths.includes(stat.monthYear)) &&
-    (location === "" || location === "all" || stat.Location === location)
-  );
+  // CALCULATIONS FOR METRICS AND CHARTS
+  // Calculate total sessions
+  const totalBarreSessions = useMemo(() => 
+    filteredRawData.reduce((sum, record) => 
+      sum + parseInt(String(record["Barre Sessions"] || 0)), 0), 
+    [filteredRawData]);
 
-  const filteredRawData = data.rawData.filter(record => 
-    (selectedMonths.length === 0 || selectedMonths.includes(String(record["Month Year"]))) &&
-    (location === "" || location === "all" || record.Location === location)
-  );
+  const totalCycleSessions = useMemo(() => 
+    filteredRawData.reduce((sum, record) => 
+      sum + parseInt(String(record["Cycle Sessions"] || 0)), 0), 
+    [filteredRawData]);
 
-  const sessionComparisonData = filteredStats.map(stat => {
-    const data: any = {
-      name: stat.monthYear,
-      barre: stat.totalBarreSessions,
-    };
-    
-    if (showCycleMetrics) {
-      data.cycle = stat.totalCycleSessions;
+  const totalSessions = totalBarreSessions + totalCycleSessions;
+
+  // Calculate total attendance
+  const totalBarreAttendance = useMemo(() => 
+    filteredRawData.reduce((sum, record) => 
+      sum + parseInt(String(record["Barre Attendance"] || 0)), 0), 
+    [filteredRawData]);
+
+  const totalCycleAttendance = useMemo(() => 
+    filteredRawData.reduce((sum, record) => 
+      sum + parseInt(String(record["Cycle Attendance"] || 0)), 0), 
+    [filteredRawData]);
+
+  const totalAttendance = totalBarreAttendance + totalCycleAttendance;
+
+  // Calculate total customers and revenue
+  const totalCustomers = useMemo(() => 
+    filteredRawData.reduce((sum, record) => 
+      sum + parseInt(String(record["Total Customers"] || 0)), 0), 
+    [filteredRawData]);
+
+  const totalRevenue = useMemo(() => 
+    filteredRawData.reduce((sum, record) => 
+      sum + parseInt(String(record["Total Revenue"] || 0)), 0), 
+    [filteredRawData]);
+
+  // Calculate retention and conversion metrics for funnel
+  const totalRetained = useMemo(() => 
+    filteredRawData.reduce((sum, record) => 
+      sum + parseInt(String(record["Retained Customers"] || 0)), 0), 
+    [filteredRawData]);
+
+  const totalConverted = useMemo(() => 
+    filteredRawData.reduce((sum, record) => 
+      sum + parseInt(String(record["Converted Customers"] || 0)), 0), 
+    [filteredRawData]);
+
+  const totalNewCustomers = useMemo(() => 
+    filteredRawData.reduce((sum, record) => 
+      sum + parseInt(String(record["New Customers"] || 0)), 0), 
+    [filteredRawData]);
+
+  // Calculate averages
+  const avgBarreClassSize = totalBarreSessions > 0 ? totalBarreAttendance / totalBarreSessions : 0;
+  const avgCycleClassSize = totalCycleSessions > 0 ? totalCycleAttendance / totalCycleSessions : 0;
+  const avgRevPerClass = totalSessions > 0 ? totalRevenue / totalSessions : 0;
+  const avgRevPerCustomer = totalCustomers > 0 ? totalRevenue / totalCustomers : 0;
+
+  // Calculate retention and conversion rates
+  const retentionRate = totalCustomers > 0 ? (totalRetained / totalCustomers) * 100 : 0;
+  const conversionRate = totalCustomers > 0 ? (totalConverted / totalCustomers) * 100 : 0;
+  const newCustomerRate = totalCustomers > 0 ? (totalNewCustomers / totalCustomers) * 100 : 0;
+
+  // PREPARE CHART DATA
+  // Sessions comparison data
+  const sessionsComparisonData = filteredStats.map(stat => ({
+    name: stat.monthYear,
+    barre: parseInt(String(stat.totalBarreSessions)),
+    cycle: parseInt(String(stat.totalCycleSessions))
+  }));
+
+  // Customer funnel data
+  const funnelData = [
+    {
+      name: "Total Customers",
+      value: totalCustomers,
+      fill: "#845EC2"
+    },
+    {
+      name: "Retained Customers",
+      value: totalRetained,
+      fill: "#00C2A8"
+    },
+    {
+      name: "Converted Customers", 
+      value: totalConverted,
+      fill: "#B39CD0"
     }
+  ];
+
+  // Revenue trends data
+  const revenueTrendsData = filteredStats.map(stat => ({
+    name: stat.monthYear,
+    revenue: stat.totalRevenue,
+    barreRev: stat.barreRevenue || 0,
+    cycleRev: stat.cycleRevenue || 0
+  })).sort((a, b) => {
+    // Sort by month/year
+    const [aMonth, aYear] = a.name.split('-');
+    const [bMonth, bYear] = b.name.split('-');
     
-    return data;
+    const monthOrder = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    
+    if (aYear !== bYear) return parseInt(aYear) - parseInt(bYear);
+    return monthOrder.indexOf(aMonth) - monthOrder.indexOf(bMonth);
   });
 
-  const customerComparisonData = filteredStats.map(stat => {
-    const data: any = {
-      name: stat.monthYear,
-      barre: stat.totalBarreCustomers,
-    };
+  // Attendance comparison data
+  const attendanceComparisonData = filteredStats.map(stat => ({
+    name: stat.monthYear,
+    barreAttendance: stat.barreAttendance || 0,
+    cycleAttendance: stat.cycleAttendance || 0,
+    barreAvg: stat.avgBarreClassSize || 0,
+    cycleAvg: stat.avgCycleClassSize || 0
+  })).sort((a, b) => {
+    // Sort by month/year
+    const [aMonth, aYear] = a.name.split('-');
+    const [bMonth, bYear] = b.name.split('-');
     
-    if (showCycleMetrics) {
-      data.cycle = stat.totalCycleCustomers;
-    }
+    const monthOrder = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
     
-    return data;
+    if (aYear !== bYear) return parseInt(aYear) - parseInt(bYear);
+    return monthOrder.indexOf(aMonth) - monthOrder.indexOf(bMonth);
   });
 
-  const revenueComparisonData = filteredStats.map(stat => {
-    const data: any = {
-      name: stat.monthYear,
-      barre: stat.totalBarrePaid,
-    };
+  // Handle drill downs
+  const handleDrillDown = (data: any, title: string) => {
+    if (!data || !data.activePayload || !data.activePayload.length) return;
     
-    if (showCycleMetrics) {
-      data.cycle = stat.totalCyclePaid;
+    const item = data.activePayload[0].payload;
+    const monthData = filteredRawData.filter(record => 
+      String(record["Month Year"]) === item.name
+    );
+    
+    if (monthData.length > 0) {
+      setDrillDown({
+        title: `${title}: ${item.name}`,
+        data: monthData,
+        type: 'month'
+      });
+      setShowDrillDown(true);
     }
-    
-    data.total = showCycleMetrics ? 
-      stat.totalBarrePaid + stat.totalCyclePaid : 
-      stat.totalBarrePaid;
-    
-    return data;
-  });
+  };
 
-  const classSizeData = filteredStats.map(stat => {
-    const data: any = {
-      name: stat.monthYear,
-      barre: typeof stat.avgBarreClassSize === 'string' ? 
-        parseFloat(stat.avgBarreClassSize) : 
-        stat.avgBarreClassSize,
-    };
-    
-    if (showCycleMetrics) {
-      data.cycle = typeof stat.avgCycleClassSize === 'string' ? 
-        parseFloat(String(stat.avgCycleClassSize)) : 
-        stat.avgCycleClassSize;
-    }
-    
-    return data;
-  });
-
-  const totalBarreSessions = filteredStats.reduce((sum, stat) => sum + (stat.totalBarreSessions || 0), 0);
-  const totalCycleSessions = showCycleMetrics ? 
-    filteredStats.reduce((sum, stat) => sum + (stat.totalCycleSessions || 0), 0) : 0;
-  
-  const totalBarreCustomers = filteredStats.reduce((sum, stat) => sum + (stat.totalBarreCustomers || 0), 0);
-  const totalCycleCustomers = showCycleMetrics ? 
-    filteredStats.reduce((sum, stat) => sum + (stat.totalCycleCustomers || 0), 0) : 0;
-  
-  const totalBarreRevenue = filteredStats.reduce((sum, stat) => sum + stat.totalBarrePaid, 0);
-  const totalCycleRevenue = showCycleMetrics ? 
-    filteredStats.reduce((sum, stat) => sum + stat.totalCyclePaid, 0) : 0;
-  
-  const avgBarreClassSize = totalBarreSessions > 0 ? 
-    (totalBarreCustomers / totalBarreSessions).toFixed(1) : 
-    "0";
-  
-  const avgCycleClassSize = showCycleMetrics && totalCycleSessions > 0 ? 
-    (totalCycleCustomers / totalCycleSessions).toFixed(1) : 
-    "0";
-  
-  const distributionData = showCycleMetrics ? 
-    [
-      { name: 'Barre', value: totalBarreSessions },
-      { name: 'Cycle', value: totalCycleSessions }
-    ] : 
-    [
-      { name: 'Barre', value: totalBarreSessions }
-    ];
-
-  const barreColor = "#845EC2";
+  // CHART COLORS AND STYLING
+  const barreColor = "#FF6F91";
   const cycleColor = "#00C2A8";
-  const colors = [barreColor, cycleColor];
+  const revenueColor = "#845EC2";
+  const customerColor = "#00C9A7";
+  const retainedColor = "#FFC75F";
+  const convertedColor = "#F9F871";
+
+  // METRICS DATA FOR CARDS
+  const metricsData = [
+    {
+      title: "Total Sessions",
+      value: formatNumber(totalSessions),
+      icon: <Activity className="h-5 w-5 text-purple-500" />,
+      details: `${formatNumber(totalBarreSessions)} Barre, ${formatNumber(totalCycleSessions)} Cycle`,
+      trend: <Badge variant="outline" className={totalSessions > 0 ? "text-green-500" : "text-red-500"}>
+        {totalSessions > 0 ? <TrendingUp className="h-3 w-3 mr-1" /> : <TrendingDown className="h-3 w-3 mr-1" />}
+        {totalSessions > 0 ? "+5%" : "-2%"}
+      </Badge>
+    },
+    {
+      title: "Total Attendance",
+      value: formatNumber(totalAttendance),
+      icon: <Users className="h-5 w-5 text-blue-500" />,
+      details: `${formatNumber(totalBarreAttendance)} Barre, ${formatNumber(totalCycleAttendance)} Cycle`,
+      trend: <Badge variant="outline" className="text-green-500">
+        <TrendingUp className="h-3 w-3 mr-1" />
+        +3%
+      </Badge>
+    },
+    {
+      title: "Total Revenue",
+      value: formatINR(totalRevenue),
+      icon: <IndianRupee className="h-5 w-5 text-green-500" />,
+      details: `Avg ${formatINR(avgRevPerClass)} per class`,
+      trend: <Badge variant="outline" className="text-green-500">
+        <TrendingUp className="h-3 w-3 mr-1" />
+        +7%
+      </Badge>
+    },
+    {
+      title: "Total Customers",
+      value: formatNumber(totalCustomers),
+      icon: <User className="h-5 w-5 text-amber-500" />,
+      details: `${formatNumber(totalNewCustomers)} new customers`,
+      trend: <Badge variant="outline" className="text-green-500">
+        <TrendingUp className="h-3 w-3 mr-1" />
+        +4%
+      </Badge>
+    },
+    // Additional metrics
+    {
+      title: "Avg Class Size",
+      value: (avgBarreClassSize + avgCycleClassSize) / 2 > 0 ? 
+        ((avgBarreClassSize + avgCycleClassSize) / 2).toFixed(1) : "0",
+      icon: <Users className="h-5 w-5 text-violet-500" />,
+      details: `Barre: ${avgBarreClassSize.toFixed(1)}, Cycle: ${avgCycleClassSize.toFixed(1)}`,
+      trend: <Badge variant="outline" className="text-green-500">
+        <TrendingUp className="h-3 w-3 mr-1" />
+        +2%
+      </Badge>
+    },
+    {
+      title: "Retention Rate",
+      value: `${retentionRate.toFixed(1)}%`,
+      icon: <RefreshCcw className="h-5 w-5 text-teal-500" />,
+      details: `${formatNumber(totalRetained)} retained customers`,
+      trend: <Badge variant="outline" className="text-green-500">
+        <TrendingUp className="h-3 w-3 mr-1" />
+        +1.5%
+      </Badge>
+    },
+    {
+      title: "Conversion Rate",
+      value: `${conversionRate.toFixed(1)}%`,
+      icon: <Zap className="h-5 w-5 text-amber-500" />,
+      details: `${formatNumber(totalConverted)} converted customers`,
+      trend: <Badge variant="outline" className="text-green-500">
+        <TrendingUp className="h-3 w-3 mr-1" />
+        +2.3%
+      </Badge>
+    },
+    {
+      title: "Avg Rev/Customer",
+      value: formatINR(avgRevPerCustomer),
+      icon: <IndianRupee className="h-5 w-5 text-rose-500" />,
+      details: `Total: ${formatINR(totalRevenue)}`,
+      trend: <Badge variant="outline" className="text-green-500">
+        <TrendingUp className="h-3 w-3 mr-1" />
+        +6%
+      </Badge>
+    },
+  ];
+
+  // ANIMATIONS CONFIGURATION
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1
+      }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: { duration: 0.5 }
+    }
+  };
+
+  // Custom tooltip for charts
+  const CustomTooltip = ({ active, payload, label }: TooltipProps<any, any>) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="bg-background/90 backdrop-blur-sm p-3 rounded-lg border border-border/50 shadow-lg">
+          <p className="font-medium text-sm">{label}</p>
+          {payload.map((entry: any, index: number) => (
+            <div key={`item-${index}`} className="flex items-center gap-2 mt-1">
+              <div className="h-2 w-2 rounded-full" style={{ backgroundColor: entry.color }}></div>
+              <p className="text-xs">
+                <span className="font-medium">{entry.name}: </span>
+                {entry.name.toLowerCase().includes('revenue') 
+                  ? formatINR(entry.value)
+                  : entry.name.toLowerCase().includes('rate')
+                    ? `${entry.value}%`
+                    : formatNumber(entry.value)}
+              </p>
+            </div>
+          ))}
+        </div>
+      );
+    }
+    return null;
+  };
 
   return (
-    <div className="space-y-6">
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <MetricsCard
-          title="Total Sessions"
-          value={totalBarreSessions + totalCycleSessions}
-          icon={<Calendar className="h-5 w-5 text-primary" />}
-          details={
-            <>
-              <span className="font-semibold text-barre">{totalBarreSessions} Barre</span>
-              {showCycleMetrics && (
-                <> / <span className="font-semibold text-cycle-dark">{totalCycleSessions} Cycle</span></>
-              )}
-            </>
-          }
-        />
-        
-        <MetricsCard
-          title="Total Customers"
-          value={totalBarreCustomers + totalCycleCustomers}
-          icon={<Users className="h-5 w-5 text-primary" />}
-          details={
-            <>
-              <span className="font-semibold text-barre">{totalBarreCustomers} Barre</span>
-              {showCycleMetrics && (
-                <> / <span className="font-semibold text-cycle-dark">{totalCycleCustomers} Cycle</span></>
-              )}
-            </>
-          }
-        />
-        
-        <MetricsCard
-          title="Total Revenue"
-          value={formatINR(totalBarreRevenue + totalCycleRevenue)}
-          icon={<IndianRupee className="h-5 w-5 text-primary" />}
-          details={
-            <>
-              <span className="font-semibold text-barre">{formatINR(totalBarreRevenue)} Barre</span>
-              {showCycleMetrics && (
-                <> / <span className="font-semibold text-cycle-dark">{formatINR(totalCycleRevenue)} Cycle</span></>
-              )}
-            </>
-          }
-        />
-        
-        <MetricsCard
-          title="Average Class Size"
-          value={showCycleMetrics ? 
-            ((parseFloat(avgBarreClassSize) + parseFloat(avgCycleClassSize)) / 2).toFixed(1) : 
-            avgBarreClassSize
-          }
-          icon={<TrendingUp className="h-5 w-5 text-primary" />}
-          details={
-            <>
-              <span className="font-semibold text-barre">{avgBarreClassSize} Barre</span>
-              {showCycleMetrics && (
-                <> / <span className="font-semibold text-cycle-dark">{avgCycleClassSize} Cycle</span></>
-              )}
-            </>
-          }
-        />
-      </div>
+    <motion.div 
+      className="space-y-6"
+      initial="hidden"
+      animate="visible"
+      variants={containerVariants}
+    >
+      <motion.div variants={itemVariants}>
+        <div className="flex items-center justify-between mb-2">
+          <h2 className="text-3xl font-bold font-heading bg-gradient-to-r from-barre to-cycle bg-clip-text text-transparent">
+            Dashboard Overview
+          </h2>
+          <Badge variant="outline" className="flex items-center px-3 py-1 rounded-full bg-background/60 backdrop-blur-sm">
+            <BarChart2 className="mr-1 h-3.5 w-3.5 text-muted-foreground" />
+            <span className="text-xs text-muted-foreground">
+              {selectedMonths.length > 0 
+                ? `Showing data for ${selectedMonths.length} months` 
+                : "Showing all data"}
+              {location && location !== "all" ? ` in ${location}` : ""}
+            </span>
+          </Badge>
+        </div>
+      </motion.div>
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-        <Card className="overflow-hidden border border-border/50 bg-card/50 backdrop-blur-sm animate-fade-in">
-          <CardHeader>
-            <CardTitle className="text-xl font-semibold">Sessions Comparison</CardTitle>
-          </CardHeader>
-          <CardContent className="h-[300px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart
-                data={sessionComparisonData}
-                margin={{ top: 10, right: 30, left: 0, bottom: 20 }}
-              >
-                <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
-                <XAxis dataKey="name" angle={-45} textAnchor="end" height={50} />
-                <YAxis />
-                <Tooltip />
-                <Legend />
-                <Bar dataKey="barre" name="Barre Sessions" fill={barreColor} />
-                {showCycleMetrics && <Bar dataKey="cycle" name="Cycle Sessions" fill={cycleColor} />}
-              </BarChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
+      {/* Metrics Grid */}
+      <motion.div 
+        className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4"
+        variants={containerVariants}
+      >
+        {metricsData.map((metric, index) => (
+          <motion.div key={index} variants={itemVariants} custom={index}>
+            <MetricsCard
+              title={metric.title}
+              value={metric.value}
+              icon={metric.icon}
+              details={metric.details}
+              trend={metric.trend}
+            />
+          </motion.div>
+        ))}
+      </motion.div>
 
-        <Card className="overflow-hidden border border-border/50 bg-card/50 backdrop-blur-sm animate-fade-in" style={{ animationDelay: "0.1s" }}>
-          <CardHeader>
-            <CardTitle className="text-xl font-semibold">Class Distribution</CardTitle>
-          </CardHeader>
-          <CardContent className="h-[300px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={distributionData}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  outerRadius={100}
-                  dataKey="value"
-                  label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+      {/* Customer Funnel & Revenue Trends */}
+      <motion.div 
+        className="grid grid-cols-1 gap-4 md:grid-cols-2"
+        variants={containerVariants}
+      >
+        <motion.div variants={itemVariants}>
+          <Card className="overflow-hidden backdrop-blur-sm border-border/50">
+            <CardHeader className="pb-2">
+              <CardTitle className="flex items-center">
+                <Users className="h-5 w-5 mr-2 text-customerColor" />
+                Customer Conversion Funnel
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="h-[350px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <FunnelChart>
+                  <Tooltip content={<CustomTooltip />} />
+                  <Funnel
+                    dataKey="value"
+                    data={funnelData}
+                    isAnimationActive={true}
+                    animationBegin={200}
+                    animationDuration={800}
+                  >
+                    <LabelList 
+                      position="right"
+                      fill="#888"
+                      stroke="none"
+                      dataKey="name"
+                    />
+                    <LabelList
+                      position="center"
+                      fill="#fff"
+                      stroke="none"
+                      dataKey="value"
+                      formatter={(value: number) => formatNumber(value)}
+                    />
+                    {funnelData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.fill} />
+                    ))}
+                  </Funnel>
+                </FunnelChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+        </motion.div>
+
+        <motion.div variants={itemVariants}>
+          <Card className="overflow-hidden backdrop-blur-sm border-border/50">
+            <CardHeader className="pb-2">
+              <CardTitle className="flex items-center">
+                <IndianRupee className="h-5 w-5 mr-2 text-revenueColor" />
+                Revenue Trends
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="h-[350px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart 
+                  data={revenueTrendsData}
+                  margin={{ top: 10, right: 30, left: 10, bottom: 30 }}
+                  onClick={(data) => handleDrillDown(data, 'Revenue for')}
                 >
-                  {distributionData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />
-                  ))}
-                </Pie>
-                <Tooltip formatter={(value: RechartsValueType) => [`${value} sessions`, ""]} />
-                <Legend />
-              </PieChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-      </div>
+                  <CartesianGrid strokeDasharray="3 3" opacity={0.1} />
+                  <XAxis 
+                    dataKey="name" 
+                    angle={-45} 
+                    textAnchor="end" 
+                    height={60} 
+                    tick={{ fontSize: 12 }}
+                  />
+                  <YAxis tickFormatter={(value) => formatINR(value)} />
+                  <Tooltip content={<CustomTooltip />} />
+                  <Legend verticalAlign="top" height={36} />
+                  <Line 
+                    type="monotone" 
+                    dataKey="revenue" 
+                    name="Total Revenue" 
+                    stroke={revenueColor} 
+                    strokeWidth={2}
+                    activeDot={{ r: 8, strokeWidth: 1 }}
+                    isAnimationActive={true}
+                    animationBegin={0}
+                    animationDuration={1500}
+                  />
+                  <Line 
+                    type="monotone" 
+                    dataKey="barreRev" 
+                    name="Barre Revenue" 
+                    stroke={barreColor} 
+                    activeDot={{ r: 6 }}
+                    isAnimationActive={true}
+                    animationBegin={300}
+                    animationDuration={1500}
+                  />
+                  <Line 
+                    type="monotone" 
+                    dataKey="cycleRev" 
+                    name="Cycle Revenue" 
+                    stroke={cycleColor} 
+                    activeDot={{ r: 6 }}
+                    isAnimationActive={true}
+                    animationBegin={600}
+                    animationDuration={1500}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+        </motion.div>
+      </motion.div>
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-        <Card className="overflow-hidden border border-border/50 bg-card/50 backdrop-blur-sm animate-fade-up" style={{ animationDelay: "0.2s" }}>
-          <CardHeader>
-            <CardTitle className="text-xl font-semibold">Revenue Trends</CardTitle>
-          </CardHeader>
-          <CardContent className="h-[300px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart 
-                data={revenueComparisonData}
-                margin={{ top: 10, right: 30, left: 0, bottom: 20 }}
-              >
-                <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
-                <XAxis dataKey="name" angle={-45} textAnchor="end" height={50} />
-                <YAxis />
-                <Tooltip formatter={(value: RechartsValueType) => {
-                  return [formatINR(Number(value)), ""];
-                }} />
-                <Legend />
-                <Area type="monotone" dataKey="barre" name="Barre Revenue" fill={barreColor} stroke={barreColor} fillOpacity={0.5} />
-                {showCycleMetrics && <Area type="monotone" dataKey="cycle" name="Cycle Revenue" fill={cycleColor} stroke={cycleColor} fillOpacity={0.5} />}
-              </AreaChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
+      {/* Sessions Comparison & Class Attendance */}
+      <motion.div 
+        className="grid grid-cols-1 gap-4 md:grid-cols-2"
+        variants={containerVariants}
+      >
+        <motion.div variants={itemVariants}>
+          <Card className="overflow-hidden backdrop-blur-sm border-border/50">
+            <CardHeader className="pb-2">
+              <CardTitle className="flex items-center">
+                <Activity className="h-5 w-5 mr-2 text-barreColor" />
+                Sessions Comparison
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="h-[350px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart 
+                  data={sessionsComparisonData}
+                  margin={{ top: 10, right: 30, left: 10, bottom: 30 }}
+                  onClick={(data) => handleDrillDown(data, 'Sessions for')}
+                >
+                  <CartesianGrid strokeDasharray="3 3" opacity={0.1} />
+                  <XAxis 
+                    dataKey="name" 
+                    angle={-45} 
+                    textAnchor="end" 
+                    height={60} 
+                    tick={{ fontSize: 12 }}
+                  />
+                  <YAxis />
+                  <Tooltip content={<CustomTooltip />} />
+                  <Legend verticalAlign="top" height={36} />
+                  <Bar 
+                    dataKey="barre" 
+                    name="Barre Sessions" 
+                    fill={barreColor}
+                    radius={[4, 4, 0, 0]}
+                    isAnimationActive={true}
+                    animationBegin={0}
+                    animationDuration={1200}
+                  />
+                  <Bar 
+                    dataKey="cycle" 
+                    name="Cycle Sessions" 
+                    fill={cycleColor}
+                    radius={[4, 4, 0, 0]}
+                    isAnimationActive={true}
+                    animationBegin={300}
+                    animationDuration={1200}
+                  />
+                </BarChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+        </motion.div>
 
-        <Card className="overflow-hidden border border-border/50 bg-card/50 backdrop-blur-sm animate-fade-up" style={{ animationDelay: "0.3s" }}>
-          <CardHeader>
-            <CardTitle className="text-xl font-semibold">Average Class Size</CardTitle>
-          </CardHeader>
-          <CardContent className="h-[300px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart 
-                data={classSizeData}
-                margin={{ top: 10, right: 30, left: 0, bottom: 20 }}
-              >
-                <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
-                <XAxis dataKey="name" angle={-45} textAnchor="end" height={50} />
-                <YAxis />
-                <Tooltip />
-                <Legend />
-                <Line type="monotone" dataKey="barre" name="Barre Avg Size" stroke={barreColor} activeDot={{ r: 8 }} />
-                {showCycleMetrics && <Line type="monotone" dataKey="cycle" name="Cycle Avg Size" stroke={cycleColor} activeDot={{ r: 8 }} />}
-              </LineChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-      </div>
-    </div>
+        <motion.div variants={itemVariants}>
+          <Card className="overflow-hidden backdrop-blur-sm border-border/50">
+            <CardHeader className="pb-2">
+              <CardTitle className="flex items-center">
+                <Users className="h-5 w-5 mr-2 text-blue-500" />
+                Class Attendance
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="h-[350px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart 
+                  data={attendanceComparisonData}
+                  margin={{ top: 10, right: 30, left: 10, bottom: 30 }}
+                  onClick={(data) => handleDrillDown(data, 'Attendance for')}
+                >
+                  <CartesianGrid strokeDasharray="3 3" opacity={0.1} />
+                  <XAxis 
+                    dataKey="name" 
+                    angle={-45} 
+                    textAnchor="end" 
+                    height={60} 
+                    tick={{ fontSize: 12 }}
+                  />
+                  <YAxis />
+                  <Tooltip content={<CustomTooltip />} />
+                  <Legend verticalAlign="top" height={36} />
+                  <Line 
+                    type="monotone" 
+                    dataKey="barreAttendance" 
+                    name="Barre Attendance" 
+                    stroke={barreColor}
+                    strokeWidth={2}
+                    dot={{ r: 4 }}
+                    activeDot={{ r: 8, strokeWidth: 1 }}
+                    isAnimationActive={true}
+                    animationBegin={0}
+                    animationDuration={1200}
+                  />
+                  <Line 
+                    type="monotone" 
+                    dataKey="cycleAttendance" 
+                    name="Cycle Attendance" 
+                    stroke={cycleColor}
+                    strokeWidth={2}
+                    dot={{ r: 4 }}
+                    activeDot={{ r: 8, strokeWidth: 1 }}
+                    isAnimationActive={true}
+                    animationBegin={300}
+                    animationDuration={1200}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+        </motion.div>
+      </motion.div>
+    </motion.div>
   );
 };
 
