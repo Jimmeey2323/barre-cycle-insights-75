@@ -49,6 +49,9 @@ export interface MonthlyStats {
   totalConverted?: number;  // Added for funnel chart
   totalNew?: number;  // Added for new customers metric
   mostPopularClass?: string;  // Added for class popularity metric
+  revenuePerSeat?: number;  // Added for financials metrics
+  avgRevenuePerSeat?: number; // Added for financials metrics
+  seatUtilization?: number;  // Added for financials metrics
 }
 
 export interface TeacherStats {
