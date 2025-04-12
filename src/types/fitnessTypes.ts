@@ -51,3 +51,19 @@ export interface ProcessedData {
 // For typing Recharts data
 export type RechartsValueType = string | number | Array<string | number>;
 export type RechartsNameType = string | number;
+
+// Custom table component prop types
+export interface TableHeadProps extends React.ThHTMLAttributes<HTMLTableCellElement> {
+  isNumeric?: boolean;
+}
+
+export interface TableCellProps extends React.TdHTMLAttributes<HTMLTableCellElement> {
+  isNumeric?: boolean;
+  isCurrency?: boolean;
+  isAverage?: boolean;
+}
+
+export interface TableRowProps extends React.HTMLAttributes<HTMLTableRowElement> {
+  isSubtotal?: boolean;
+  isTotal?: boolean;
+}
