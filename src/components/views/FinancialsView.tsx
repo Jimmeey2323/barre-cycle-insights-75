@@ -202,7 +202,7 @@ const FinancialsView: React.FC<FinancialsViewProps> = ({ data, selectedMonths, l
     }
     
     if (detailedData.length > 0) {
-      showDrillDown(detailedData, `${dataLabel}: ${item.name}`, dataKey);
+      showDrillDown(detailedData, `${dataLabel}: ${item.name}`, 'financial');
     }
   };
 
