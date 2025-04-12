@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ProcessedData } from "@/types/fitnessTypes";
@@ -145,10 +146,11 @@ const ClassesView: React.FC<ClassesViewProps> = ({ data, selectedMonths, locatio
     return monthOrder.indexOf(aMonth) - monthOrder.indexOf(bMonth);
   });
 
-  const barreColor = "#FF6F91";
-  const cycleColor = "#9FD8CB";
-  const emptyColor = "#E5E7EB";
-  const filledColor = "#60A5FA";
+  // Updated colors for clarity
+  const barreColor = "#845EC2"; // Purple for Barre
+  const cycleColor = "#00C2A8"; // Teal for Cycle
+  const emptyColor = "#E5E7EB"; // Light gray for empty classes
+  const filledColor = "#60A5FA"; // Blue for filled classes
 
   return (
     <div className="space-y-6">
@@ -230,8 +232,23 @@ const ClassesView: React.FC<ClassesViewProps> = ({ data, selectedMonths, locatio
                 <YAxis />
                 <Tooltip />
                 <Legend />
-                <Line type="monotone" dataKey="barreAvg" name="Barre Avg Attendance" stroke={barreColor} activeDot={{ r: 8 }} />
-                <Line type="monotone" dataKey="cycleAvg" name="Cycle Avg Attendance" stroke={cycleColor} activeDot={{ r: 8 }} />
+                <Line 
+                  type="monotone" 
+                  dataKey="barreAvg" 
+                  name="Barre Avg Attendance" 
+                  stroke={barreColor} 
+                  activeDot={{ r: 8 }} 
+                  strokeWidth={2}
+                />
+                <Line 
+                  type="monotone" 
+                  dataKey="cycleAvg" 
+                  name="Cycle Avg Attendance" 
+                  stroke={cycleColor} 
+                  activeDot={{ r: 8 }} 
+                  strokeWidth={2}
+                  strokeDasharray="5 5"
+                />
               </LineChart>
             </ResponsiveContainer>
           </CardContent>
@@ -252,8 +269,23 @@ const ClassesView: React.FC<ClassesViewProps> = ({ data, selectedMonths, locatio
                 <YAxis />
                 <Tooltip formatter={(value) => [`${value}%`, ""]} />
                 <Legend />
-                <Line type="monotone" dataKey="barre" name="Barre Fill Rate" stroke={barreColor} activeDot={{ r: 8 }} />
-                <Line type="monotone" dataKey="cycle" name="Cycle Fill Rate" stroke={cycleColor} activeDot={{ r: 8 }} />
+                <Line 
+                  type="monotone" 
+                  dataKey="barre" 
+                  name="Barre Fill Rate" 
+                  stroke={barreColor} 
+                  activeDot={{ r: 8 }}
+                  strokeWidth={2}
+                />
+                <Line 
+                  type="monotone" 
+                  dataKey="cycle" 
+                  name="Cycle Fill Rate" 
+                  stroke={cycleColor} 
+                  activeDot={{ r: 8 }}
+                  strokeWidth={2}
+                  strokeDasharray="5 5"
+                />
               </LineChart>
             </ResponsiveContainer>
           </CardContent>
@@ -277,7 +309,7 @@ const ClassesView: React.FC<ClassesViewProps> = ({ data, selectedMonths, locatio
                   dataKey="value"
                   label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
                 >
-                  <Cell fill={filledColor} />
+                  <Cell fill={barreColor} />
                   <Cell fill={emptyColor} />
                 </Pie>
                 <Tooltip formatter={(value) => [`${value} classes`, ""]} />
@@ -303,7 +335,7 @@ const ClassesView: React.FC<ClassesViewProps> = ({ data, selectedMonths, locatio
                   dataKey="value"
                   label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
                 >
-                  <Cell fill={filledColor} />
+                  <Cell fill={cycleColor} />
                   <Cell fill={emptyColor} />
                 </Pie>
                 <Tooltip formatter={(value) => [`${value} classes`, ""]} />
