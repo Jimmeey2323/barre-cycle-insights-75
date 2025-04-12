@@ -18,7 +18,7 @@ import { filterData } from "@/lib/utils";
 import { ChartContainer, ChartTooltipContent } from "@/components/ui/chart";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useTheme } from "@/contexts/ThemeContext";
-import { Sparklines, SparklinesLine, SparklinesSpots } from 'react-sparklines';
+import { Sparkline, SparklinesLine, SparklinesSpots } from 'react-sparklines';
 
 interface FinancialsViewProps {
   data: ProcessedData;
@@ -91,7 +91,7 @@ const FinancialsView: React.FC<FinancialsViewProps> = ({ data, selectedMonths, l
   const revenueShare = totalRevenue > 0 ? {
     barreShare: (totalBarrePaid / totalRevenue) * 100,
     cycleShare: (totalCyclePaid / totalRevenue) * 100
-  } : { barreShare: 0, cycleShare: 0 };
+  } : null;
 
   // Calculate revenue growth (using first and last month in filtered data)
   const sortedMonthlyStats = [...filteredStats].sort((a, b) => {
@@ -107,7 +107,6 @@ const FinancialsView: React.FC<FinancialsViewProps> = ({ data, selectedMonths, l
   const firstMonth = sortedMonthlyStats[0];
   const lastMonth = sortedMonthlyStats[sortedMonthlyStats.length - 1];
   
-  // Fixed: Changed Boolean to a conditional expression
   const revenueGrowth = firstMonth && lastMonth && firstMonth.totalRevenue > 0 
     ? ((lastMonth.totalRevenue - firstMonth.totalRevenue) / firstMonth.totalRevenue) * 100 
     : 0;
@@ -221,7 +220,7 @@ const FinancialsView: React.FC<FinancialsViewProps> = ({ data, selectedMonths, l
     },
     {
       title: "Revenue Share",
-      value: `${revenueShare ? revenueShare.barreShare.toFixed(1) : '0'}% / ${revenueShare ? revenueShare.cycleShare.toFixed(1) : '0'}%`,
+      value: `${revenueShare.barreShare.toFixed(1)}% / ${revenueShare.cycleShare.toFixed(1)}%`,
       icon: <PieChartIcon className="h-5 w-5 text-amber-500" />,
       details: `Barre / Cycle`,
       trend: <Badge variant="outline" className="text-blue-500">
@@ -367,12 +366,12 @@ const FinancialsView: React.FC<FinancialsViewProps> = ({ data, selectedMonths, l
                     <p className="text-xs text-muted-foreground">{metric.details}</p>
                     
                     {/* Add sparkline if data is available */}
-                    {metric.sparkline && metric.sparkline.length > 0 && (
+                    {!!metric.sparkline && (
                       <div className="h-8 mt-2">
-                        <Sparklines data={metric.sparkline} width={100} height={30}>
+                        <Sparkline data={metric.sparkline} width={100} height={30}>
                           <SparklinesLine color="var(--chart-primary)" style={{ fill: "none" }} />
                           <SparklinesSpots size={2} style={{ fill: "var(--chart-primary)" }} />
-                        </Sparklines>
+                        </Sparkline>
                       </div>
                     )}
                   </div>
@@ -420,7 +419,7 @@ const FinancialsView: React.FC<FinancialsViewProps> = ({ data, selectedMonths, l
                         padding={{ left: 10, right: 10 }}
                       />
                       <YAxis 
-                        tickFormatter={formatINR} 
+                        tickFormatter={(value) => formatINR(value)} 
                         tick={{ fill: 'var(--foreground)', fontSize: 12 }}
                       />
                       <Tooltip 
@@ -538,7 +537,7 @@ const FinancialsView: React.FC<FinancialsViewProps> = ({ data, selectedMonths, l
                         padding={{ left: 10, right: 10 }}
                       />
                       <YAxis 
-                        tickFormatter={formatINR} 
+                        tickFormatter={(value) => formatINR(value)} 
                         tick={{ fill: 'var(--foreground)', fontSize: 12 }}
                       />
                       <Tooltip 
@@ -611,7 +610,7 @@ const FinancialsView: React.FC<FinancialsViewProps> = ({ data, selectedMonths, l
                         padding={{ left: 10, right: 10 }}
                       />
                       <YAxis 
-                        tickFormatter={formatINR} 
+                        tickFormatter={(value) => formatINR(value)} 
                         tick={{ fill: 'var(--foreground)', fontSize: 12 }}
                       />
                       <Tooltip 

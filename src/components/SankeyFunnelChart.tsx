@@ -3,7 +3,7 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatNumber, formatPercent, formatINR } from "@/lib/formatters";
 
-export interface FunnelNode {
+interface FunnelNode {
   id: string;
   label: string;
   value: number;
@@ -12,14 +12,14 @@ export interface FunnelNode {
   column: number;
 }
 
-export interface FunnelLink {
+interface FunnelLink {
   source: string;
   target: string;
   value: number;
   color: string;
 }
 
-export interface SankeyFunnelChartProps {
+interface SankeyFunnelChartProps {
   title: string;
   nodes: FunnelNode[];
   links: FunnelLink[];
@@ -76,7 +76,7 @@ const SankeyFunnelChart: React.FC<SankeyFunnelChartProps> = ({
         )}
       </CardHeader>
       <CardContent className="relative p-4">
-        <svg width="100%" height="110" style={{ overflow: 'visible' }}>
+        <svg width="100%" height="340" style={{ overflow: 'visible' }}>
           <defs>
             {links.map((link, index) => (
               <linearGradient key={`gradient-${index}`} id={`gradient-${index}`} gradientUnits="userSpaceOnUse">
@@ -94,27 +94,27 @@ const SankeyFunnelChart: React.FC<SankeyFunnelChartProps> = ({
             return (
               <g key={`col-${colNum}`} transform={`translate(${xPos}%, 0)`}>
                 {columns[colNum].map((node, idx) => {
-                  const nodeHeight = (node.value / maxValue) * 40;
-                  const yPos = node.position === 'top' ? 0 : 80 - nodeHeight;
+                  const nodeHeight = (node.value / maxValue) * 100;
+                  const yPos = node.position === 'top' ? 0 : 280 - nodeHeight;
                   
                   return (
-                    <g key={node.id} transform={`translate(-45, ${yPos})`}>
+                    <g key={node.id} transform={`translate(-70, ${yPos})`}>
                       <rect
                         x="0"
                         y="0"
-                        width="90"
-                        height={nodeHeight > 0 ? Math.max(nodeHeight, 20) : 20}
+                        width="140"
+                        height={nodeHeight}
                         fill={node.color}
                         fillOpacity="0.2"
                         stroke={node.color}
                         strokeWidth="1"
-                        rx="4"
-                        ry="4"
+                        rx="6"
+                        ry="6"
                       />
-                      <foreignObject x="5" y="5" width="80" height={Math.max(nodeHeight - 10, 10)}>
+                      <foreignObject x="10" y="10" width="120" height={nodeHeight - 20}>
                         <div className="flex h-full flex-col items-center justify-center text-center">
-                          <div className="text-xs font-bold">{node.value}</div>
-                          <div className="text-xs whitespace-nowrap overflow-hidden text-ellipsis w-full">{node.label}</div>
+                          <div className="text-lg font-bold">{node.value}</div>
+                          <div className="text-xs">{node.label}</div>
                         </div>
                       </foreignObject>
                     </g>
@@ -137,25 +137,25 @@ const SankeyFunnelChart: React.FC<SankeyFunnelChartProps> = ({
             const sourceX = sourceNode.column * sourceColWidth;
             const targetX = targetNode.column * targetColWidth;
             
-            const sourceHeight = (sourceNode.value / maxValue) * 40;
-            const targetHeight = (targetNode.value / maxValue) * 40;
+            const sourceHeight = (sourceNode.value / maxValue) * 100;
+            const targetHeight = (targetNode.value / maxValue) * 100;
             
-            const sourceY = sourceNode.position === 'top' ? 0 : 80 - sourceHeight;
-            const targetY = targetNode.position === 'top' ? 0 : 80 - targetHeight;
+            const sourceY = sourceNode.position === 'top' ? 0 : 280 - sourceHeight;
+            const targetY = targetNode.position === 'top' ? 0 : 280 - targetHeight;
             
             // Calculate control points for the Bezier curve
             const sourceControlX = sourceX + sourceColWidth * 0.8;
             const targetControlX = targetX - targetColWidth * 0.8;
             
             // Calculate link width based on value
-            const linkWidth = Math.max(2, (link.value / maxValue) * 20);
+            const linkWidth = (link.value / maxValue) * 60;
             
             // Create path between the nodes
-            const sourceRight = sourceX + 45; // 90/2 = 45
-            const targetLeft = targetX - 45;
+            const sourceRight = sourceX + 70; // 140/2 = 70
+            const targetLeft = targetX - 70;
             
-            const sourceMid = sourceY + Math.max(sourceHeight, 20) / 2;
-            const targetMid = targetY + Math.max(targetHeight, 20) / 2;
+            const sourceMid = sourceY + sourceHeight / 2;
+            const targetMid = targetY + targetHeight / 2;
             
             const path = `M ${sourceRight} ${sourceMid} 
                           C ${sourceControlX} ${sourceMid}, 
@@ -174,6 +174,18 @@ const SankeyFunnelChart: React.FC<SankeyFunnelChartProps> = ({
             );
           })}
         </svg>
+        
+        {/* Legend or additional information could go here */}
+        <div className="mt-4 flex justify-center">
+          <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
+            <button className="flex items-center gap-1 rounded-md border px-3 py-1 hover:bg-muted">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M19 9l-7 7-7-7" />
+              </svg>
+              Filters
+            </button>
+          </div>
+        </div>
       </CardContent>
     </Card>
   );
