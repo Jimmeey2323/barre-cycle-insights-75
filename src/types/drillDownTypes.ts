@@ -1,13 +1,15 @@
 
 export interface DrillDownData {
+  data: any[];
   title: string;
-  data: any;
-  type: string;
+  type: 'teacher' | 'class' | 'location' | 'month' | 'financial' | 'retention';
 }
 
 export interface DrillDownContextProps {
   drillDownData: DrillDownData | null;
-  setDrillDown: (data: DrillDownData | null) => void;
-  showDrillDown: boolean;
-  setShowDrillDown: (show: boolean) => void;
+  showDrillDown: (data: any, title: string, type: 'teacher' | 'class' | 'location' | 'month' | 'financial' | 'retention') => void;
+  hideDrillDown: () => void;
+  isVisible: boolean;
+  drillDownTitle: string;
+  drillDownType: 'teacher' | 'class' | 'location' | 'month' | 'financial' | 'retention' | '';
 }
