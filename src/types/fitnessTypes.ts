@@ -1,3 +1,4 @@
+
 // Basic types for fitness data
 export interface RawDataRecord {
   [key: string]: string | number;
@@ -20,6 +21,7 @@ export interface RawDataRecord {
 
 export interface MonthlyStats {
   month: string;
+  monthYear: string; // Added monthYear field
   totalSessions: number;
   barreSessions: number;
   cycleSessions: number;
@@ -29,6 +31,15 @@ export interface MonthlyStats {
   cyclePaid: number;
   totalRevenue: number;
   avgClassSize: number;
+  // Additional calculated fields
+  totalBarreSessions?: number;
+  totalCycleSessions?: number;
+  totalBarreCustomers?: number;
+  totalCycleCustomers?: number;
+  totalBarrePaid?: number;
+  totalCyclePaid?: number;
+  avgBarreClassSize?: number | string;
+  avgCycleClassSize?: number | string;
 }
 
 export interface TeacherStats {
@@ -53,6 +64,7 @@ export interface ProcessedData {
   months: string[];
   trainers: string[];
   classTypes: string[];
+  teachers?: string[]; // Added for backwards compatibility
 }
 
 // View types for the dashboard
@@ -61,6 +73,16 @@ export type ViewType = 'overview' | 'teachers' | 'classes' | 'financials' | 'ret
 // Recharts types - already present, keeping for reference
 export type RechartsValueType = number | string | Array<string | number>;
 export type RechartsNameType = string | number;
+
+// DrillDown Context types
+export interface DrillDownContextProps {
+  showDrillDown: (data: any, title: string, type: 'teacher' | 'class' | 'location' | 'month' | 'financial' | 'retention') => void;
+  hideDrillDown: () => void;
+  isVisible: boolean;
+  drillDownData: any;
+  drillDownTitle: string;
+  drillDownType: 'teacher' | 'class' | 'location' | 'month' | 'financial' | 'retention';
+}
 
 // SpeechRecognition globals
 declare global {

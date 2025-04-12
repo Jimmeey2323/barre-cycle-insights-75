@@ -18,7 +18,7 @@ export function filterData(
   // Filter raw data
   const filteredRawData = data.rawData.filter((record) => {
     const matchesMonth = selectedMonths.length === 0 || selectedMonths.includes(record["Month Year"]);
-    const matchesLocation = !location || location === "" || record.Location === location;
+    const matchesLocation = !location || location === "" || location === "all" || record.Location === location;
     return matchesMonth && matchesLocation;
   });
 
@@ -30,7 +30,7 @@ export function filterData(
   // Recalculate monthly stats if location filter is applied
   let processedMonthlyStats = filteredMonthlyStats;
   
-  if (location && location !== "") {
+  if (location && location !== "" && location !== "all") {
     // Group by month and recalculate stats
     const monthlyData = new Map<string, RawDataRecord[]>();
     
@@ -60,25 +60,45 @@ export function filterData(
         ? (totalCycleCustomers / totalCycleSessions).toFixed(1)
         : "0";
       
+      // Create a MonthlyStats object
+      const month = monthYear.split('-')[0];
+      const totalSessions = totalBarreSessions + totalCycleSessions;
+      
       return {
+        month,
         monthYear,
+        totalSessions,
+        barreSessions: totalBarreSessions,
+        cycleSessions: totalCycleSessions,
+        barreCustomers: totalBarreCustomers,
+        cycleCustomers: totalCycleCustomers,
+        barrePaid: totalBarrePaid,
+        cyclePaid: totalCyclePaid,
+        totalRevenue: totalBarrePaid + totalCyclePaid,
+        avgClassSize: totalSessions > 0 ? 
+          ((totalBarreCustomers + totalCycleCustomers) / totalSessions) : 0,
+        // Include calculated fields
         totalBarreSessions,
-        totalCycleSessions, 
+        totalCycleSessions,
         totalBarreCustomers,
         totalCycleCustomers,
         totalBarrePaid,
         totalCyclePaid,
         avgBarreClassSize,
         avgCycleClassSize
-      };
+      } as MonthlyStats;
     });
   }
 
   return {
     rawData: filteredRawData,
     monthlyStats: processedMonthlyStats,
+    teacherStats: data.teacherStats,
     locations: data.locations,
-    teachers: data.teachers,
+    months: data.months,
+    trainers: data.trainers,
+    classTypes: data.classTypes,
+    teachers: data.trainers // For backwards compatibility
   };
 }
 
@@ -125,8 +145,8 @@ export function sortData<T>(
   direction: "asc" | "desc" = "asc"
 ): T[] {
   return [...data].sort((a, b) => {
-    let aValue = a[field];
-    let bValue = b[field];
+    let aValue: any = a[field];
+    let bValue: any = b[field];
     
     // Convert to numbers if possible
     if (typeof aValue === "string" && !isNaN(Number(aValue))) {

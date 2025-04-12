@@ -6,10 +6,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatINR, formatNumber, formatPercent } from '@/lib/formatters';
 import { BarChart as BarChartIcon, LineChart as LineChartIcon, Table2 } from 'lucide-react';
-import { RechartsValueType } from '@/types/fitnessTypes';
 
 interface DrillDownDetailProps {
-  data: any;
+  data: any[];
   title: string;
   type: 'teacher' | 'class' | 'location' | 'month' | 'financial' | 'retention';
 }
@@ -45,8 +44,8 @@ const DrillDownDetail: React.FC<DrillDownDetailProps> = ({ data, title, type }) 
   
   // Choose colors based on type
   const getColorByField = (field: string) => {
-    if (field.toLowerCase().includes('barre')) return '#FF6F91';
-    if (field.toLowerCase().includes('cycle')) return '#9FD8CB';
+    if (field.toLowerCase().includes('barre')) return '#845EC2';
+    if (field.toLowerCase().includes('cycle')) return '#00C2A8';
     if (field.toLowerCase().includes('revenue') || field.toLowerCase().includes('paid')) return '#6366F1';
     if (field.toLowerCase().includes('retention') || field.toLowerCase().includes('retained')) return '#10B981';
     if (field.toLowerCase().includes('new')) return '#60A5FA';
@@ -90,18 +89,18 @@ const DrillDownDetail: React.FC<DrillDownDetailProps> = ({ data, title, type }) 
     if (value === null || value === undefined) return '-';
     
     if (isCurrencyField(fieldName)) {
-      return formatINR(value);
+      return formatINR(value.toString());
     } else if (isPercentField(fieldName)) {
-      return formatPercent(value);
+      return formatPercent(value.toString());
     } else if (typeof value === 'number' || !isNaN(parseFloat(value))) {
-      return formatNumber(value);
+      return formatNumber(value.toString());
     }
     
     return value;
   };
 
   // Custom tooltip formatter for recharts
-  const customFormatter = (value: RechartsValueType) => {
+  const customFormatter = (value: any) => {
     // Handle the case where value is an array
     if (Array.isArray(value)) {
       return value.length > 0 ? String(value[0]) : '0';
@@ -145,7 +144,7 @@ const DrillDownDetail: React.FC<DrillDownDetailProps> = ({ data, title, type }) 
                   />
                   <YAxis />
                   <Tooltip 
-                    formatter={(value, name) => {
+                    formatter={(value, name: any) => {
                       const strValue = customFormatter(value);
                       if (isCurrencyField(name.toString())) {
                         return [formatINR(strValue), name];
@@ -190,7 +189,7 @@ const DrillDownDetail: React.FC<DrillDownDetailProps> = ({ data, title, type }) 
                   />
                   <YAxis />
                   <Tooltip 
-                    formatter={(value, name) => {
+                    formatter={(value, name: any) => {
                       const strValue = customFormatter(value);
                       if (isCurrencyField(name.toString())) {
                         return [formatINR(strValue), name];

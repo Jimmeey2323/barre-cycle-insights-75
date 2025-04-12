@@ -72,6 +72,13 @@
   .premium-button {
     @apply bg-gradient-to-br from-primary to-primary/70 hover:from-primary/90 hover:to-primary/60 text-white shadow-md;
   }
+  
+  /* Custom gradient border definition */
+  .border-gradient-to-r {
+    border-width: 4px;
+    border-style: solid;
+    border-image: linear-gradient(to right, hsl(var(--primary)), hsl(var(--barre)), hsl(var(--cycle))) 1;
+  }
 }
 
 @layer utilities {
@@ -285,7 +292,8 @@ tbody tr:hover {
 }
 
 .premium-border {
-  @apply border-t-4 border-gradient-to-r from-primary via-barre to-cycle;
+  @apply border-t-4;
+  border-image: linear-gradient(to right, hsl(var(--primary)), hsl(var(--barre)), hsl(var(--cycle))) 1;
 }
 
 .premium-shadow {
