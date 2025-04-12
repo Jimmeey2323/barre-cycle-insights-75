@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -12,7 +11,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { useToast } from "@/components/ui/use-toast";
 import { useDebounce } from "@/hooks/use-debounce";
 import { RawDataRecord } from "@/types/fitnessTypes";
-import { ArrowDownUp, DownloadIcon, ChevronsUpDown, Save, Trash2, Edit, Settings, Plus, X, RefreshCw } from 'lucide-react';
+import { ArrowDownUp, DownloadIcon, ChevronsUpDown, Save, Trash2, Edit, Settings, Plus, X, RefreshCw, ChevronDown } from 'lucide-react';
 import { Badge } from "@/components/ui/badge";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
@@ -55,7 +54,6 @@ const PivotTableView: React.FC<PivotTableViewProps> = ({ data, selectedMonths, l
   const { toast } = useToast();
 
   useEffect(() => {
-    // Load saved pivots from localStorage
     const savedPivotsStr = localStorage.getItem('savedPivotConfigs');
     if (savedPivotsStr) {
       try {
@@ -68,7 +66,6 @@ const PivotTableView: React.FC<PivotTableViewProps> = ({ data, selectedMonths, l
       }
     }
     
-    // Extract possible filter fields
     if (data.length > 0) {
       const commonFields = Object.keys(data[0]).filter(field => 
         !['Teacher Email', 'Month Year', 'Location', 'Teacher Name'].includes(field)
@@ -77,7 +74,6 @@ const PivotTableView: React.FC<PivotTableViewProps> = ({ data, selectedMonths, l
     }
   }, []);
 
-  // Filter data based on selectedMonths and location
   const filteredData = useMemo(() => {
     let filtered = data.filter(item => 
       (selectedMonths.length === 0 || selectedMonths.includes(String(item["Month Year"]))) &&
@@ -89,7 +85,6 @@ const PivotTableView: React.FC<PivotTableViewProps> = ({ data, selectedMonths, l
       )
     );
     
-    // Apply additional filter fields
     Object.entries(filterFields).forEach(([field, values]) => {
       if (values.length > 0) {
         filtered = filtered.filter(item => 
@@ -101,13 +96,11 @@ const PivotTableView: React.FC<PivotTableViewProps> = ({ data, selectedMonths, l
     return filtered;
   }, [data, selectedMonths, location, debouncedSearchTerm, filterFields]);
 
-  // Available fields for selection
   const availableFields = useMemo(() => {
     if (!data || data.length === 0) return [];
     return Object.keys(data[0]);
   }, [data]);
 
-  // Process data for pivot table
   const groupedData = useMemo(() => {
     if (!filteredData || filteredData.length === 0 || !rowHeaders.length || !colHeaders.length || !valueField) {
       return {};
@@ -116,11 +109,9 @@ const PivotTableView: React.FC<PivotTableViewProps> = ({ data, selectedMonths, l
     const result: Record<string, Record<string, any>> = {};
     
     filteredData.forEach((item) => {
-      // Create a combined row key from all rowHeaders
       const rowKeys = rowHeaders.map(header => String(item[header as keyof typeof item] || 'Unknown'));
       const rowKey = rowKeys.join(' - ');
       
-      // Create a combined column key from all colHeaders
       const colKeys = colHeaders.map(header => String(item[header as keyof typeof item] || 'Unknown'));
       const colKey = colKeys.join(' - ');
       
@@ -136,14 +127,12 @@ const PivotTableView: React.FC<PivotTableViewProps> = ({ data, selectedMonths, l
         result[rowKey][colKey] = [];
       }
       
-      // Store all values to support different aggregation methods
       result[rowKey][colKey].push(value);
     });
     
     return result;
   }, [filteredData, rowHeaders, colHeaders, valueField]);
 
-  // Apply aggregation based on selected method
   const aggregatedData = useMemo(() => {
     const result: Record<string, Record<string, number>> = {};
     
@@ -218,7 +207,6 @@ const PivotTableView: React.FC<PivotTableViewProps> = ({ data, selectedMonths, l
     return keysArray;
   }, [aggregatedData, sortBy, sortDirection]);
 
-  // Calculated totals for each row and column
   const rowTotals = useMemo(() => {
     const totals: Record<string, number> = {};
     
@@ -308,10 +296,8 @@ const PivotTableView: React.FC<PivotTableViewProps> = ({ data, selectedMonths, l
       return;
     }
     
-    // Build CSV header
     const csvHeader = ['Row Field', ...colKeys, 'Total'];
     
-    // Build rows
     const csvRows = rowKeys.map(row => {
       const rowData = [row];
       
@@ -319,7 +305,6 @@ const PivotTableView: React.FC<PivotTableViewProps> = ({ data, selectedMonths, l
         rowData.push(String(aggregatedData[row]?.[col] || 0));
       });
       
-      // Add row total
       if (showRowTotals) {
         rowData.push(String(rowTotals[row]));
       }
@@ -327,25 +312,20 @@ const PivotTableView: React.FC<PivotTableViewProps> = ({ data, selectedMonths, l
       return rowData.join(',');
     });
     
-    // Add totals row
-    if (showColTotals) {
-      const totalsRow = ['Total'];
-      colKeys.forEach(col => {
-        totalsRow.push(String(colTotals[col]));
-      });
-      if (showRowTotals) {
-        totalsRow.push(String(grandTotal));
-      }
-      csvRows.push(totalsRow.join(','));
+    const totalsRow = ['Total'];
+    colKeys.forEach(col => {
+      totalsRow.push(String(colTotals[col]));
+    });
+    if (showRowTotals) {
+      totalsRow.push(String(grandTotal));
     }
     
-    // Combine all into CSV content
     const csvContent = [
       csvHeader.join(','),
-      ...csvRows
+      ...csvRows,
+      totalsRow.join(',')
     ].join('\n');
     
-    // Create download link
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
