@@ -1,5 +1,5 @@
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700&family=Poppins:wght@300;400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -41,6 +41,11 @@
     --chart-primary: #3b82f6;
     --chart-secondary: #60a5fa;
     --chart-accent: #93c5fd;
+    
+    --barre: 342 80% 55%;
+    --barre-dark: 342 80% 45%;
+    --cycle: 160 70% 40%;
+    --cycle-dark: 160 70% 30%;
   }
   
   .dark {
@@ -126,7 +131,7 @@
     --popover: 0 0% 100%;
     --popover-foreground: 215 14% 35%;
     
-    --primary: 205 75% 35%;
+    --primary: 213 100% 50%;
     --primary-foreground: 0 0% 100%;
     
     --secondary: 210 20% 96%;
@@ -135,7 +140,7 @@
     --muted: 210 20% 96%;
     --muted-foreground: 215 14% 45%;
     
-    --accent: 205 75% 35%;
+    --accent: 213 100% 50%;
     --accent-foreground: 0 0% 100%;
     
     --destructive: 0 84.2% 60.2%;
@@ -143,15 +148,15 @@
     
     --border: 210 20% 90%;
     --input: 210 20% 90%;
-    --ring: 205 75% 35%;
+    --ring: 213 100% 50%;
     
     --barre: 339 75% 65%;
     --cycle: 173 75% 45%;
     
-    /* Custom chart colors for physique57 theme */
-    --chart-primary: #0d5c8f;
-    --chart-secondary: #1a7cb8;
-    --chart-accent: #2e9be0;
+    /* Custom chart colors for physique57 theme - #007bff as requested */
+    --chart-primary: #007bff;
+    --chart-secondary: #3498db;
+    --chart-accent: #5dade2;
   }
 }
 
@@ -166,7 +171,7 @@
   }
 
   .light {
-    font-family: 'Playfair Display', serif;
+    font-family: 'Poppins', sans-serif;
     font-weight: 500;
   }
 
@@ -222,16 +227,40 @@
 .title-char {
   display: inline-block;
   transition: transform 0.3s ease, color 0.3s ease;
+  animation: float 3s ease-in-out infinite alternate;
+  animation-delay: calc(var(--char-index, 0) * 0.1s);
+}
+
+@keyframes float {
+  0% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+  100% {
+    transform: translateY(0px);
+  }
 }
 
 .title-char:hover {
-  transform: translateY(-5px) scale(1.1);
+  transform: translateY(-8px) scale(1.2);
   color: var(--chart-accent);
 }
 
 /* Animate title icons */
 .title-icon {
   transition: transform 0.4s ease;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
 }
 
 .title-icon:hover {
@@ -268,23 +297,85 @@
   stroke: var(--background) !important;
 }
 
+.recharts-tooltip-wrapper {
+  z-index: 1000 !important;
+}
+
 /* Apply theme to tabs */
-.tab-active {
+[data-state="active"].tab[role="tab"] {
+  background-color: var(--primary) !important;
+  color: var(--primary-foreground) !important;
+}
+
+.dark [data-state="active"].tab[role="tab"] {
+  background-color: var(--primary) !important;
+  color: var(--primary-foreground) !important;
+}
+
+.physique57 [data-state="active"].tab[role="tab"] {
   background-color: var(--primary) !important;
   color: var(--primary-foreground) !important;
 }
 
 /* Enhanced search bar */
 .search-bar {
-  width: 250px;
+  min-width: 280px;
+  width: 280px;
   transition: width 0.3s ease;
 }
 
-.search-bar:focus {
-  width: 300px;
+.search-bar:focus-within {
+  width: 320px;
 }
 
 /* Clear selection button */
 .clear-button {
   @apply text-sm text-muted-foreground hover:text-foreground transition-colors;
+}
+
+/* Active theme indication */
+.theme-item {
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.theme-item[data-state="active"] {
+  outline: 2px solid var(--primary);
+}
+
+/* Add styling for pivot table */
+.pivot-saved {
+  @apply bg-secondary/50 border border-border/50 rounded-lg p-3 mb-2 flex justify-between items-center;
+}
+
+.pivot-saved-title {
+  @apply font-semibold text-sm;
+}
+
+.nested-row {
+  @apply pl-6;
+}
+
+.pivot-table-toolbar {
+  @apply flex flex-wrap gap-2 p-2 bg-muted/30 border-b rounded-t-lg;
+}
+
+.funnel-step {
+  position: relative;
+  margin-bottom: -20px;
+  z-index: 1;
+}
+
+.funnel-step:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: -20px;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 20px solid transparent;
+  border-right: 20px solid transparent;
+  border-top: 20px solid var(--card);
+  z-index: 0;
 }

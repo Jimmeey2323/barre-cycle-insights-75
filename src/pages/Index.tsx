@@ -18,6 +18,9 @@ const LOADING_MESSAGES = [
   "Adding J Factor"
 ];
 
+// Default months to select (Jan-Mar 2025)
+const DEFAULT_MONTHS = ["Jan-2025", "Feb-2025", "Mar-2025"];
+
 const Index = () => {
   const [data, setData] = useState<ProcessedData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -28,7 +31,7 @@ const Index = () => {
   
   // Include 'pivot' in the ViewType
   const [currentView, setCurrentView] = useState<ViewType>("overview");
-  const [selectedMonths, setSelectedMonths] = useState<string[]>([]);
+  const [selectedMonths, setSelectedMonths] = useState<string[]>(DEFAULT_MONTHS);
   const [location, setLocation] = useState("all");
 
   // Cycle through loading messages
@@ -68,12 +71,13 @@ const Index = () => {
         console.log("Setting data in state, with monthly stats:", processedData.monthlyStats.length);
         setData(processedData);
         
-        // Auto-select the last 3 months or all if less than 3
-        if (processedData.monthlyStats.length > 0) {
-          const allMonths = processedData.monthlyStats.map(stat => stat.monthYear);
-          console.log("Available months:", allMonths);
-          
-          const sortedMonths = [...allMonths].sort((a, b) => {
+        // Check if default months exist in the data
+        const availableMonths = processedData.monthlyStats.map(stat => stat.monthYear);
+        const monthsToSelect = DEFAULT_MONTHS.filter(month => availableMonths.includes(month));
+        
+        // If none of the default months exist, select the 3 most recent
+        if (monthsToSelect.length === 0 && availableMonths.length > 0) {
+          const sortedMonths = [...availableMonths].sort((a, b) => {
             // Parse "MMM-YYYY" format
             const [aMonth, aYear] = a.split('-');
             const [bMonth, bYear] = b.split('-');
@@ -87,10 +91,12 @@ const Index = () => {
           });
           
           // Get last 3 months (most recent)
-          const monthsToSelect = sortedMonths.slice(-3);
-          console.log("Auto-selecting months:", monthsToSelect);
+          const recentMonths = sortedMonths.slice(-3);
+          console.log("Auto-selecting months:", recentMonths);
           
-          // Set selected months
+          setSelectedMonths(recentMonths);
+        } else if (monthsToSelect.length > 0) {
+          console.log("Using default months:", monthsToSelect);
           setSelectedMonths(monthsToSelect);
         }
         

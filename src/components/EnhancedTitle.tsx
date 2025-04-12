@@ -1,15 +1,12 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import { Badge } from "@/components/ui/badge";
-import { Dumbbell, Activity, SunMoon, Moon, Sun } from "lucide-react";
+import { Dumbbell, Activity } from "lucide-react";
 import { useTheme } from '@/contexts/ThemeContext';
 
 const EnhancedTitle: React.FC = () => {
   const titleRef = useRef<HTMLHeadingElement>(null);
-  const {
-    theme,
-    setTheme
-  } = useTheme();
+  const { theme } = useTheme();
   
   useEffect(() => {
     if (!titleRef.current) return;
@@ -43,9 +40,9 @@ const EnhancedTitle: React.FC = () => {
   }, []);
   
   return (
-    <div className="flex items-center justify-center gap-3">
+    <div className="flex items-center gap-3">
       <Dumbbell 
-        className="h-7 w-7 text-barre title-icon" 
+        className="h-7 w-7 text-barre title-icon animate-pulse" 
         strokeWidth={1.5} 
       />
       
@@ -56,7 +53,7 @@ const EnhancedTitle: React.FC = () => {
       </div>
       
       <Activity 
-        className="h-7 w-7 text-cycle title-icon" 
+        className="h-7 w-7 text-cycle title-icon animate-spin" 
         strokeWidth={1.5} 
       />
     </div>

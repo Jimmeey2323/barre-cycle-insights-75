@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ProcessedData, ViewType } from "@/types/fitnessTypes";
@@ -18,6 +19,7 @@ import { Card, CardContent } from "./ui/card";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { Badge } from "./ui/badge";
+
 interface DashboardLayoutProps {
   data: ProcessedData | null;
   isLoading: boolean;
@@ -29,7 +31,9 @@ interface DashboardLayoutProps {
   location: string;
   setLocation: (location: string) => void;
 }
+
 const LoadingMessages = ["Gathering Attendance...", "Compiling Report...", "Drawing Charts...", "Adding Filters...", "Adding J Factor..."];
+
 const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   data,
   isLoading,
@@ -159,6 +163,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
         </div>
       </div>;
   }
+  
   if (!data) {
     return <div className="flex h-screen items-center justify-center bg-gradient-to-br from-background to-muted/30">
         <div className="text-center premium-card p-8 rounded-xl">
@@ -176,12 +181,14 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   return <div className="min-h-screen bg-gradient-to-br from-background to-muted/30 pb-8 font-sans">
       <div className="container mx-auto px-4 py-8">
         <div className="mb-8 flex flex-row justify-between items-center gap-4">
-          <div className="flex-1">
+          <div className="flex items-center gap-4">
             <EnhancedTitle />
           </div>
           
-          <div className="flex items-center gap-4 flex-shrink-0">
-            <VoiceSearch onSearch={handleSearch} className="search-bar w-[250px]" />
+          <div className="flex items-center gap-4">
+            <div className="w-[280px]">
+              <VoiceSearch onSearch={handleSearch} className="search-bar" />
+            </div>
             <div className="flex-shrink-0">
               <ThemeToggle />
             </div>
@@ -204,7 +211,10 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                       <ChevronDown className="h-4 w-4 opacity-50" />
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="start" className="w-[200px] p-2 rounded-lg shadow-lg backdrop-blur-sm bg-popover/95 animate-scale-in">
+                  <DropdownMenuContent align="start" className="w-[200px] p-2 rounded-lg shadow-lg backdrop-blur-sm bg-popover/95 animate-scale-in" onCloseAutoFocus={(e) => {
+                    // Prevent the dropdown from closing when clicking inside
+                    e.preventDefault();
+                  }}>
                     <div className="flex justify-between px-2 py-1 border-b mb-1">
                       <button 
                         className="text-xs text-primary hover:text-primary/80 font-medium"
@@ -219,7 +229,10 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                         Clear
                       </button>
                     </div>
-                    {data.monthlyStats.map(stat => <DropdownMenuItem key={stat.monthYear} className="flex items-center gap-2 rounded-md cursor-pointer" onClick={() => {
+                    {data.monthlyStats.map(stat => <DropdownMenuItem key={stat.monthYear} className="flex items-center gap-2 rounded-md cursor-pointer" onClick={(e) => {
+                    // Prevent the dropdown from closing
+                    e.preventDefault();
+                    
                     if (selectedMonths.includes(stat.monthYear)) {
                       setSelectedMonths(selectedMonths.filter(m => m !== stat.monthYear));
                     } else {
@@ -260,7 +273,10 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                       <ChevronDown className="h-4 w-4 opacity-50" />
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="start" className="w-[200px] p-2 rounded-lg shadow-lg backdrop-blur-sm bg-popover/95 animate-scale-in max-h-[300px] overflow-y-auto">
+                  <DropdownMenuContent align="start" className="w-[200px] p-2 rounded-lg shadow-lg backdrop-blur-sm bg-popover/95 animate-scale-in max-h-[300px] overflow-y-auto" onCloseAutoFocus={(e) => {
+                    // Prevent the dropdown from closing when clicking inside
+                    e.preventDefault();
+                  }}>
                     <div className="flex justify-between px-2 py-1 border-b mb-1">
                       <button 
                         className="text-xs text-primary hover:text-primary/80 font-medium"
@@ -275,7 +291,10 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                         Clear
                       </button>
                     </div>
-                    {uniqueTrainers.map(teacher => <DropdownMenuItem key={teacher} className="flex items-center gap-2 rounded-md cursor-pointer" onClick={() => {
+                    {uniqueTrainers.map(teacher => <DropdownMenuItem key={teacher} className="flex items-center gap-2 rounded-md cursor-pointer" onClick={(e) => {
+                    // Prevent the dropdown from closing
+                    e.preventDefault();
+                    
                     if (trainers.includes(teacher)) {
                       setTrainers(trainers.filter(t => t !== teacher));
                     } else {
@@ -301,7 +320,10 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                       <ChevronDown className="h-4 w-4 opacity-50" />
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="start" className="w-[200px] p-2 rounded-lg shadow-lg backdrop-blur-sm bg-popover/95 animate-scale-in">
+                  <DropdownMenuContent align="start" className="w-[200px] p-2 rounded-lg shadow-lg backdrop-blur-sm bg-popover/95 animate-scale-in" onCloseAutoFocus={(e) => {
+                    // Prevent the dropdown from closing when clicking inside
+                    e.preventDefault();
+                  }}>
                     <div className="flex justify-between px-2 py-1 border-b mb-1">
                       <button 
                         className="text-xs text-primary hover:text-primary/80 font-medium"
@@ -316,7 +338,10 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                         Clear
                       </button>
                     </div>
-                    {uniqueClassTypes.map(type => <DropdownMenuItem key={type} className="flex items-center gap-2 rounded-md cursor-pointer" onClick={() => {
+                    {uniqueClassTypes.map(type => <DropdownMenuItem key={type} className="flex items-center gap-2 rounded-md cursor-pointer" onClick={(e) => {
+                    // Prevent the dropdown from closing
+                    e.preventDefault();
+                    
                     if (classTypes.includes(type)) {
                       setClassTypes(classTypes.filter(t => t !== type));
                     } else {

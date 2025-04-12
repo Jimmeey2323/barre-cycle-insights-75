@@ -124,8 +124,15 @@ export function processFitnessData(rawData: any[]) {
       const totalBarrePaid = monthData.reduce((sum, item) => sum + parseFloat(item["Barre Paid"] || "0"), 0);
       const totalCyclePaid = monthData.reduce((sum, item) => sum + parseFloat(item["Cycle Paid"] || "0"), 0);
       
-      const totalNonEmptyBarreSessions = monthData.reduce((sum, item) => sum + parseInt(item["Non-Empty Barre Sessions"] || "0"), 0);
-      const totalNonEmptyCycleSessions = monthData.reduce((sum, item) => sum + parseInt(item["Non-Empty Cycle Sessions"] || "0"), 0);
+      const totalNonEmptyBarreSessions = monthData.reduce((sum, item) => {
+        const sessions = parseInt(item["Non-Empty Barre Sessions"] || "0");
+        return sum + (isNaN(sessions) ? 0 : sessions);
+      }, 0);
+      
+      const totalNonEmptyCycleSessions = monthData.reduce((sum, item) => {
+        const sessions = parseInt(item["Non-Empty Cycle Sessions"] || "0");
+        return sum + (isNaN(sessions) ? 0 : sessions);
+      }, 0);
       
       // Calculate average class sizes
       const avgBarreClassSize = totalNonEmptyBarreSessions > 0 
@@ -137,14 +144,30 @@ export function processFitnessData(rawData: any[]) {
         : "0";
         
       // Calculate retention and conversion metrics  
-      const totalRetained = monthData.reduce((sum, item) => sum + parseInt(item["Retained"] || "0"), 0);
-      const totalConverted = monthData.reduce((sum, item) => sum + parseInt(item["Converted"] || "0"), 0);
-      const totalNew = monthData.reduce((sum, item) => sum + parseInt(item["New"] || "0"), 0);
+      const totalRetained = monthData.reduce((sum, item) => {
+        const retained = parseInt(item["Retained"] || "0");
+        return sum + (isNaN(retained) ? 0 : retained);
+      }, 0);
+      
+      const totalConverted = monthData.reduce((sum, item) => {
+        const converted = parseInt(item["Converted"] || "0");
+        return sum + (isNaN(converted) ? 0 : converted);
+      }, 0);
+      
+      const totalNew = monthData.reduce((sum, item) => {
+        const newCustomers = parseInt(item["New"] || "0");
+        return sum + (isNaN(newCustomers) ? 0 : newCustomers);
+      }, 0);
+      
+      // Calculate most popular class
+      const mostPopularClass = totalBarreCustomers > totalCycleCustomers ? "Barre" : 
+                               totalCycleCustomers > totalBarreCustomers ? "Cycle" : 
+                               "Tie";
         
       return {
         monthYear,
         month: monthYear.split('-')[0],
-        Location: sampleLocation, // Add Location to monthlyStats
+        Location: sampleLocation, // Added Location property to monthlyStats
         totalSessions: totalBarreSessions + totalCycleSessions,
         barreSessions: totalBarreSessions,
         cycleSessions: totalCycleSessions,
@@ -165,7 +188,8 @@ export function processFitnessData(rawData: any[]) {
         avgCycleClassSize,
         totalRetained,
         totalConverted,
-        totalNew
+        totalNew,
+        mostPopularClass // Add most popular class information
       };
     });
 
@@ -173,20 +197,46 @@ export function processFitnessData(rawData: any[]) {
     const teacherStats = trainers.map(teacher => {
       const teacherData = rawData.filter(item => item["Teacher Name"] === teacher);
       
-      const barreSessions = teacherData.reduce((sum, item) => sum + parseInt(item["Barre Sessions"] || "0"), 0);
-      const cycleSessions = teacherData.reduce((sum, item) => sum + parseInt(item["Cycle Sessions"] || "0"), 0);
+      const barreSessions = teacherData.reduce((sum, item) => {
+        const sessions = parseInt(item["Barre Sessions"] || "0");
+        return sum + (isNaN(sessions) ? 0 : sessions);
+      }, 0);
       
-      const barreCustomers = teacherData.reduce((sum, item) => sum + parseInt(item["Barre Customers"] || "0"), 0);
-      const cycleCustomers = teacherData.reduce((sum, item) => sum + parseInt(item["Cycle Customers"] || "0"), 0);
+      const cycleSessions = teacherData.reduce((sum, item) => {
+        const sessions = parseInt(item["Cycle Sessions"] || "0");
+        return sum + (isNaN(sessions) ? 0 : sessions);
+      }, 0);
       
-      const barrePaid = teacherData.reduce((sum, item) => sum + parseFloat(item["Barre Paid"] || "0"), 0);
-      const cyclePaid = teacherData.reduce((sum, item) => sum + parseFloat(item["Cycle Paid"] || "0"), 0);
+      const barreCustomers = teacherData.reduce((sum, item) => {
+        const customers = parseInt(item["Barre Customers"] || "0");
+        return sum + (isNaN(customers) ? 0 : customers);
+      }, 0);
+      
+      const cycleCustomers = teacherData.reduce((sum, item) => {
+        const customers = parseInt(item["Cycle Customers"] || "0");
+        return sum + (isNaN(customers) ? 0 : customers);
+      }, 0);
+      
+      const barrePaid = teacherData.reduce((sum, item) => {
+        const paid = parseFloat(item["Barre Paid"] || "0");
+        return sum + (isNaN(paid) ? 0 : paid);
+      }, 0);
+      
+      const cyclePaid = teacherData.reduce((sum, item) => {
+        const paid = parseFloat(item["Cycle Paid"] || "0");
+        return sum + (isNaN(paid) ? 0 : paid);
+      }, 0);
       
       const teacherEmail = teacherData[0]["Teacher Email"] || "";
       
       // Calculate average class sizes
       const avgBarreClassSize = barreSessions > 0 ? barreCustomers / barreSessions : 0;
       const avgCycleClassSize = cycleSessions > 0 ? cycleCustomers / cycleSessions : 0;
+      
+      // Calculate most taught class
+      const mostTaughtClass = barreSessions > cycleSessions ? "Barre" : 
+                              cycleSessions > barreSessions ? "Cycle" : 
+                              "Both equally";
       
       return {
         name: teacher,
@@ -199,7 +249,8 @@ export function processFitnessData(rawData: any[]) {
         cyclePaid,
         totalSessions: barreSessions + cycleSessions,
         avgBarreClassSize,
-        avgCycleClassSize
+        avgCycleClassSize,
+        mostTaughtClass // Add most taught class information
       };
     });
 

@@ -1,152 +1,131 @@
 
-import React, { useState, useEffect, useRef } from 'react';
-import { Search, Mic, X } from 'lucide-react';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { useToast } from '@/components/ui/use-toast';
+import React, { useState, useRef } from 'react';
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Mic, MicOff, SearchIcon } from "lucide-react";
+import { useToast } from "@/components/ui/use-toast";
 
-interface VoiceSearchProps {
+export interface VoiceSearchProps {
   onSearch: (query: string) => void;
+  className?: string; // Added className prop to fix the TS error
 }
 
-const VoiceSearch: React.FC<VoiceSearchProps> = ({ onSearch }) => {
-  const [searchQuery, setSearchQuery] = useState('');
+const VoiceSearch: React.FC<VoiceSearchProps> = ({ onSearch, className }) => {
+  const [query, setQuery] = useState("");
   const [isListening, setIsListening] = useState(false);
-  const [isSupported, setIsSupported] = useState(true);
-  const recognitionRef = useRef<any>(null);
   const { toast } = useToast();
-  
-  useEffect(() => {
-    // Check if browser supports SpeechRecognition
-    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
-      const SpeechRecognition = window.webkitSpeechRecognition || window.SpeechRecognition;
-      recognitionRef.current = new SpeechRecognition();
-      recognitionRef.current.continuous = false;
-      recognitionRef.current.interimResults = false;
-      recognitionRef.current.lang = 'en-US';
+  const recognitionRef = useRef<SpeechRecognition | null>(null);
+
+  const startListening = () => {
+    try {
+      if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+        toast({
+          title: "Speech Recognition Not Supported",
+          description: "Your browser does not support voice search.",
+          variant: "destructive"
+        });
+        return;
+      }
       
-      recognitionRef.current.onresult = (event: any) => {
-        const transcript = event.results[0][0].transcript.toLowerCase();
-        setSearchQuery(transcript);
-        
-        // If user says "search for X" or "find X", extract the query
-        let finalQuery = transcript;
-        if (transcript.includes('search for ')) {
-          finalQuery = transcript.split('search for ')[1];
-        } else if (transcript.includes('find ')) {
-          finalQuery = transcript.split('find ')[1];
-        }
-        
-        setSearchQuery(finalQuery);
-        onSearch(finalQuery);
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      const recognition = new SpeechRecognition();
+      
+      recognition.continuous = false;
+      recognition.interimResults = false;
+      recognition.lang = 'en-US';
+      
+      recognition.onresult = (event) => {
+        const transcript = event.results[0][0].transcript;
+        setQuery(transcript);
+        onSearch(transcript);
         
         toast({
           title: "Voice Search",
-          description: `Searching for: "${finalQuery}"`,
+          description: `Searching for: "${transcript}"`,
         });
       };
       
-      recognitionRef.current.onerror = (event: any) => {
-        console.error('Speech recognition error:', event.error);
+      recognition.onerror = (event) => {
+        console.error("Speech recognition error", event.error);
         setIsListening(false);
-        
-        if (event.error === 'not-allowed') {
-          toast({
-            variant: "destructive",
-            title: "Microphone Access Denied",
-            description: "Please allow microphone access for voice search to work.",
-          });
-        }
-      };
-      
-      recognitionRef.current.onend = () => {
-        setIsListening(false);
-      };
-    } else {
-      setIsSupported(false);
-      toast({
-        variant: "destructive",
-        title: "Voice Search Not Supported",
-        description: "Your browser doesn't support voice search functionality.",
-      });
-    }
-    
-    return () => {
-      if (recognitionRef.current) {
-        recognitionRef.current.abort();
-      }
-    };
-  }, [toast, onSearch]);
-  
-  const handleStartListening = () => {
-    if (recognitionRef.current && !isListening) {
-      try {
-        recognitionRef.current.start();
-        setIsListening(true);
         
         toast({
-          title: "Listening...",
-          description: "Speak now to search",
+          title: "Voice Search Error",
+          description: `Failed to recognize speech: ${event.error}`,
+          variant: "destructive"
         });
-      } catch (error) {
-        console.error('Error starting speech recognition:', error);
-      }
-    }
-  };
-  
-  const handleStopListening = () => {
-    if (recognitionRef.current && isListening) {
-      recognitionRef.current.stop();
-      setIsListening(false);
-    }
-  };
-  
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (searchQuery.trim()) {
-      onSearch(searchQuery);
-    }
-  };
-  
-  const clearSearch = () => {
-    setSearchQuery('');
-    onSearch('');
-  };
-  
-  return (
-    <form onSubmit={handleSubmit} className="relative flex items-center max-w-md w-full">
-      <div className="relative w-full">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input
-          type="search"
-          placeholder="Search analytics..."
-          className="pl-10 pr-10 w-full bg-background/50 backdrop-blur-sm border-muted"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-        />
-        {searchQuery && (
-          <button 
-            type="button" 
-            onClick={clearSearch}
-            className="absolute right-10 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
-          >
-            <X className="h-4 w-4" />
-          </button>
-        )}
-      </div>
+      };
       
-      {isSupported && (
+      recognition.onend = () => {
+        setIsListening(false);
+      };
+      
+      recognition.start();
+      recognitionRef.current = recognition;
+      setIsListening(true);
+      
+      toast({
+        description: "Listening...",
+      });
+    } catch (error) {
+      console.error("Error starting speech recognition:", error);
+      setIsListening(false);
+      toast({
+        title: "Voice Search Error",
+        description: "Failed to start voice recognition",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const stopListening = () => {
+    if (recognitionRef.current) {
+      recognitionRef.current.stop();
+      recognitionRef.current = null;
+    }
+    setIsListening(false);
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setQuery(e.target.value);
+  };
+
+  const handleSearch = () => {
+    onSearch(query);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleSearch();
+    }
+  };
+
+  return (
+    <div className={`flex items-center gap-2 ${className}`}>
+      <div className="relative flex-grow">
+        <SearchIcon className="absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <Input
+          type="text"
+          placeholder="Search..."
+          className="pl-8 pr-14 bg-background/70 backdrop-blur-sm"
+          value={query}
+          onChange={handleInputChange}
+          onKeyDown={handleKeyDown}
+        />
         <Button
-          type="button"
           size="icon"
-          variant={isListening ? "destructive" : "ghost"}
-          className="ml-2"
-          onClick={isListening ? handleStopListening : handleStartListening}
+          variant="ghost"
+          className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7"
+          onClick={isListening ? stopListening : startListening}
         >
-          <Mic className={`h-4 w-4 ${isListening ? 'animate-pulse' : ''}`} />
+          {isListening ? (
+            <MicOff className="h-4 w-4 text-red-500 animate-pulse" />
+          ) : (
+            <Mic className="h-4 w-4 text-muted-foreground" />
+          )}
         </Button>
-      )}
-    </form>
+      </div>
+    </div>
   );
 };
 
