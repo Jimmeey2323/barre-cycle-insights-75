@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ProcessedData, RechartsValueType } from "@/types/fitnessTypes";
@@ -51,17 +50,17 @@ const TeachersView: React.FC<TeachersViewProps> = ({ data, selectedMonths, locat
       };
     }
     
-    acc[teacherName].barreSessions += parseInt(record["Barre Sessions"] || "0");
-    acc[teacherName].cycleSessions += parseInt(record["Cycle Sessions"] || "0");
-    acc[teacherName].barreCustomers += parseInt(record["Barre Customers"] || "0");
-    acc[teacherName].cycleCustomers += parseInt(record["Cycle Customers"] || "0");
+    acc[teacherName].barreSessions += parseInt(String(record["Barre Sessions"] || "0"));
+    acc[teacherName].cycleSessions += parseInt(String(record["Cycle Sessions"] || "0"));
+    acc[teacherName].barreCustomers += parseInt(String(record["Barre Customers"] || "0"));
+    acc[teacherName].cycleCustomers += parseInt(String(record["Cycle Customers"] || "0"));
     acc[teacherName].barrePaid += parseFloat(record["Barre Paid"] || "0");
     acc[teacherName].cyclePaid += parseFloat(record["Cycle Paid"] || "0");
-    acc[teacherName].totalSessions += parseInt(record["Total Sessions"] || "0");
+    acc[teacherName].totalSessions += parseInt(String(record["Total Sessions"] || "0"));
     
     // Calculate avg class size for non-empty sessions
-    const nonEmptyBarreSessions = parseInt(record["Non-Empty Barre Sessions"] || "0");
-    const nonEmptyCycleSessions = parseInt(record["Non-Empty Cycle Sessions"] || "0");
+    const nonEmptyBarreSessions = parseInt(String(record["Non-Empty Barre Sessions"] || "0"));
+    const nonEmptyCycleSessions = parseInt(String(record["Non-Empty Cycle Sessions"] || "0"));
     
     if (nonEmptyBarreSessions > 0) {
       acc[teacherName].avgBarreClassSize = (acc[teacherName].barreCustomers / nonEmptyBarreSessions).toFixed(1);

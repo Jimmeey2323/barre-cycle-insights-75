@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ProcessedData, RechartsValueType, RechartsNameType } from "@/types/fitnessTypes";
@@ -66,10 +65,10 @@ const RetentionView: React.FC<RetentionViewProps> = ({ data, selectedMonths, loc
       : 0;
       
     return {
-      name: item.monthYear,
-      new: item.newCustomers,
-      retained: item.retainedCustomers,
-      converted: item.convertedCustomers,
+      name: String(item.monthYear),
+      new: parseInt(String(item.newCustomers), 10),
+      retained: parseInt(String(item.retainedCustomers), 10),
+      converted: parseInt(String(item.convertedCustomers), 10),
       retentionRate,
       conversionRate
     };

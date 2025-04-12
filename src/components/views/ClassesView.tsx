@@ -24,15 +24,15 @@ const ClassesView: React.FC<ClassesViewProps> = ({ data, selectedMonths, locatio
   // Class attendance data
   const attendanceData = filteredStats.map(stat => ({
     name: stat.monthYear,
-    barreAvg: parseFloat(stat.avgBarreClassSize),
-    cycleAvg: parseFloat(stat.avgCycleClassSize)
+    barreAvg: typeof stat.avgBarreClassSize === 'string' ? parseFloat(stat.avgBarreClassSize) : stat.avgBarreClassSize,
+    cycleAvg: typeof stat.avgCycleClassSize === 'string' ? parseFloat(stat.avgCycleClassSize) : stat.avgCycleClassSize
   }));
 
   // Empty vs non-empty classes
   const emptyVsNonEmptyBarre = filteredRawData.reduce(
     (acc, record) => {
-      acc.empty += parseInt(record["Empty Barre Sessions"] || "0");
-      acc.nonEmpty += parseInt(record["Non-Empty Barre Sessions"] || "0");
+      acc.empty += parseInt(String(record["Empty Barre Sessions"] || "0"));
+      acc.nonEmpty += parseInt(String(record["Non-Empty Barre Sessions"] || "0"));
       return acc;
     },
     { empty: 0, nonEmpty: 0 }
@@ -40,8 +40,8 @@ const ClassesView: React.FC<ClassesViewProps> = ({ data, selectedMonths, locatio
 
   const emptyVsNonEmptyCycle = filteredRawData.reduce(
     (acc, record) => {
-      acc.empty += parseInt(record["Empty Cycle Sessions"] || "0");
-      acc.nonEmpty += parseInt(record["Non-Empty Cycle Sessions"] || "0");
+      acc.empty += parseInt(String(record["Empty Cycle Sessions"] || "0"));
+      acc.nonEmpty += parseInt(String(record["Non-Empty Cycle Sessions"] || "0"));
       return acc;
     },
     { empty: 0, nonEmpty: 0 }
@@ -66,8 +66,8 @@ const ClassesView: React.FC<ClassesViewProps> = ({ data, selectedMonths, locatio
 
   // Class fill rate (non-empty sessions as % of total)
   const barreClassFillRate = filteredRawData.map(record => {
-    const totalSessions = parseInt(record["Barre Sessions"] || "0");
-    const nonEmptySessions = parseInt(record["Non-Empty Barre Sessions"] || "0");
+    const totalSessions = parseInt(String(record["Barre Sessions"] || "0"));
+    const nonEmptySessions = parseInt(String(record["Non-Empty Barre Sessions"] || "0"));
     const fillRate = totalSessions > 0 ? (nonEmptySessions / totalSessions) * 100 : 0;
     
     return {
@@ -87,8 +87,8 @@ const ClassesView: React.FC<ClassesViewProps> = ({ data, selectedMonths, locatio
     
     const record = filteredRawData.find(r => r["Month Year"] === item.name);
     if (record) {
-      acc[item.name].totalSessions += parseInt(record["Barre Sessions"] || "0");
-      acc[item.name].nonEmptySessions += parseInt(record["Non-Empty Barre Sessions"] || "0");
+      acc[item.name].totalSessions += parseInt(String(record["Barre Sessions"] || "0"));
+      acc[item.name].nonEmptySessions += parseInt(String(record["Non-Empty Barre Sessions"] || "0"));
     }
     
     return acc;
@@ -109,8 +109,8 @@ const ClassesView: React.FC<ClassesViewProps> = ({ data, selectedMonths, locatio
       };
     }
     
-    acc[monthYear].totalSessions += parseInt(record["Cycle Sessions"] || "0");
-    acc[monthYear].nonEmptySessions += parseInt(record["Non-Empty Cycle Sessions"] || "0");
+    acc[monthYear].totalSessions += parseInt(String(record["Cycle Sessions"] || "0"));
+    acc[monthYear].nonEmptySessions += parseInt(String(record["Non-Empty Cycle Sessions"] || "0"));
     
     return acc;
   }, {});
@@ -135,8 +135,8 @@ const ClassesView: React.FC<ClassesViewProps> = ({ data, selectedMonths, locatio
   // Sort by month/year
   combinedFillRateData.sort((a, b) => {
     // Parse "MMM-YYYY" format
-    const [aMonth, aYear] = a.name.split('-');
-    const [bMonth, bYear] = b.name.split('-');
+    const [aMonth, aYear] = String(a.name).split('-');
+    const [bMonth, bYear] = String(b.name).split('-');
     
     const monthOrder = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
     

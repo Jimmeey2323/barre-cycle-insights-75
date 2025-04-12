@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ProcessedData, RechartsValueType, RechartsNameType } from "@/types/fitnessTypes";
@@ -16,7 +15,7 @@ interface FinancialsViewProps {
 }
 
 const FinancialsView: React.FC<FinancialsViewProps> = ({ data, selectedMonths, location }) => {
-  const { showDrillDown } = useDrillDown();
+  const drillDownContext = useDrillDown();
   
   // Filter data based on selected months and location
   const filteredStats = data.monthlyStats.filter(stat => 
@@ -204,18 +203,22 @@ const FinancialsView: React.FC<FinancialsViewProps> = ({ data, selectedMonths, l
 
   // Handle chart click for drill down
   const handleChartClick = (data: any, chartName: string) => {
-    if (data) {
-      showDrillDown({
-        title: `${chartName}: ${data.name}`,
-        data: filteredRawData.filter(r => r["Month Year"] === data.name),
-        summary: {
-          totalRevenue: data.total || data.revenue || 0,
-          barreRevenue: data.barre || 0,
-          cycleRevenue: data.cycle || 0,
-          change: data.change !== undefined ? data.change : null,
-          averageRevenue: data.average || 0
-        }
-      });
+    if (data && drillDownContext && drillDownContext.showDrillDown) {
+      drillDownContext.showDrillDown(
+        {
+          title: `${chartName}: ${data.name}`,
+          data: filteredRawData.filter(r => r["Month Year"] === data.name),
+          summary: {
+            totalRevenue: data.total || data.revenue || 0,
+            barreRevenue: data.barre || 0,
+            cycleRevenue: data.cycle || 0,
+            change: data.change !== undefined ? data.change : null,
+            averageRevenue: data.average || 0
+          }
+        },
+        `${chartName}: ${data.name}`,
+        'financial'
+      );
     }
   };
 

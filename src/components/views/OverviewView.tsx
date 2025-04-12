@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ProcessedData, RechartsValueType } from "@/types/fitnessTypes";
@@ -18,12 +17,10 @@ const OverviewView: React.FC<OverviewViewProps> = ({ data, selectedMonths, locat
   const { toast } = useToast();
   const [showCycleMetrics, setShowCycleMetrics] = useState(true);
   
-  // Check if we should show cycle metrics based on location
   useEffect(() => {
     setShowCycleMetrics(location === "" || location === "Supreme HQ");
   }, [location]);
 
-  // Filter data based on selected months and location
   const filteredStats = data.monthlyStats.filter(stat => 
     (selectedMonths.length === 0 || selectedMonths.includes(stat.monthYear))
   );
@@ -33,7 +30,6 @@ const OverviewView: React.FC<OverviewViewProps> = ({ data, selectedMonths, locat
     (location === "" || record.Location === location)
   );
 
-  // For session comparison chart - conditionally include cycle data
   const sessionComparisonData = filteredStats.map(stat => {
     const data: any = {
       name: stat.monthYear,
@@ -47,7 +43,6 @@ const OverviewView: React.FC<OverviewViewProps> = ({ data, selectedMonths, locat
     return data;
   });
 
-  // For customer comparison chart - conditionally include cycle data
   const customerComparisonData = filteredStats.map(stat => {
     const data: any = {
       name: stat.monthYear,
@@ -61,7 +56,6 @@ const OverviewView: React.FC<OverviewViewProps> = ({ data, selectedMonths, locat
     return data;
   });
 
-  // For revenue comparison chart - conditionally include cycle data
   const revenueComparisonData = filteredStats.map(stat => {
     const data: any = {
       name: stat.monthYear,
@@ -79,7 +73,6 @@ const OverviewView: React.FC<OverviewViewProps> = ({ data, selectedMonths, locat
     return data;
   });
 
-  // For class size comparison - conditionally include cycle data
   const classSizeData = filteredStats.map(stat => {
     const data: any = {
       name: stat.monthYear,
@@ -93,7 +86,6 @@ const OverviewView: React.FC<OverviewViewProps> = ({ data, selectedMonths, locat
     return data;
   });
 
-  // Calculate metrics based on filters
   const totalBarreSessions = filteredStats.reduce((sum, stat) => sum + stat.totalBarreSessions, 0);
   const totalCycleSessions = showCycleMetrics ? 
     filteredStats.reduce((sum, stat) => sum + stat.totalCycleSessions, 0) : 0;
@@ -107,12 +99,13 @@ const OverviewView: React.FC<OverviewViewProps> = ({ data, selectedMonths, locat
     filteredStats.reduce((sum, stat) => sum + stat.totalCyclePaid, 0) : 0;
   
   const avgBarreClassSize = totalBarreSessions > 0 ? 
-    (totalBarreCustomers / totalBarreSessions).toFixed(1) : "0";
+    (totalBarreCustomers / totalBarreSessions).toFixed(1) : 
+    "0";
   
   const avgCycleClassSize = showCycleMetrics && totalCycleSessions > 0 ? 
-    (totalCycleCustomers / totalCycleSessions).toFixed(1) : "0";
+    (totalCycleCustomers / totalCycleSessions).toFixed(1) : 
+    "0";
   
-  // Calculate overall distribution for pie chart - conditionally include cycle data
   const distributionData = showCycleMetrics ? 
     [
       { name: 'Barre', value: totalBarreSessions },
@@ -122,7 +115,7 @@ const OverviewView: React.FC<OverviewViewProps> = ({ data, selectedMonths, locat
       { name: 'Barre', value: totalBarreSessions }
     ];
 
-  const barreColor = "#845EC2"; // Updated to match the theme
+  const barreColor = "#845EC2";
   const cycleColor = "#00C2A8";
   const colors = [barreColor, cycleColor];
 
@@ -174,15 +167,15 @@ const OverviewView: React.FC<OverviewViewProps> = ({ data, selectedMonths, locat
         <MetricsCard
           title="Average Class Size"
           value={showCycleMetrics ? 
-            ((parseFloat(avgBarreClassSize) + parseFloat(avgCycleClassSize)) / 2).toFixed(1) : 
-            avgBarreClassSize
+            ((parseFloat(String(avgBarreClassSize)) + parseFloat(String(avgCycleClassSize))) / 2).toFixed(1) : 
+            String(avgBarreClassSize)
           }
           icon={<TrendingUp className="h-5 w-5 text-primary" />}
           details={
             <>
-              <span className="font-semibold text-barre">{avgBarreClassSize} Barre</span>
+              <span className="font-semibold text-barre">{String(avgBarreClassSize)} Barre</span>
               {showCycleMetrics && (
-                <> / <span className="font-semibold text-cycle-dark">{avgCycleClassSize} Cycle</span></>
+                <> / <span className="font-semibold text-cycle-dark">{String(avgCycleClassSize)} Cycle</span></>
               )}
             </>
           }

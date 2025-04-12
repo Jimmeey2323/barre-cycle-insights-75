@@ -97,6 +97,17 @@ export function processFitnessData(rawData: any[]) {
     const monthYears = Array.from(new Set(rawData.map(item => item["Month Year"])))
       .filter(month => month); // Filter out empty values
 
+    // Get unique locations
+    const locations = Array.from(new Set(rawData.map(item => item["Location"])))
+      .filter(location => location);
+      
+    // Get unique teachers/trainers
+    const trainers = Array.from(new Set(rawData.map(item => item["Teacher Name"])))
+      .filter(trainer => trainer);
+      
+    // Get unique class types
+    const classTypes = ["Barre", "Cycle"];
+
     // Process monthly statistics
     const monthlyStats = monthYears.map(monthYear => {
       const monthData = rawData.filter(item => item["Month Year"] === monthYear);
@@ -129,6 +140,17 @@ export function processFitnessData(rawData: any[]) {
         
       return {
         monthYear,
+        month: monthYear.split('-')[0],
+        totalSessions: totalBarreSessions + totalCycleSessions,
+        barreSessions: totalBarreSessions,
+        cycleSessions: totalCycleSessions,
+        barreCustomers: totalBarreCustomers,
+        cycleCustomers: totalCycleCustomers,
+        barrePaid: totalBarrePaid,
+        cyclePaid: totalCyclePaid,
+        totalRevenue: totalBarrePaid + totalCyclePaid,
+        avgClassSize: (totalBarreSessions + totalCycleSessions) > 0 ?
+          ((totalBarreCustomers + totalCycleCustomers) / (totalBarreSessions + totalCycleSessions)) : 0,
         totalBarreSessions,
         totalCycleSessions,
         totalBarreCustomers,
@@ -143,9 +165,49 @@ export function processFitnessData(rawData: any[]) {
       };
     });
 
+    // Process teacher statistics
+    const teacherStats = trainers.map(teacher => {
+      const teacherData = rawData.filter(item => item["Teacher Name"] === teacher);
+      
+      const barreSessions = teacherData.reduce((sum, item) => sum + parseInt(item["Barre Sessions"] || "0"), 0);
+      const cycleSessions = teacherData.reduce((sum, item) => sum + parseInt(item["Cycle Sessions"] || "0"), 0);
+      
+      const barreCustomers = teacherData.reduce((sum, item) => sum + parseInt(item["Barre Customers"] || "0"), 0);
+      const cycleCustomers = teacherData.reduce((sum, item) => sum + parseInt(item["Cycle Customers"] || "0"), 0);
+      
+      const barrePaid = teacherData.reduce((sum, item) => sum + parseFloat(item["Barre Paid"] || "0"), 0);
+      const cyclePaid = teacherData.reduce((sum, item) => sum + parseFloat(item["Cycle Paid"] || "0"), 0);
+      
+      const teacherEmail = teacherData[0]["Teacher Email"] || "";
+      
+      // Calculate average class sizes
+      const avgBarreClassSize = barreSessions > 0 ? barreCustomers / barreSessions : 0;
+      const avgCycleClassSize = cycleSessions > 0 ? cycleCustomers / cycleSessions : 0;
+      
+      return {
+        name: teacher,
+        email: teacherEmail,
+        barreSessions,
+        cycleSessions,
+        barreCustomers,
+        cycleCustomers,
+        barrePaid,
+        cyclePaid,
+        totalSessions: barreSessions + cycleSessions,
+        avgBarreClassSize,
+        avgCycleClassSize
+      };
+    });
+
     return {
       rawData,
-      monthlyStats
+      monthlyStats,
+      teacherStats,
+      locations,
+      months: monthYears, // Set months to monthYears array
+      trainers,
+      classTypes,
+      teachers: trainers // For backwards compatibility
     };
   } catch (error) {
     console.error("Error processing fitness data:", error);

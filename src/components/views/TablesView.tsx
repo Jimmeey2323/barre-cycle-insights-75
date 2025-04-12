@@ -1,17 +1,12 @@
-
-import React, { useState } from "react";
-import { ProcessedData } from "@/types/fitnessTypes";
+import React, { useState, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { ProcessedData } from "@/types/fitnessTypes";
+import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ArrowDown, ArrowUp, ChevronsUpDown } from "lucide-react";
+import { cn, sortData } from "@/lib/utils";
+import { formatINR } from "@/lib/formatters";
 
 interface TablesViewProps {
   data: ProcessedData;
@@ -20,318 +15,160 @@ interface TablesViewProps {
 }
 
 const TablesView: React.FC<TablesViewProps> = ({ data, selectedMonths, location }) => {
-  const [activeTab, setActiveTab] = useState("raw-data");
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
+  const [searchQuery, setSearchQuery] = useState("");
+  const [sortColumn, setSortColumn] = useState<keyof any>("Month Year");
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
+  const [activeTable, setActiveTable] = useState<"rawData" | "monthlyStats">("rawData");
 
-  // Filter the raw data based on selected months and location
-  const filteredRawData = data.rawData.filter(item => {
-    const matchesMonth = selectedMonths.length === 0 || selectedMonths.includes(item["Month Year"]);
-    const matchesLocation = !location || item["Location"] === location;
-    return matchesMonth && matchesLocation;
-  });
+  // Filter data based on selected months and location
+  const filteredRawData = useMemo(() => {
+    return data.rawData.filter(record =>
+      (selectedMonths.length === 0 || selectedMonths.includes(record["Month Year"])) &&
+      (location === "" || record.Location === location) &&
+      Object.values(record).some(value =>
+        String(value).toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    );
+  }, [data.rawData, selectedMonths, location, searchQuery]);
 
-  // Calculate pagination
-  const totalPages = Math.ceil(filteredRawData.length / itemsPerPage);
-  const paginatedData = filteredRawData.slice(
-    (currentPage - 1) * itemsPerPage, 
-    currentPage * itemsPerPage
-  );
+  const filteredMonthlyStats = useMemo(() => {
+    return data.monthlyStats.filter(stat =>
+      (selectedMonths.length === 0 || selectedMonths.includes(stat.monthYear)) &&
+      Object.values(stat).some(value =>
+        String(value).toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    );
+  }, [data.monthlyStats, selectedMonths, searchQuery]);
 
-  // Format currency values
-  const formatCurrency = (value: string) => {
-    const num = parseFloat(value);
-    return isNaN(num) ? "$0.00" : `$${num.toFixed(2)}`;
+  // Sort data
+  const sortedRawData = useMemo(() => {
+    return sortData(filteredRawData, sortColumn, sortDirection);
+  }, [filteredRawData, sortColumn, sortDirection]);
+
+  const sortedMonthlyStats = useMemo(() => {
+    return sortData(filteredMonthlyStats, sortColumn, sortDirection);
+  }, [filteredMonthlyStats, sortColumn, sortDirection]);
+
+  // Handlers
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value);
   };
 
+  const handleSort = (column: keyof any) => {
+    if (column === sortColumn) {
+      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+    } else {
+      setSortColumn(column);
+      setSortDirection("asc");
+    }
+  };
+
+  const RawDataTable = () => (
+    <div className="rounded-md border">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            {Object.keys(data.rawData[0]).map((header) => (
+              <TableHead key={header} onClick={() => handleSort(header)}>
+                {header}
+                {sortColumn === header && (
+                  sortDirection === "asc" ? <ArrowUp className="ml-2 h-4 w-4 inline-block" /> : <ArrowDown className="ml-2 h-4 w-4 inline-block" />
+                )}
+              </TableHead>
+            ))}
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {sortedRawData.map((record, index) => (
+            <TableRow key={index}>
+              {Object.entries(record).map(([key, value], i) => (
+                <TableCell key={i}>
+                  {typeof value === 'number' ? value : String(value)}
+                </TableCell>
+              ))}
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </div>
+  );
+
+  const MonthlyStatsTable = () => (
+    <div className="rounded-md border">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            {Object.keys(data.monthlyStats[0]).map((header) => (
+              <TableHead key={header} onClick={() => handleSort(header)}>
+                {header}
+                {sortColumn === header && (
+                  sortDirection === "asc" ? <ArrowUp className="ml-2 h-4 w-4 inline-block" /> : <ArrowDown className="ml-2 h-4 w-4 inline-block" />
+                )}
+              </TableHead>
+            ))}
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {sortedMonthlyStats.map((item, index) => (
+            <TableRow key={index}>
+              <TableCell>{item.month}</TableCell>
+              <TableCell>{item.monthYear}</TableCell>
+              <TableCell>{parseInt(String(item.totalSessions))}</TableCell>
+              <TableCell>{parseInt(String(item.barreSessions))}</TableCell>
+              <TableCell>{parseInt(String(item.cycleSessions))}</TableCell>
+              <TableCell>{parseInt(String(item.barreCustomers))}</TableCell>
+              <TableCell>{parseInt(String(item.cycleCustomers))}</TableCell>
+              <TableCell>{formatINR(item.barrePaid)}</TableCell>
+              <TableCell>{formatINR(item.cyclePaid)}</TableCell>
+              <TableCell>{formatINR(item.totalRevenue)}</TableCell>
+              <TableCell>{typeof item.avgClassSize === 'number' ? item.avgClassSize.toFixed(1) : item.avgClassSize}</TableCell>
+              <TableCell>{item.totalBarreSessions}</TableCell>
+              <TableCell>{item.totalCycleSessions}</TableCell>
+              <TableCell>{item.totalBarreCustomers}</TableCell>
+              <TableCell>{item.totalCycleCustomers}</TableCell>
+              <TableCell>{item.totalBarrePaid}</TableCell>
+              <TableCell>{item.totalCyclePaid}</TableCell>
+              <TableCell>{item.avgBarreClassSize}</TableCell>
+              <TableCell>{item.avgCycleClassSize}</TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </div>
+  );
+
   return (
-    <Card className="card-glass">
-      <CardHeader>
-        <CardTitle className="text-gradient-barre">
-          Detailed Data Tables
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-          <TabsList className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
-            <TabsTrigger value="raw-data">Raw Data</TabsTrigger>
-            <TabsTrigger value="teacher-data">Teacher Data</TabsTrigger>
-            <TabsTrigger value="session-data">Session Data</TabsTrigger>
-            <TabsTrigger value="revenue-data">Revenue Data</TabsTrigger>
-          </TabsList>
-
-          {/* Raw Data Table */}
-          <TabsContent value="raw-data" className="space-y-4">
-            <div className="rounded-md border">
-              <Table className="table-compact">
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Month</TableHead>
-                    <TableHead>Teacher</TableHead>
-                    <TableHead>Location</TableHead>
-                    <TableHead>Total Sessions</TableHead>
-                    <TableHead>Total Customers</TableHead>
-                    <TableHead isNumeric>Total Paid</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {paginatedData.map((row, index) => (
-                    <TableRow key={index}>
-                      <TableCell>{row["Month Year"]}</TableCell>
-                      <TableCell>{row["Teacher Name"]}</TableCell>
-                      <TableCell>{row["Location"]}</TableCell>
-                      <TableCell>{row["Total Sessions"]}</TableCell>
-                      <TableCell>{row["Total Customers"]}</TableCell>
-                      <TableCell isNumeric>{formatCurrency(row["Total Paid"])}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-            <Pagination>
-              <PaginationContent>
-                <PaginationItem>
-                  <PaginationPrevious 
-                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                    className={currentPage === 1 ? "pointer-events-none opacity-50" : ""}
-                  />
-                </PaginationItem>
-                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                  // Show current page and surrounding pages
-                  let pageNum = currentPage - 2 + i;
-                  if (pageNum < 1) pageNum += 5;
-                  if (pageNum > totalPages) pageNum -= 5;
-                  if (pageNum >= 1 && pageNum <= totalPages) {
-                    return (
-                      <PaginationItem key={pageNum}>
-                        <PaginationLink 
-                          isActive={pageNum === currentPage} 
-                          onClick={() => setCurrentPage(pageNum)}
-                        >
-                          {pageNum}
-                        </PaginationLink>
-                      </PaginationItem>
-                    );
-                  }
-                  return null;
-                })}
-                <PaginationItem>
-                  <PaginationNext 
-                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                    className={currentPage === totalPages ? "pointer-events-none opacity-50" : ""}
-                  />
-                </PaginationItem>
-              </PaginationContent>
-            </Pagination>
-          </TabsContent>
-
-          {/* Teacher Data Table */}
-          <TabsContent value="teacher-data" className="space-y-4">
-            <div className="rounded-md border">
-              <Table className="table-compact">
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Teacher Name</TableHead>
-                    <TableHead>Teacher ID</TableHead>
-                    <TableHead>Email</TableHead>
-                    <TableHead>Barre Sessions</TableHead>
-                    <TableHead>Cycle Sessions</TableHead>
-                    <TableHead isNumeric>Barre Revenue</TableHead>
-                    <TableHead isNumeric>Cycle Revenue</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {paginatedData.map((row, index) => (
-                    <TableRow key={index}>
-                      <TableCell>{row["Teacher Name"]}</TableCell>
-                      <TableCell>{row["Teacher ID"]}</TableCell>
-                      <TableCell>{row["Teacher Email"]}</TableCell>
-                      <TableCell>{row["Barre Sessions"]}</TableCell>
-                      <TableCell>{row["Cycle Sessions"]}</TableCell>
-                      <TableCell isNumeric>{formatCurrency(row["Barre Paid"])}</TableCell>
-                      <TableCell isNumeric>{formatCurrency(row["Cycle Paid"])}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-            <Pagination>
-              {/* Same pagination as above */}
-              <PaginationContent>
-                <PaginationItem>
-                  <PaginationPrevious 
-                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                    className={currentPage === 1 ? "pointer-events-none opacity-50" : ""}
-                  />
-                </PaginationItem>
-                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                  let pageNum = currentPage - 2 + i;
-                  if (pageNum < 1) pageNum += 5;
-                  if (pageNum > totalPages) pageNum -= 5;
-                  if (pageNum >= 1 && pageNum <= totalPages) {
-                    return (
-                      <PaginationItem key={pageNum}>
-                        <PaginationLink 
-                          isActive={pageNum === currentPage} 
-                          onClick={() => setCurrentPage(pageNum)}
-                        >
-                          {pageNum}
-                        </PaginationLink>
-                      </PaginationItem>
-                    );
-                  }
-                  return null;
-                })}
-                <PaginationItem>
-                  <PaginationNext 
-                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                    className={currentPage === totalPages ? "pointer-events-none opacity-50" : ""}
-                  />
-                </PaginationItem>
-              </PaginationContent>
-            </Pagination>
-          </TabsContent>
-
-          {/* Session Data Table */}
-          <TabsContent value="session-data" className="space-y-4">
-            <div className="rounded-md border">
-              <Table className="table-compact">
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Month</TableHead>
-                    <TableHead>Location</TableHead>
-                    <TableHead>Total Sessions</TableHead>
-                    <TableHead>Empty Sessions</TableHead>
-                    <TableHead>Non-Empty Sessions</TableHead>
-                    <TableHead>Barre Sessions</TableHead>
-                    <TableHead>Cycle Sessions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {paginatedData.map((row, index) => (
-                    <TableRow key={index}>
-                      <TableCell>{row["Month Year"]}</TableCell>
-                      <TableCell>{row["Location"]}</TableCell>
-                      <TableCell>{row["Total Sessions"]}</TableCell>
-                      <TableCell>{row["Total Empty Sessions"]}</TableCell>
-                      <TableCell>{row["Total Non-Empty Sessions"]}</TableCell>
-                      <TableCell>{row["Barre Sessions"]}</TableCell>
-                      <TableCell>{row["Cycle Sessions"]}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-            <Pagination>
-              {/* Same pagination as above */}
-              <PaginationContent>
-                <PaginationItem>
-                  <PaginationPrevious 
-                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                    className={currentPage === 1 ? "pointer-events-none opacity-50" : ""}
-                  />
-                </PaginationItem>
-                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                  let pageNum = currentPage - 2 + i;
-                  if (pageNum < 1) pageNum += 5;
-                  if (pageNum > totalPages) pageNum -= 5;
-                  if (pageNum >= 1 && pageNum <= totalPages) {
-                    return (
-                      <PaginationItem key={pageNum}>
-                        <PaginationLink 
-                          isActive={pageNum === currentPage} 
-                          onClick={() => setCurrentPage(pageNum)}
-                        >
-                          {pageNum}
-                        </PaginationLink>
-                      </PaginationItem>
-                    );
-                  }
-                  return null;
-                })}
-                <PaginationItem>
-                  <PaginationNext 
-                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                    className={currentPage === totalPages ? "pointer-events-none opacity-50" : ""}
-                  />
-                </PaginationItem>
-              </PaginationContent>
-            </Pagination>
-          </TabsContent>
-
-          {/* Revenue Data Table */}
-          <TabsContent value="revenue-data" className="space-y-4">
-            <div className="rounded-md border">
-              <Table className="table-compact">
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Month</TableHead>
-                    <TableHead>Location</TableHead>
-                    <TableHead>Total Customers</TableHead>
-                    <TableHead isNumeric>Barre Revenue</TableHead>
-                    <TableHead isNumeric>Cycle Revenue</TableHead>
-                    <TableHead isNumeric>Total Revenue</TableHead>
-                    <TableHead>New</TableHead>
-                    <TableHead>Retained</TableHead>
-                    <TableHead>Converted</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {paginatedData.map((row, index) => (
-                    <TableRow key={index}>
-                      <TableCell>{row["Month Year"]}</TableCell>
-                      <TableCell>{row["Location"]}</TableCell>
-                      <TableCell>{row["Total Customers"]}</TableCell>
-                      <TableCell isNumeric>{formatCurrency(row["Barre Paid"])}</TableCell>
-                      <TableCell isNumeric>{formatCurrency(row["Cycle Paid"])}</TableCell>
-                      <TableCell isNumeric>{formatCurrency(row["Total Paid"])}</TableCell>
-                      <TableCell>{row["New"]}</TableCell>
-                      <TableCell>{row["Retained"]}</TableCell>
-                      <TableCell>{row["Converted"]}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-            <Pagination>
-              {/* Same pagination as above */}
-              <PaginationContent>
-                <PaginationItem>
-                  <PaginationPrevious 
-                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                    className={currentPage === 1 ? "pointer-events-none opacity-50" : ""}
-                  />
-                </PaginationItem>
-                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                  let pageNum = currentPage - 2 + i;
-                  if (pageNum < 1) pageNum += 5;
-                  if (pageNum > totalPages) pageNum -= 5;
-                  if (pageNum >= 1 && pageNum <= totalPages) {
-                    return (
-                      <PaginationItem key={pageNum}>
-                        <PaginationLink 
-                          isActive={pageNum === currentPage} 
-                          onClick={() => setCurrentPage(pageNum)}
-                        >
-                          {pageNum}
-                        </PaginationLink>
-                      </PaginationItem>
-                    );
-                  }
-                  return null;
-                })}
-                <PaginationItem>
-                  <PaginationNext 
-                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                    className={currentPage === totalPages ? "pointer-events-none opacity-50" : ""}
-                  />
-                </PaginationItem>
-              </PaginationContent>
-            </Pagination>
-          </TabsContent>
-        </Tabs>
-      </CardContent>
-    </Card>
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle>Data Tables</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-between">
+            <Input
+              type="search"
+              placeholder="Search table..."
+              value={searchQuery}
+              onChange={handleSearchChange}
+            />
+            <Select value={activeTable} onValueChange={setActiveTable}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Select Table" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="rawData">Raw Data</SelectItem>
+                <SelectItem value="monthlyStats">Monthly Stats</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          {activeTable === "rawData" ? (
+            data.rawData.length > 0 ? <RawDataTable /> : <p>No Raw Data available</p>
+          ) : (
+            data.monthlyStats.length > 0 ? <MonthlyStatsTable /> : <p>No Monthly Stats available.</p>
+          )}
+        </CardContent>
+      </Card>
+    </div>
   );
 };
 
