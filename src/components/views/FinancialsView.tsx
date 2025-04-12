@@ -1,3 +1,4 @@
+
 import React, { useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ProcessedData } from "@/types/fitnessTypes";
@@ -91,7 +92,7 @@ const FinancialsView: React.FC<FinancialsViewProps> = ({ data, selectedMonths, l
   const revenueShare = totalRevenue > 0 ? {
     barreShare: (totalBarrePaid / totalRevenue) * 100,
     cycleShare: (totalCyclePaid / totalRevenue) * 100
-  } : null;
+  } : { barreShare: 0, cycleShare: 0 };
 
   // Calculate revenue growth (using first and last month in filtered data)
   const sortedMonthlyStats = [...filteredStats].sort((a, b) => {
@@ -220,7 +221,7 @@ const FinancialsView: React.FC<FinancialsViewProps> = ({ data, selectedMonths, l
     },
     {
       title: "Revenue Share",
-      value: `${revenueShare.barreShare.toFixed(1)}% / ${revenueShare.cycleShare.toFixed(1)}%`,
+      value: `${revenueShare ? revenueShare.barreShare.toFixed(1) : '0'}% / ${revenueShare ? revenueShare.cycleShare.toFixed(1) : '0'}%`,
       icon: <PieChartIcon className="h-5 w-5 text-amber-500" />,
       details: `Barre / Cycle`,
       trend: <Badge variant="outline" className="text-blue-500">
@@ -366,7 +367,7 @@ const FinancialsView: React.FC<FinancialsViewProps> = ({ data, selectedMonths, l
                     <p className="text-xs text-muted-foreground">{metric.details}</p>
                     
                     {/* Add sparkline if data is available */}
-                    {!!metric.sparkline && (
+                    {metric.sparkline && (
                       <div className="h-8 mt-2">
                         <Sparkline data={metric.sparkline} width={100} height={30}>
                           <SparklinesLine color="var(--chart-primary)" style={{ fill: "none" }} />
