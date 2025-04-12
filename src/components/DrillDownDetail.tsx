@@ -6,6 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatINR, formatNumber, formatPercent } from '@/lib/formatters';
 import { BarChart as BarChartIcon, LineChart as LineChartIcon, Table2 } from 'lucide-react';
+import { RechartsValueType } from '@/types/fitnessTypes';
 
 interface DrillDownDetailProps {
   data: any;
@@ -98,6 +99,15 @@ const DrillDownDetail: React.FC<DrillDownDetailProps> = ({ data, title, type }) 
     
     return value;
   };
+
+  // Custom tooltip formatter for recharts
+  const customFormatter = (value: RechartsValueType) => {
+    // Handle the case where value is an array
+    if (Array.isArray(value)) {
+      return value.length > 0 ? String(value[0]) : '0';
+    }
+    return String(value);
+  };
   
   return (
     <div className="space-y-4">
@@ -136,12 +146,13 @@ const DrillDownDetail: React.FC<DrillDownDetailProps> = ({ data, title, type }) 
                   <YAxis />
                   <Tooltip 
                     formatter={(value, name) => {
+                      const strValue = customFormatter(value);
                       if (isCurrencyField(name.toString())) {
-                        return [formatINR(value), name];
+                        return [formatINR(strValue), name];
                       } else if (isPercentField(name.toString())) {
-                        return [formatPercent(value), name];
+                        return [formatPercent(strValue), name];
                       }
-                      return [formatNumber(value), name];
+                      return [formatNumber(strValue), name];
                     }}
                   />
                   <Legend />
@@ -180,12 +191,13 @@ const DrillDownDetail: React.FC<DrillDownDetailProps> = ({ data, title, type }) 
                   <YAxis />
                   <Tooltip 
                     formatter={(value, name) => {
+                      const strValue = customFormatter(value);
                       if (isCurrencyField(name.toString())) {
-                        return [formatINR(value), name];
+                        return [formatINR(strValue), name];
                       } else if (isPercentField(name.toString())) {
-                        return [formatPercent(value), name];
+                        return [formatPercent(strValue), name];
                       }
-                      return [formatNumber(value), name];
+                      return [formatNumber(strValue), name];
                     }}
                   />
                   <Legend />
@@ -220,7 +232,6 @@ const DrillDownDetail: React.FC<DrillDownDetailProps> = ({ data, title, type }) 
                       {columns.map((column) => (
                         <TableHead 
                           key={column}
-                          isNumeric={numericFields.includes(column)}
                           className={column === columns[0] ? "text-left" : "text-center"}
                         >
                           {column}
@@ -234,8 +245,6 @@ const DrillDownDetail: React.FC<DrillDownDetailProps> = ({ data, title, type }) 
                         {columns.map((column, colIndex) => (
                           <TableCell 
                             key={`${rowIndex}-${colIndex}`}
-                            isNumeric={numericFields.includes(column)}
-                            isCurrency={isCurrencyField(column)}
                             className={column === columns[0] ? "text-left" : "text-center"}
                           >
                             {formatCellValue(row[column], column)}
@@ -245,13 +254,12 @@ const DrillDownDetail: React.FC<DrillDownDetailProps> = ({ data, title, type }) 
                     ))}
                   </TableBody>
                   <TableFooter>
-                    <TableRow isTotal>
+                    <TableRow>
                       <TableCell>{data.length} items</TableCell>
                       {columns.slice(1).map((column) => (
                         <TableCell 
                           key={`total-${column}`}
-                          isNumeric={numericFields.includes(column)}
-                          isCurrency={isCurrencyField(column)}
+                          className="text-center"
                         >
                           {numericFields.includes(column) ? 
                             formatCellValue(totals[column], column) : 
