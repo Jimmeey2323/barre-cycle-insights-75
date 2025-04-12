@@ -1,12 +1,7 @@
-
 import React, { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ProcessedData, ViewType } from "@/types/fitnessTypes";
-import { 
-  BarChart, LineChart, PieChart, ActivityIcon, Users, IndianRupee, 
-  RefreshCw, Database, TableProperties, SearchIcon, ArrowUpRightSquare, 
-  ChevronDown, FilterIcon, MapPinIcon, Dumbbell
-} from "lucide-react";
+import { BarChart, LineChart, PieChart, ActivityIcon, Users, IndianRupee, RefreshCw, Database, TableProperties, SearchIcon, ArrowUpRightSquare, ChevronDown, FilterIcon, MapPinIcon, Dumbbell } from "lucide-react";
 import OverviewView from "./views/OverviewView";
 import TeachersView from "./views/TeachersView";
 import ClassesView from "./views/ClassesView";
@@ -20,15 +15,9 @@ import VoiceSearch from "./VoiceSearch";
 import { ThemeToggle } from "./ThemeToggle";
 import { Button } from "./ui/button";
 import { Card, CardContent } from "./ui/card";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { Badge } from "./ui/badge";
-
 interface DashboardLayoutProps {
   data: ProcessedData | null;
   isLoading: boolean;
@@ -40,15 +29,7 @@ interface DashboardLayoutProps {
   location: string;
   setLocation: (location: string) => void;
 }
-
-const LoadingMessages = [
-  "Gathering Attendance...",
-  "Compiling Report...",
-  "Drawing Charts...",
-  "Adding Filters...",
-  "Adding J Factor..."
-];
-
+const LoadingMessages = ["Gathering Attendance...", "Compiling Report...", "Drawing Charts...", "Adding Filters...", "Adding J Factor..."];
 const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   data,
   isLoading,
@@ -64,17 +45,14 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   const [trainers, setTrainers] = useState<string[]>([]);
   const [classTypes, setClassTypes] = useState<string[]>([]);
   const [loadingMessageIndex, setLoadingMessageIndex] = useState(0);
-  
   useEffect(() => {
     if (isLoading) {
       const interval = setInterval(() => {
         setLoadingMessageIndex(prev => (prev + 1) % LoadingMessages.length);
       }, 1000);
-      
       return () => clearInterval(interval);
     }
   }, [isLoading]);
-  
   const handleSearch = (query: string) => {
     setSearchQuery(query);
     // You could implement actual search functionality here
@@ -109,7 +87,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
       if (record["Barre Sessions"] && parseInt(String(record["Barre Sessions"])) > 0) {
         types.add("Barre");
       }
-      
+
       // Check if record has Cycle Sessions
       if (record["Cycle Sessions"] && parseInt(String(record["Cycle Sessions"])) > 0) {
         types.add("Cycle");
@@ -117,32 +95,26 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
     });
     return Array.from(types);
   }, [data?.rawData]);
-
-  console.log("DashboardLayout rendering with:", { 
-    hasData: !!data, 
-    isLoading, 
+  console.log("DashboardLayout rendering with:", {
+    hasData: !!data,
+    isLoading,
     hasError: !!error,
     selectedMonths,
     location,
     uniqueTrainers: uniqueTrainers.length,
     uniqueClassTypes: uniqueClassTypes.length
   });
-
   if (isLoading) {
-    return (
-      <div className="flex h-screen items-center justify-center bg-gradient-to-br from-background to-muted/30">
+    return <div className="flex h-screen items-center justify-center bg-gradient-to-br from-background to-muted/30">
         <div className="text-center premium-card p-8 rounded-xl animate-fade-in">
           <ActivityIcon className="mx-auto h-12 w-12 animate-spin text-primary" />
           <h2 className="mt-4 text-2xl font-bold font-heading">{LoadingMessages[loadingMessageIndex]}</h2>
           <p className="mt-2 text-muted-foreground">Fetching data from Google Sheets</p>
         </div>
-      </div>
-    );
+      </div>;
   }
-
   if (error) {
-    return (
-      <div className="flex h-screen items-center justify-center bg-gradient-to-br from-background to-muted/30">
+    return <div className="flex h-screen items-center justify-center bg-gradient-to-br from-background to-muted/30">
         <div className="text-center max-w-md mx-auto premium-card p-8 rounded-xl">
           <h2 className="text-2xl font-bold text-red-500">Error loading data</h2>
           <p className="mt-2 text-sm">{error.message}</p>
@@ -150,41 +122,28 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
             <pre>{error.stack}</pre>
           </div>
         </div>
-      </div>
-    );
+      </div>;
   }
-
   if (!data) {
-    return (
-      <div className="flex h-screen items-center justify-center bg-gradient-to-br from-background to-muted/30">
+    return <div className="flex h-screen items-center justify-center bg-gradient-to-br from-background to-muted/30">
         <div className="text-center premium-card p-8 rounded-xl">
           <h2 className="text-2xl font-bold">No data available</h2>
           <p className="mt-2 text-muted-foreground">Please try refreshing the page</p>
         </div>
-      </div>
-    );
+      </div>;
   }
 
   // Calculate filter effects - for now it's just information display
   const totalRecords = data.rawData.length;
-  const filteredCount = data.rawData.filter(record => 
-    (selectedMonths.length === 0 || selectedMonths.includes(String(record["Month Year"]))) &&
-    (location === "" || location === "all" || record.Location === location) &&
-    (trainers.length === 0 || (record["Teacher Name"] && trainers.includes(String(record["Teacher Name"])))) &&
-    (classTypes.length === 0 || ((record["Barre Sessions"] && parseInt(String(record["Barre Sessions"])) > 0 && classTypes.includes("Barre")) || 
-                                (record["Cycle Sessions"] && parseInt(String(record["Cycle Sessions"])) > 0 && classTypes.includes("Cycle"))))
-  ).length;
-  
-  const filterPercentage = totalRecords > 0 ? Math.round((filteredCount / totalRecords) * 100) : 0;
-
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-background to-muted/30 pb-8 font-sans">
+  const filteredCount = data.rawData.filter(record => (selectedMonths.length === 0 || selectedMonths.includes(String(record["Month Year"]))) && (location === "" || location === "all" || record.Location === location) && (trainers.length === 0 || record["Teacher Name"] && trainers.includes(String(record["Teacher Name"]))) && (classTypes.length === 0 || record["Barre Sessions"] && parseInt(String(record["Barre Sessions"])) > 0 && classTypes.includes("Barre") || record["Cycle Sessions"] && parseInt(String(record["Cycle Sessions"])) > 0 && classTypes.includes("Cycle"))).length;
+  const filterPercentage = totalRecords > 0 ? Math.round(filteredCount / totalRecords * 100) : 0;
+  return <div className="min-h-screen bg-gradient-to-br from-background to-muted/30 pb-8 font-sans">
       <div className="container mx-auto px-4 py-8">
         <div className="mb-8 flex flex-row justify-between items-center gap-4">
           <div className="flex items-center gap-2">
             <Dumbbell className="h-6 w-6 text-primary" /> 
             <EnhancedTitle />
-            <ActivityIcon className="h-6 w-6 text-barre animate-pulse" />
+            
           </div>
           
           <div className="flex items-center gap-2">
@@ -192,11 +151,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
             
             <ThemeToggle />
             
-            <Button 
-              variant="outline" 
-              size="icon"
-              className="bg-background/70 backdrop-blur-sm"
-            >
+            <Button variant="outline" size="icon" className="bg-background/70 backdrop-blur-sm">
               <ArrowUpRightSquare className="h-4 w-4" />
             </Button>
           </div>
@@ -216,24 +171,18 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="start" className="w-[200px] p-2 rounded-lg shadow-lg backdrop-blur-sm bg-popover/95 animate-scale-in">
-                    {data.monthlyStats.map(stat => (
-                      <DropdownMenuItem 
-                        key={stat.monthYear}
-                        className="flex items-center gap-2 rounded-md cursor-pointer"
-                        onClick={() => {
-                          if (selectedMonths.includes(stat.monthYear)) {
-                            setSelectedMonths(selectedMonths.filter(m => m !== stat.monthYear));
-                          } else {
-                            setSelectedMonths([...selectedMonths, stat.monthYear]);
-                          }
-                        }}
-                      >
+                    {data.monthlyStats.map(stat => <DropdownMenuItem key={stat.monthYear} className="flex items-center gap-2 rounded-md cursor-pointer" onClick={() => {
+                    if (selectedMonths.includes(stat.monthYear)) {
+                      setSelectedMonths(selectedMonths.filter(m => m !== stat.monthYear));
+                    } else {
+                      setSelectedMonths([...selectedMonths, stat.monthYear]);
+                    }
+                  }}>
                         <div className={`w-4 h-4 rounded border ${selectedMonths.includes(stat.monthYear) ? 'bg-primary border-primary' : 'border-muted-foreground'} flex items-center justify-center`}>
                           {selectedMonths.includes(stat.monthYear) && <div className="w-2 h-2 rounded-sm bg-primary-foreground" />}
                         </div>
                         <span>{stat.monthYear}</span>
-                      </DropdownMenuItem>
-                    ))}
+                      </DropdownMenuItem>)}
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>
@@ -248,9 +197,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                   </SelectTrigger>
                   <SelectContent className="rounded-lg shadow-lg backdrop-blur-sm bg-popover/95 animate-scale-in">
                     <SelectItem value="all">All locations</SelectItem>
-                    {locations.map(loc => (
-                      <SelectItem key={loc} value={loc}>{loc}</SelectItem>
-                    ))}
+                    {locations.map(loc => <SelectItem key={loc} value={loc}>{loc}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
@@ -266,24 +213,18 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="start" className="w-[200px] p-2 rounded-lg shadow-lg backdrop-blur-sm bg-popover/95 animate-scale-in max-h-[300px] overflow-y-auto">
-                    {uniqueTrainers.map(teacher => (
-                      <DropdownMenuItem 
-                        key={teacher}
-                        className="flex items-center gap-2 rounded-md cursor-pointer"
-                        onClick={() => {
-                          if (trainers.includes(teacher)) {
-                            setTrainers(trainers.filter(t => t !== teacher));
-                          } else {
-                            setTrainers([...trainers, teacher]);
-                          }
-                        }}
-                      >
+                    {uniqueTrainers.map(teacher => <DropdownMenuItem key={teacher} className="flex items-center gap-2 rounded-md cursor-pointer" onClick={() => {
+                    if (trainers.includes(teacher)) {
+                      setTrainers(trainers.filter(t => t !== teacher));
+                    } else {
+                      setTrainers([...trainers, teacher]);
+                    }
+                  }}>
                         <div className={`w-4 h-4 rounded border ${trainers.includes(teacher) ? 'bg-primary border-primary' : 'border-muted-foreground'} flex items-center justify-center`}>
                           {trainers.includes(teacher) && <div className="w-2 h-2 rounded-sm bg-primary-foreground" />}
                         </div>
                         <span>{teacher}</span>
-                      </DropdownMenuItem>
-                    ))}
+                      </DropdownMenuItem>)}
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>
@@ -299,48 +240,35 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="start" className="w-[200px] p-2 rounded-lg shadow-lg backdrop-blur-sm bg-popover/95 animate-scale-in">
-                    {uniqueClassTypes.map(type => (
-                      <DropdownMenuItem 
-                        key={type}
-                        className="flex items-center gap-2 rounded-md cursor-pointer"
-                        onClick={() => {
-                          if (classTypes.includes(type)) {
-                            setClassTypes(classTypes.filter(t => t !== type));
-                          } else {
-                            setClassTypes([...classTypes, type]);
-                          }
-                        }}
-                      >
+                    {uniqueClassTypes.map(type => <DropdownMenuItem key={type} className="flex items-center gap-2 rounded-md cursor-pointer" onClick={() => {
+                    if (classTypes.includes(type)) {
+                      setClassTypes(classTypes.filter(t => t !== type));
+                    } else {
+                      setClassTypes([...classTypes, type]);
+                    }
+                  }}>
                         <div className={`w-4 h-4 rounded border ${classTypes.includes(type) ? 'bg-primary border-primary' : 'border-muted-foreground'} flex items-center justify-center`}>
                           {classTypes.includes(type) && <div className="w-2 h-2 rounded-sm bg-primary-foreground" />}
                         </div>
                         <span>{type}</span>
-                      </DropdownMenuItem>
-                    ))}
+                      </DropdownMenuItem>)}
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>
 
-              {(selectedMonths.length > 0 || location !== "" || trainers.length > 0 || classTypes.length > 0) && (
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  onClick={() => {
-                    setSelectedMonths([]);
-                    setLocation("");
-                    setTrainers([]);
-                    setClassTypes([]);
-                  }}
-                  className="ml-auto text-xs text-muted-foreground hover:text-foreground"
-                >
+              {(selectedMonths.length > 0 || location !== "" || trainers.length > 0 || classTypes.length > 0) && <Button variant="ghost" size="sm" onClick={() => {
+              setSelectedMonths([]);
+              setLocation("");
+              setTrainers([]);
+              setClassTypes([]);
+            }} className="ml-auto text-xs text-muted-foreground hover:text-foreground">
                   Clear all filters
-                </Button>
-              )}
+                </Button>}
             </CardContent>
           </Card>
         </div>
 
-        <Tabs value={currentView} onValueChange={(value) => setCurrentView(value as ViewType)} className="space-y-4">
+        <Tabs value={currentView} onValueChange={value => setCurrentView(value as ViewType)} className="space-y-4">
           <div className="bg-card/70 backdrop-blur-xl rounded-lg p-1 border border-border/50 sticky top-4 z-10 shadow-md">
             <TabsList className="grid w-full grid-cols-3 md:grid-cols-7">
               <TabsTrigger value="overview" className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all duration-300">
@@ -374,16 +302,13 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
             </TabsList>
           </div>
 
-          {searchQuery ? (
-            <div className="p-8 text-center premium-card rounded-xl">
+          {searchQuery ? <div className="p-8 text-center premium-card rounded-xl">
               <h2 className="text-2xl font-bold mb-4">Search Results for "{searchQuery}"</h2>
               <p className="text-muted-foreground">
                 Showing results across all dashboard sections. 
                 <Button variant="link" onClick={() => setSearchQuery("")}>Clear search</Button>
               </p>
-            </div>
-          ) : (
-            <>
+            </div> : <>
               <TabsContent value="overview" className="space-y-4 animate-fade-in">
                 <OverviewView data={data} selectedMonths={selectedMonths} location={location} />
               </TabsContent>
@@ -411,12 +336,9 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
               <TabsContent value="pivot" className="space-y-4 animate-fade-in">
                 <PivotTableView data={data.rawData} selectedMonths={selectedMonths} location={location} />
               </TabsContent>
-            </>
-          )}
+            </>}
         </Tabs>
       </div>
-    </div>
-  );
+    </div>;
 };
-
 export default DashboardLayout;
