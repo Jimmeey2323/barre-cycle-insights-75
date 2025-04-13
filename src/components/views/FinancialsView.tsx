@@ -367,7 +367,7 @@ const FinancialsView: React.FC<FinancialsViewProps> = ({ data, selectedMonths, l
                     <p className="text-xs text-muted-foreground">{metric.details}</p>
                     
                     {/* Add sparkline if data is available */}
-                    {metric.sparkline && metric.sparkline.length > 0 && (
+                    {metric.sparkline && (
                       <div className="h-8 mt-2">
                         <Sparkline data={metric.sparkline} width={100} height={30}>
                           <SparklinesLine color="var(--chart-primary)" style={{ fill: "none" }} />
